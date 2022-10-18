@@ -9,7 +9,7 @@ Random notes:
 
 then it can be imported as a normal package anywhere.
 
-- A very minimal (for the moment) working example of how a simulation can be carried out can be found under Francesco/00 - Intial testing.ipynb
+- A very minimal (for the moment) working example of how a simulation can be carried out can be found under Francesco/00 - Initial testing.ipynb. A more comprehensive (and comprehensible) guide will follow!
 
 - Usage of 32-bit precision floats instead of 64-bit ones leads to a considerable speedup (> 3x)
 
