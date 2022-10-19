@@ -27,6 +27,7 @@ class CellState:
     radius: Array 
     chemical: Array
     divrate: Array
+    division: Array
     key: Array
     
     
