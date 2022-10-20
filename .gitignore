@@ -5,5 +5,6 @@ jax_morph.egg-info/
 jax_morph/__pycache__/
 jax_morph/.ipynb_checkpoints/
 Francesco/chem_twotypes/__pycache__/
+__pycache__/
 files.txt
 ..gitignore.swp
