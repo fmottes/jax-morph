@@ -7,10 +7,6 @@ from jax_morph.datastructures import CellState
 from jax_morph.cell_division import S_cell_division
 from jax_morph.cell_growth import S_grow_cells
 
-from .mechanical import S_mechmin_twotypes
-from .secdiff import S_ss_chemfield
-from .divrates import S_set_divrate
-
 from jax_md import minimize, energy, quantity
 
 # Set initial_attribute of existing cells to all ones. 
@@ -53,6 +49,7 @@ def _relax_initial_config(R, fspace):
 def _template_initial_state(key, 
                            field_ndims, 
                            init_positions_fn,
+                           fspace,
                            params):
   """
   Template initial state to start with. Sets up random positions and relaxes configuration
@@ -63,50 +60,51 @@ def _template_initial_state(key,
   Returns:
     CellState
   """
-  R = init_positions_fn(key, params)
+  R = init_positions_fn(key, fspace, params)
   attributes = [R,]
   for ndim in field_ndims: 
-    attributes.append(_set_initial_attribute(ndim))
+    attributes.append(_set_initial_attribute(ndim, params))
   # Random key.
   attributes.append(key)
   return CellState(*attributes)
 
-def init_packed_positions(key, params):
+def init_packed_positions(key, fspace, params):
   N = params['ncells_init'] + params['ncells_add']
   cluster_box_size = quantity.box_size_at_number_density(params['ncells_init'], 1.2, 2)
   R = random.uniform(key, (N, 2))*cluster_box_size
-  R = _relax_initial_config(R)
+  R = _relax_initial_config(R, fspace)
   return R
 
-  def packed_cell_state(key, params, fspace):
-    """
+def packed_cell_state(key, params, fspace):
+  """
     Creates packed cell state - all nCellsInit are closely packed together
     Arg:
       key: jax.random.PRNGKey
       getGrowth_fn: function to assign initial growthrates with
     Returns:
       big_state
-    """
+  """
 
   field_ndims = np.ones
+  # TODO: this in a more intelligent way
   field_ndims = np.array([1, 1, params['n_chem'], 1, 1]).astype(np.int32)
-  big_state = _template_initial_state(key, field_ndims, init_packed_positions, super_param)
+  big_state = _template_initial_state(key, field_ndims, init_packed_positions, fspace, params)
 
   # Set only positions of existing cells. 
-  big_state = dataclasses.replace(big_state,
+  big_state = jax_dataclasses.replace(big_state,
                                   position = np.where(np.reshape(big_state.celltype > 0, (-1, 1)), big_state.position, np.array([[0.0, 0.0]]))
   )
   N, ncells_init, cellRad, n_chem = params['ncells_init'] + params['ncells_add'], params['ncells_init'], params['cellRad'], params['n_chem']
 
   # TODO: Also set growthrates.
   # Set all radii. 
-  big_state = dataclasses.replace(big_state,
-                                  radii=big_state.radii*cellRad)
+  big_state = jax_dataclasses.replace(big_state,
+                                  radius=big_state.radius*cellRad)
   # TODO: Need to update chemical concentrations here if there's a field.
   # Chemical has to be 2D for some reason. 
-  big_state = dataclasses.replace(big_state, 
+  big_state = jax_dataclasses.replace(big_state, 
                                   chemical=np.reshape(big_state.chemical, (-1, 1)))
-  big_state = dataclasses.replace(big_state, 
+  big_state = jax_dataclasses.replace(big_state, 
                                   division=0.0*big_state.division)
   return big_state
 
