@@ -7,7 +7,7 @@ def S_grow_cells(state, params, fspace=None, grate=.1):
     #constant growth
     new_radius = state.radius * np.exp(grate)
     
-    #set max radius - try without for now
+    #set max radius
     new_radius = np.where(new_radius<params['cellRad'], new_radius, params['cellRad'])
     
     new_state = jax_dataclasses.replace(state, radius=new_radius)
