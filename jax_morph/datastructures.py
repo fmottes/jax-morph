@@ -1,6 +1,5 @@
 import jax_md.dataclasses as jax_dataclasses
 from jax_md import util, space
-
 Array = util.Array
 
 
@@ -28,7 +27,6 @@ class CellState:
     chemical: Array
     divrate: Array
     key: Array
-    
     
 @jax_dataclasses.dataclass
 class SpaceFunc:
