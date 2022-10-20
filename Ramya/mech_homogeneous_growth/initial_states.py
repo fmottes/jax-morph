@@ -87,24 +87,23 @@ def packed_cell_state(key, params, fspace):
 
   field_ndims = np.ones
   # TODO: this in a more intelligent way
-  field_ndims = np.array([1, 1, params['n_chem'], 1, 1]).astype(np.int32)
-  big_state = _template_initial_state(key, field_ndims, init_packed_positions, fspace, params)
+  field_ndims = np.array([1, 1, params['n_chem'], 1]).astype(np.int32)
+  istate = _template_initial_state(key, field_ndims, init_packed_positions, fspace, params)
 
   # Set only positions of existing cells. 
-  big_state = jax_dataclasses.replace(big_state,
-                                  position = np.where(np.reshape(big_state.celltype > 0, (-1, 1)), big_state.position, np.array([[0.0, 0.0]]))
+  istate = jax_dataclasses.replace(istate,
+                                  position = np.where(np.reshape(istate.celltype > 0, (-1, 1)), istate.position, np.array([[0.0, 0.0]]))
   )
   N, ncells_init, cellRad, n_chem = params['ncells_init'] + params['ncells_add'], params['ncells_init'], params['cellRad'], params['n_chem']
 
   # TODO: Also set growthrates.
   # Set all radii. 
-  big_state = jax_dataclasses.replace(big_state,
-                                  radius=big_state.radius*cellRad)
+  istate = jax_dataclasses.replace(istate,
+                                  radius=istate.radius*cellRad)
   # TODO: Need to update chemical concentrations here if there's a field.
   # Chemical has to be 2D for some reason. 
-  big_state = jax_dataclasses.replace(big_state, 
-                                  chemical=np.reshape(big_state.chemical, (-1, 1)))
-  big_state = jax_dataclasses.replace(big_state, 
-                                  division=0.0*big_state.division)
-  return big_state
+  istate = jax_dataclasses.replace(istate, 
+                                  chemical=np.reshape(istate.chemical, (-1, 1)))
+
+  return istate
 
