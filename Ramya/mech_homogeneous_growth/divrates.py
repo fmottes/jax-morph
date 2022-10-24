@@ -5,7 +5,7 @@ import jax_md.dataclasses as jax_dataclasses
 from jax_md import partition, util, smap, space, energy
 from jax_morph.utils import logistic
 from jax_morph.datastructures import CellState
-
+from Francesco.chem_twotypes.divrates import div_chemical
 maybe_downcast = util.maybe_downcast
 
 def stress(dr,sigma,epsilon,alpha, radius):
@@ -122,3 +122,10 @@ def div_mechanical(state,fspace, params, nbrs) -> np.array:
     divrate = divrate*logistic(state.radius+.06, 50, params['cellRad'])
     
     return divrate
+
+def S_set_divrate(state, params, fspace, nbrs):
+    
+    divrate = div_chemical(state, params)
+    new_state = jax_dataclasses.replace(state, divrate=divrate)
+    
+    return new_state

@@ -2,7 +2,7 @@ import jax.numpy as np
 import jax_md.dataclasses as jax_dataclasses
 
 
-def S_grow_cells(state, params, fspace=None, grate=.1, nbrs=None):
+def S_grow_cells(state, params, fspace=None, nbrs=None, grate=.1):
     
     #constant growth
     new_radius = state.radius * np.exp(grate)
