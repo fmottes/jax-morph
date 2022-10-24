@@ -18,16 +18,18 @@ def stress(dr,sigma,epsilon,alpha, radius):
   Returns:
     force between two cells
   """
-  angle = np.arctan2(dr[1] - dr[1] + 1e-5, dr[0] - dr[0])
+  angle = np.arctan2(dr[1] + 1e-5, dr[0])
   F = -2* epsilon * alpha * np.exp(-alpha*(dr - sigma))*( np.exp(-alpha*(dr - sigma))- np.float32(1) )
   F_x = F*np.cos(angle)
   F_y = F*np.sin(angle)
+  F_x = 0.5
+  F_y = 0.2
   area = np.pi*np.power(radius, 2)
   sigma_xx = F_x*dr[0]/area
   sigma_yy = F_y*dr[1]/area
   sigma_xy = F_x*dr[1]/area
   sigma_yx = F_y*dr[0]/area
-  stress_tensor = np.array([[sigma_xx, sigma_xy], [sigma_yx, sigma_yy]])
+  stress_tensor = np.array([sigma_xx, sigma_xy, sigma_yx, sigma_yy])
   # For now, return sum of stress tensor
   return np.nan_to_num(np.sum(stress_tensor, dtype=dr.dtype))
 
@@ -42,7 +44,7 @@ def stress_neighbor_list(
     r_onset=2.0,
     r_cutoff=2.5,
     dr_threshold=0.5,
-    per_particle=False,
+    per_particle=True,
     fractional_coordinates=False,
     format: partition.NeighborListFormat=partition.OrderedSparse,
     ):
@@ -99,7 +101,7 @@ def _generate_morse_params_twotypes(state, params):
 
     return epsilon_matrix, sigma_matrix
 
-def div_mechanical(state,fspace, params, nbrs) -> np.array:
+def div_mechanical(state, params, fspace, nbrs) -> np.array:
     div_gamma = params['div_gamma']
     div_k = params['div_k']
     
@@ -112,20 +114,22 @@ def div_mechanical(state,fspace, params, nbrs) -> np.array:
     stresses = stress_fn(state.position, nbrs)
     # calculate "rates"
     div = logistic(stresses,div_gamma[0],div_k[0])
-    div = np.where(stresses > 0, div, logistic(stresses,div_gamma[1],div_k[1]))
+    div = np.where(stresses > 0, logistic(stresses,div_gamma[1],div_k[1]), div)
     
     # create array with new divrates
-    divrate = np.where(state.celltype>0,divrate, 0.0)
-    
+    divrate = np.where(state.celltype>0,div, 0.0)
+    max_divrate = logistic(state.chemical, 0.1, 25.0)
+    divrate = np.multiply(max_divrate, divrate)
+
     # cells cannot divide if they are too small
     # constants are arbitrary, change if you change cell radius
     divrate = divrate*logistic(state.radius+.06, 50, params['cellRad'])
     
-    return divrate
+    return stresses
 
 def S_set_divrate(state, params, fspace, nbrs):
     
-    divrate = div_chemical(state, params)
+    divrate = div_mechanical(state, params, fspace, nbrs)
     new_state = jax_dataclasses.replace(state, divrate=divrate)
     
     return new_state
