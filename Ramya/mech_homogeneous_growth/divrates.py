@@ -22,7 +22,7 @@ def stress(dr,sigma,epsilon,alpha, radius):
   F = -2* epsilon * alpha * np.exp(-alpha*(dr - sigma))*( np.exp(-alpha*(dr - sigma))- np.float32(1) )
   F_x = F*np.cos(angle)
   F_y = F*np.sin(angle)
-  area = np.pi*np.power(radius, 2)
+  area = np.pi*np.power(radius, 2) + 1e-6
   sigma_xx = F_x*dr[0]/area
   sigma_yy = F_y*dr[1]/area
   sigma_xy = F_x*dr[1]/area
@@ -123,7 +123,7 @@ def div_mechanical(state, params, fspace, nbrs) -> np.array:
     # constants are arbitrary, change if you change cell radius
     divrate = divrate*logistic(state.radius+.06, 50, params['cellRad'])
     
-    return stresses
+    return divrate
 
 def S_set_divrate(state, params, fspace, nbrs):
     
