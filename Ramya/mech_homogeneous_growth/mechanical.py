@@ -42,7 +42,7 @@ def _generate_morse_params_twotypes(state, params):
 
 
 
-def S_mechmin_twotypes(state, params, fspace, nbrs = None, dt=.001):
+def S_mechmin_twotypes(state, params, fspace, nbrs = None, dt=.0001):
     '''
     Minimize mechanical energy with SGD. 
     Energy is given by the Morse potential with parameters calculated for the two-celltypes case.
