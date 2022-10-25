@@ -22,8 +22,6 @@ def stress(dr,sigma,epsilon,alpha, radius):
   F = -2* epsilon * alpha * np.exp(-alpha*(dr - sigma))*( np.exp(-alpha*(dr - sigma))- np.float32(1) )
   F_x = F*np.cos(angle)
   F_y = F*np.sin(angle)
-  F_x = 0.5
-  F_y = 0.2
   area = np.pi*np.power(radius, 2)
   sigma_xx = F_x*dr[0]/area
   sigma_yy = F_y*dr[1]/area
@@ -112,10 +110,10 @@ def div_mechanical(state, params, fspace, nbrs) -> np.array:
     sigma=sigma_matrix, epsilon=epsilon_matrix, alpha=params['alpha'], radius=state.radius, 
     r_onset=params['r_onset'], r_cutoff=params['r_cutoff'])
     stresses = stress_fn(state.position, nbrs)
+    stresses = np.where(state.celltype > 0, stresses, 0.0)
     # calculate "rates"
     div = logistic(stresses,div_gamma[0],div_k[0])
     div = np.where(stresses > 0, logistic(stresses,div_gamma[1],div_k[1]), div)
-    
     # create array with new divrates
     divrate = np.where(state.celltype>0,div, 0.0)
     max_divrate = logistic(state.chemical, 0.1, 25.0)

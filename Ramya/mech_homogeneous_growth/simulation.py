@@ -43,12 +43,10 @@ def simulation(fstep, params, fspace):
 
         for i in range(1,n_ops):
             state = fstep[i](state, params, fspace, nbrs)
-        
-        return state, logp
-    
         nbrs = nbrs.update(state.position)
         if nbrs.did_buffer_overflow:  # Couldn't fit all the neighbors into the list.
             nbrs = neighbor_list_fn.allocate(state.position)
+        return state, logp, nbrs
 
     return sim_init, sim_step
 
@@ -58,7 +56,7 @@ def sim_trajectory(istate, sim_init, sim_step, key=None):
     
     def scan_fn(state, i):
         state, nbrs = state
-        state, logp = sim_step(state, nbrs)
+        state, logp, nbrs = sim_step(state, nbrs)
         state = (state, nbrs)
         return state, logp
     
