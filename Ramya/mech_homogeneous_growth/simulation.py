@@ -44,8 +44,8 @@ def simulation(fstep, params, fspace):
         for i in range(1,n_ops):
             state = fstep[i](state, params, fspace, nbrs)
         nbrs = nbrs.update(state.position)
-        if nbrs.did_buffer_overflow:  # Couldn't fit all the neighbors into the list.
-            nbrs = neighbor_list_fn.allocate(state.position)
+        #if nbrs.did_buffer_overflow:  # Couldn't fit all the neighbors into the list.
+        #    nbrs = neighbor_list_fn.allocate(state.position)
         return state, logp, nbrs
 
     return sim_init, sim_step
@@ -62,6 +62,7 @@ def sim_trajectory(istate, sim_init, sim_step, key=None):
     
     iterations = len(state.celltype)-len(istate.celltype)
     iterations = np.arange(iterations)
-    state, logp = lax.scan(scan_fn, (state, nbrs), iterations)
+    state = (state, nbrs)
+    state, logp = lax.scan(scan_fn, state, iterations)
     state, nbrs = state
     return state, logp

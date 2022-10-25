@@ -116,7 +116,7 @@ def div_mechanical(state, params, fspace, nbrs) -> np.array:
     div = np.where(stresses > 0, logistic(stresses,div_gamma[1],div_k[1]), div)
     # create array with new divrates
     divrate = np.where(state.celltype>0,div, 0.0)
-    max_divrate = logistic(state.chemical, 0.1, 25.0)
+    max_divrate = logistic(state.chemical[:, 0], 0.1, 25.0)
     divrate = np.multiply(max_divrate, divrate)
 
     # cells cannot divide if they are too small
