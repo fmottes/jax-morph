@@ -55,14 +55,15 @@ def sim_trajectory(istate, sim_init, sim_step, key=None):
     state, nbrs = sim_init(istate, key)
     
     def scan_fn(state, i):
-        state, nbrs = state
+        state, nbrs, logp = state
         state, logp, nbrs = sim_step(state, nbrs)
-        state = (state, nbrs)
-        return state, logp
+        state = (state, nbrs, logp)
+        return state, state
     
     iterations = len(state.celltype)-len(istate.celltype)
     iterations = np.arange(iterations)
-    state = (state, nbrs)
-    state, logp = lax.scan(scan_fn, state, iterations)
-    state, nbrs = state
-    return state, logp
+    state = (state, nbrs, 0.0)
+    state, state_all = lax.scan(scan_fn, state, iterations)
+    state, nbrs, logp = state
+    #return state, logp
+    return state_all
