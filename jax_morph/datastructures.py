@@ -1,6 +1,5 @@
 import jax_md.dataclasses as jax_dataclasses
 from jax_md import util, space
-import jax.numpy as np
 Array = util.Array
 
 
