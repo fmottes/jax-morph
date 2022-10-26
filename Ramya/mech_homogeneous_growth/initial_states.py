@@ -19,10 +19,8 @@ def _set_initial_attribute(n_dim, params):
   Returns:
     attr: nCells x n_dim array
   """
-  N = params['ncells_init'] + params['ncells_add']
   ncells_init = params['ncells_init']
   attr = np.ones((ncells_init, n_dim), np.float32)
-  attr = np.vstack((attr, np.zeros((N - ncells_init, n_dim))))
   attr = np.squeeze(attr)
   return attr
 
@@ -69,9 +67,9 @@ def _template_initial_state(key,
   return CellState(*attributes)
 
 def init_packed_positions(key, fspace, params):
-  N = params['ncells_init'] + params['ncells_add']
+  ncells_init = params['ncells_init']
   cluster_box_size = quantity.box_size_at_number_density(params['ncells_init'], 1.2, 2)
-  R = random.uniform(key, (N, 2))*cluster_box_size
+  R = random.uniform(key, (ncells_init, 2))*cluster_box_size
   R = _relax_initial_config(R, fspace)
   return R
 
@@ -89,11 +87,6 @@ def packed_cell_state(key, params, fspace):
   # TODO: this in a more intelligent way
   field_ndims = np.array([1, 1, params['n_chem'], 1]).astype(np.int32)
   istate = _template_initial_state(key, field_ndims, init_packed_positions, fspace, params)
-
-  # Set only positions of existing cells. 
-  istate = jax_dataclasses.replace(istate,
-                                  position = np.where(np.reshape(istate.celltype > 0, (-1, 1)), istate.position, np.array([[0.0, 0.0]]))
-  )
   N, ncells_init, cellRad, n_chem = params['ncells_init'] + params['ncells_add'], params['ncells_init'], params['cellRad'], params['n_chem']
 
   # TODO: Also set growthrates.
