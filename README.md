@@ -1,5 +1,6 @@
 # jax-morph
-Simulation and optimization of clusters of cells growing in space.
+Simulation and optimization of clusters of cells growing in space. 
+
 [Ramya demo colab](https://colab.research.google.com/drive/1man19YTDKaXqiV6WiKWCdWxLCiYAymTr?authuser=1#scrollTo=uKWBYfQXF-YI)
 ## Random notes:
 
