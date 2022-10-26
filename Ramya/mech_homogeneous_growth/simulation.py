@@ -1,13 +1,15 @@
 import jax.numpy as np
 from jax import lax, jit
-from jax_md import partition
+from jax_md import partition, quantity
 
 from jax_morph.datastructures import CellState
 
 def simulation(fstep, params, fspace):
     
     n_ops = len(fstep)
-    neighbor_list_fn = partition.neighbor_list(fspace.displacement, fspace.box_size, params["r_cutoff"])
+    box_size = quantity.box_size_at_number_density(params['ncells_init'] + params['ncells_add'], 1.2, 2)
+    neighbor_list_fn = partition.neighbor_list(fspace.displacement, box_size, params["r_cutoff"])
+    
     #fstep = iter(fstep)
     
     def sim_init(istate, key=None):

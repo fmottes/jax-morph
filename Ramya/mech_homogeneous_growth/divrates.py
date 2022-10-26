@@ -2,11 +2,15 @@ import jax.numpy as np
 from jax import jit, lax, vmap
 
 import jax_md.dataclasses as jax_dataclasses
-from jax_md import partition, util, smap, space, energy
+from jax_md import partition, util, smap, space, energy, quantity
 from jax_morph.utils import logistic
 from jax_morph.datastructures import CellState
 from Francesco.chem_twotypes.divrates import div_chemical
 maybe_downcast = util.maybe_downcast
+
+def stress(dr,sigma,epsilon,alpha, radius):
+    F = -2* epsilon * alpha * np.exp(-alpha*(dr - sigma))*( np.exp(-alpha*(dr - sigma))- np.float32(1) )
+    return np.average(F*dr/np.sqrt(np.power(dr, 2)))
 
 def stress(dr,sigma,epsilon,alpha, radius):
   """force arising from Morse interaction between particles with an equilirbium distance at sigma.
@@ -22,11 +26,10 @@ def stress(dr,sigma,epsilon,alpha, radius):
   F = -2* epsilon * alpha * np.exp(-alpha*(dr - sigma))*( np.exp(-alpha*(dr - sigma))- np.float32(1) )
   F_x = F*np.cos(angle)
   F_y = F*np.sin(angle)
-  area = np.pi*np.power(radius, 2) + 1e-6
-  sigma_xx = F_x*dr[0]/area
-  sigma_yy = F_y*dr[1]/area
-  sigma_xy = F_x*dr[1]/area
-  sigma_yx = F_y*dr[0]/area
+  sigma_xx = F_x*dr[0]
+  sigma_yy = F_y*dr[1]
+  sigma_xy = F_x*dr[1]
+  sigma_yx = F_y*dr[0]
   stress_tensor = np.array([sigma_xx, sigma_xy, sigma_yx, sigma_yy])
   # For now, return sum of stress tensor
   return np.nan_to_num(np.sum(stress_tensor, dtype=dr.dtype))
@@ -106,7 +109,8 @@ def div_mechanical(state, params, fspace, nbrs) -> np.array:
     # Calculate stresses
     epsilon_matrix, sigma_matrix = _generate_morse_params_twotypes(state, params)
     # TODO: do i need to specify box size? 
-    stress_fn = stress_neighbor_list(fspace.displacement,  fspace.box_size, 
+    box_size = quantity.box_size_at_number_density(params['ncells_init'] + params['ncells_add'], 1.2, 2)
+    stress_fn = stress_neighbor_list(fspace.displacement, box_size, 
     sigma=sigma_matrix, epsilon=epsilon_matrix, alpha=params['alpha'], radius=state.radius, 
     r_onset=params['r_onset'], r_cutoff=params['r_cutoff'])
     stresses = stress_fn(state.position, nbrs)

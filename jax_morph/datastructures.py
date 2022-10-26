@@ -37,4 +37,3 @@ class SpaceFunc:
     
     displacement: space.DisplacementFn
     shift: space.ShiftFn
-    box_size: np.float32
