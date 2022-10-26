@@ -1,3 +1,4 @@
+from IPython.core.formatters import ForwardDeclaredInstance
 import jax.numpy as np
 from jax import jit, lax, vmap, jacrev
 
@@ -8,68 +9,15 @@ from jax_morph.datastructures import CellState
 from Francesco.chem_twotypes.divrates import div_chemical
 maybe_downcast = util.maybe_downcast
 
+def stress(fspace, state, sigma, epsilon, alpha, r_onset, r_cutoff):
+    energy_fn = energy.morse_pair(fspace.displacement, epsilon=epsilon, alpha=alpha, sigma=sigma, r_onset=r_onset, r_cutoff=r_cutoff)
+    force_fn = quantity.force(energy_fn)
+    forces = force_fn(state.position)
+    drs = space.map_product(fspace.displacement)(state.position, state.position)
+    stresses = np.sum(np.multiply(forces, np.sign(drs)), axis=(0, -1))
+    stresses = np.where(state.celltype > 0, stresses, 0.0)
+    return stresses
 
-def stress(dr,sigma,epsilon,alpha):
-  #F = quantity.force(energy.morse(dr, sigma, epsilon, alpha)
-  F = -2* epsilon * alpha * np.exp(-alpha*(dr - sigma))*( np.exp(-alpha*(dr - sigma))- np.float32(1) )
-  stress_tensor = np.dot(np.atleast_2d(F).T, np.atleast_2d(dr))
-  # For now, return sum of stress tensor
-  return np.nan_to_num(np.sum(stress_tensor, dtype=dr.dtype))
-
-def stress_pair(displacement_or_metric,
-               sigma,
-               epsilon,
-               alpha,
-               r_onset,
-               r_cutoff,
-               per_particle: bool=True):
-  """Convenience wrapper to compute :ref:`Morse energy <morse-pot>` over a system."""
-  sigma = maybe_downcast(sigma)
-  epsilon = maybe_downcast(epsilon)
-  alpha = maybe_downcast(alpha)
-  return smap.pair(
-    energy.multiplicative_isotropic_cutoff(stress, r_onset, r_cutoff),
-    space.canonicalize_displacement_or_metric(displacement_or_metric),
-    ignore_unused_parameters=True,
-    sigma=sigma,
-    epsilon=epsilon,
-    alpha=alpha,
-    reduce_axis=(1,) if per_particle else None)
-
-def stress_neighbor_list(
-    displacement_or_metric,
-    box_size,
-    species=None,
-    sigma=1.0,
-    epsilon=5.0,
-    alpha=5.0,
-    r_onset=2.0,
-    r_cutoff=2.5,
-    dr_threshold=0.5,
-    per_particle=True,
-    fractional_coordinates=False,
-    format: partition.NeighborListFormat=partition.OrderedSparse,
-    ):
-
-  """Convenience wrapper to compute morse force using a neighbor list."""
-  sigma = maybe_downcast(sigma)
-  epsilon = maybe_downcast(epsilon)
-  alpha = maybe_downcast(alpha)
-  r_onset = maybe_downcast(r_onset)
-  r_cutoff = maybe_downcast(r_cutoff)
-  dr_threshold = maybe_downcast(dr_threshold)
-
-  stress_fn = smap.pair_neighbor_list(
-    energy.multiplicative_isotropic_cutoff(stress, r_onset, r_cutoff),
-    space.canonicalize_displacement_or_metric(displacement_or_metric),
-    ignore_unused_parameters=True,
-    species=species,
-    sigma=sigma,
-    epsilon=epsilon,
-    alpha=alpha,
-    reduce_axis=(1,) if per_particle else None)
-
-  return stress_fn
 
 def _generate_morse_params_twotypes(state, params):
     '''
@@ -107,18 +55,9 @@ def div_mechanical(state, params, fspace, nbrs) -> np.array:
     
     # Calculate stresses
     epsilon_matrix, sigma_matrix = _generate_morse_params_twotypes(state, params)
-    # TODO: do i need to specify box size? 
     box_size = quantity.box_size_at_number_density(params['ncells_init'] + params['ncells_add'], 1.2, 2)
-    #stress_fn = stress_neighbor_list(fspace.displacement, box_size, 
-    #sigma=sigma_matrix, epsilon=epsilon_matrix, alpha=params['alpha'], radius=state.radius, 
-    #r_onset=params['r_onset'], r_cutoff=params['r_cutoff'])
-    #stresses = stress_fn(state.position, nbrs)
-    stress_fn = stress_pair(fspace.displacement, sigma_matrix,
-               epsilon_matrix, params["alpha"],
-               params["r_onset"],params["r_cutoff"],
-               True)
-    stresses = stress_fn(state.position)
-    stresses = np.where(state.celltype > 0, stresses, 0.0)
+    stresses = stress(fspace, state, sigma_matrix, epsilon_matrix, params["alpha"], params["r_onset"], params["r_cutoff"])
+    
     # calculate "rates"
     div = logistic(stresses,div_gamma[0],div_k[0])
     div = np.where(stresses > 0, logistic(stresses,div_gamma[1],div_k[1]), div)
