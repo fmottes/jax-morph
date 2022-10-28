@@ -9,8 +9,7 @@ f32 = util.f32
 
 def S_fixed_chemfield(istate,
                   params,
-                  fspace, 
-                  nbrs=None 
+                  fspace 
                   ) -> CellState:
   """
   Fixed morphogen field based on particle position from center cell.

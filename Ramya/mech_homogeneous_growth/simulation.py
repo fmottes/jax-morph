@@ -33,39 +33,39 @@ def simulation(fstep, params, fspace):
             new_key = istate.key
 
         new_istate = CellState(new_position, new_celltype, new_radius, new_chemical, new_divrate, new_key)
-        nbrs = neighbor_list_fn.allocate(new_istate.position)
-        return new_istate, nbrs
+        #nbrs = neighbor_list_fn.allocate(new_istate.position)
+        return new_istate#, nbrs
     
     
 
-    def sim_step(state, nbrs):
+    def sim_step(state):
                         
         #first step must always be cell division
-        state, logp = fstep[0](state, params, fspace, nbrs)
+        state, logp = fstep[0](state, params, fspace)
 
         for i in range(1,n_ops):
-            state = fstep[i](state, params, fspace, nbrs)
-        nbrs = nbrs.update(state.position)
+            state = fstep[i](state, params, fspace)
+        #nbrs = nbrs.update(state.position)
         #if nbrs.did_buffer_overflow:  # Couldn't fit all the neighbors into the list.
         #    nbrs = neighbor_list_fn.allocate(state.position)
-        return state, logp, nbrs
+        return state, logp#, nbrs
 
     return sim_init, sim_step
 
 def sim_trajectory(istate, sim_init, sim_step, key=None):
     
-    state, nbrs = sim_init(istate, key)
+    state = sim_init(istate, key)
     
     def scan_fn(state, i):
-        state, nbrs, logp = state
-        state, logp, nbrs = sim_step(state, nbrs)
-        state = (state, nbrs, logp)
+        state, logp = state
+        state, logp = sim_step(state)
+        state = (state,logp)
         return state, state
     
     iterations = len(state.celltype)-len(istate.celltype)
     iterations = np.arange(iterations)
-    state = (state, nbrs, 0.0)
+    state = (state, 0.0)
     state, state_all = lax.scan(scan_fn, state, iterations)
-    state, nbrs, logp = state
+    state, logp = state
     #return state, logp
     return state_all

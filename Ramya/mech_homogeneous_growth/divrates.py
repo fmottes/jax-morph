@@ -47,7 +47,7 @@ def _generate_morse_params_twotypes(state, params):
 
     return epsilon_matrix, sigma_matrix
 
-def div_mechanical(state, params, fspace, nbrs) -> np.array:
+def div_mechanical(state, params, fspace) -> np.array:
     div_gamma = params['div_gamma']
     div_k = params['div_k']
     
@@ -71,9 +71,9 @@ def div_mechanical(state, params, fspace, nbrs) -> np.array:
     
     return divrate
 
-def S_set_divrate(state, params, fspace, nbrs):
+def S_set_divrate(state, params, fspace):
     
-    divrate = div_mechanical(state, params, fspace, nbrs)
+    divrate = div_mechanical(state, params, fspace)
     new_state = jax_dataclasses.replace(state, divrate=divrate)
     
     return new_state
