@@ -28,6 +28,8 @@ class CellState:
     divrate: Array
     key: Array
     
+    
+    
 @jax_dataclasses.dataclass
 class SpaceFunc:
     '''
