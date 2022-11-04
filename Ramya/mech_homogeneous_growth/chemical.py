@@ -20,8 +20,9 @@ def S_fixed_chemfield(istate,
     big_state_output: CellState with updated chemical concentration
   """
   # Find displacements from center of cluster.
-  cluster_box_size = quantity.box_size_at_number_density(params['ncells_init'], 1.2, 2)
-  center = np.array([cluster_box_size/2.0, cluster_box_size/2.0])
+  #cluster_box_size = quantity.box_size_at_number_density(params['ncells_init'], 1.2, 2)
+  #center = np.array([cluster_box_size/2.0, cluster_box_size/2.0])
+  center = np.array([0.0, 0.0])
   chemfield_disp = vmap(fspace.displacement, (0, None))(istate.position, center)
   chemfield_disp = np.linalg.norm(chemfield_disp, axis=1)
   # TODO: Write these out as params

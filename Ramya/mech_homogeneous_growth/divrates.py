@@ -8,11 +8,12 @@ from jax_morph.utils import logistic
 maybe_downcast = util.maybe_downcast
 
 def stress(fspace, state, sigma, epsilon, alpha, r_onset, r_cutoff):
-    energy_fn = energy.morse_pair(fspace.displacement, epsilon=epsilon, alpha=alpha, sigma=sigma, r_onset=r_onset, r_cutoff=r_cutoff)
-    force_fn = quantity.force(energy_fn)
-    forces = force_fn(state.position)
+    energy_fn = energy.morse_pair(fspace.displacement, epsilon=epsilon, alpha=alpha, sigma=sigma, r_onset=r_onset, r_cutoff=r_cutoff, per_particle=True)
+    force_fn = jacrev(energy_fn)
+    forces = -1*force_fn(state.position)
     drs = space.map_product(fspace.displacement)(state.position, state.position)
-    stresses = np.sum(np.multiply(forces, np.sign(drs)), axis=(0, -1))
+    drs = np.transpose(drs, axes=(1, 0, 2))
+    stresses = np.sum(np.multiply(forces, np.sign(drs)), axis=(1, 2))
     stresses = np.where(state.celltype > 0, stresses, 0.0)
     return stresses
 
