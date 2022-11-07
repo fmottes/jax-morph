@@ -58,8 +58,8 @@ def div_mechanical(state, params, fspace) -> np.array:
     stresses = stress(fspace, state, sigma_matrix, epsilon_matrix, params["alpha"], params["r_onset"], params["r_cutoff"])
     
     # calculate "rates"
-    div = logistic(stresses,div_gamma[0],div_k[0])
-    div = np.where(stresses > 0, logistic(stresses,div_gamma[1],div_k[1]), div)
+    div = logistic(stresses,np.abs(div_gamma[0]),-1*np.abs(div_k[0]))
+    div = np.where(stresses > 0, logistic(stresses,-1*np.abs(div_gamma[1]),np.abs(div_k[1])), div)
 
     # create array with new divrates
     divrate = np.where(state.celltype>0,div, 0.0)
