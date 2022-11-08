@@ -4,7 +4,7 @@ from jax import jit, lax, vmap, jacrev
 
 import jax_md.dataclasses as jax_dataclasses
 from jax_md import partition, util, smap, space, energy, quantity
-from jax_morph.utils import logistic
+from jax_morph.utils import logistic, polynomial
 maybe_downcast = util.maybe_downcast
 
 def stress(fspace, state, sigma, epsilon, alpha, r_onset, r_cutoff):
@@ -48,9 +48,16 @@ def _generate_morse_params_twotypes(state, params):
 
     return epsilon_matrix, sigma_matrix
 
-def div_mechanical(state, params, fspace) -> np.array:
-    div_gamma = params['div_gamma']
-    div_k = params['div_k']
+def logistic_gr(stresses, params):
+    div = logistic(stresses,params["div_gamma"][0],params["div_k"][0])
+    div = np.where(stresses > 0, logistic(stresses,params["div_gamma"][1],params["div_k"][1]), div)
+    return div
+
+def poly_gr(stresses, params):
+    div = polynomial(stresses, params["div_coeffs"])
+    return div 
+
+def div_mechanical(state, params, fspace, growth_fn=poly_gr) -> np.array:
     
     # Calculate stresses
     epsilon_matrix, sigma_matrix = _generate_morse_params_twotypes(state, params)
@@ -58,8 +65,7 @@ def div_mechanical(state, params, fspace) -> np.array:
     stresses = stress(fspace, state, sigma_matrix, epsilon_matrix, params["alpha"], params["r_onset"], params["r_cutoff"])
     
     # calculate "rates"
-    div = logistic(stresses,np.abs(div_gamma[0]),-1*np.abs(div_k[0]))
-    div = np.where(stresses > 0, logistic(stresses,-1*np.abs(div_gamma[1]),np.abs(div_k[1])), div)
+    div = growth_fn(stresses, params)
 
     # create array with new divrates
     divrate = np.where(state.celltype>0,div, 0.0)
@@ -72,9 +78,9 @@ def div_mechanical(state, params, fspace) -> np.array:
     
     return divrate
 
-def S_set_divrate(state, params, fspace):
+def S_set_divrate(state, params, fspace, **kwargs):
     
-    divrate = div_mechanical(state, params, fspace)
+    divrate = div_mechanical(state, params, fspace, **kwargs)
     new_state = jax_dataclasses.replace(state, divrate=divrate)
     
     return new_state

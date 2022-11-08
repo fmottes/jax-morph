@@ -15,11 +15,12 @@ def _simple_loss_vk(params,
             istate,
             metric_fn=cv_divrates, 
             target_metric = 0.,
+            **kwargs
            ):
     
     
         @eqx.filter_jit
-        def _simple_loss(sim_key=None):
+        def _simple_loss(sim_key=None, **kwargs):
             '''
             Only calculates the deterministic part of the square loss, does not manage stochastic nodes.
             '''
@@ -28,7 +29,7 @@ def _simple_loss_vk(params,
             all_params = eqx.combine(params, hyper_params)
 
             #forward pass - simulation
-            sim_init, sim_step = simulation(fstep, all_params, fspace)
+            sim_init, sim_step = simulation(fstep, all_params, fspace, **kwargs)
             fstate, _ = sim_trajectory(istate, sim_init, sim_step, sim_key)
 
             # Calculate metric of final structure
@@ -48,6 +49,7 @@ def avg_simple_loss(params,
             sim_keys=None,
             metric_fn=cv_divrates,
             target_metric = 0.,
+            **kwargs
            ):
     
     
@@ -57,7 +59,8 @@ def avg_simple_loss(params,
             fspace,
             istate,
             metric_fn,
-            target_metric
+            target_metric,
+            **kwargs
            )
     
     
@@ -65,7 +68,7 @@ def avg_simple_loss(params,
     
     return np.mean(losses_ens)
 
-def optimize(key, epochs, batch_size, lr, params, train_params, fstep, fspace, istate):
+def optimize(key, epochs, batch_size, lr, params, train_params, fstep, fspace, istate, **kwargs):
 
     p, hp = eqx.partition(params, train_params)
     optimizer = optax.adam(lr)
@@ -82,8 +85,8 @@ def optimize(key, epochs, batch_size, lr, params, train_params, fstep, fspace, i
     batch_subkeys = np.array(batch_subkeys)
 
 
-    l, grads = value_and_grad(avg_simple_loss)(p, hp, fstep, fspace, istate, batch_subkeys)
-
+    l, grads = value_and_grad(avg_simple_loss)(p, hp, fstep, fspace, istate, batch_subkeys, **kwargs)
+    print("loss: %s" % l)
     loss_t = [float(l)]
 
 
@@ -95,7 +98,7 @@ def optimize(key, epochs, batch_size, lr, params, train_params, fstep, fspace, i
         updates, opt_state = optimizer.update(grads, opt_state, p)
         p = eqx.apply_updates(p, updates)
         
-        l, grads = value_and_grad(avg_simple_loss)(p, hp, fstep, fspace, istate, batch_subkeys)    
+        l, grads = value_and_grad(avg_simple_loss)(p, hp, fstep, fspace, istate, batch_subkeys, **kwargs)    
         print("loss: %s" % l)
         loss_t.append(float(l))
         params_t.append(p)

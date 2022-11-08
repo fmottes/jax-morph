@@ -9,7 +9,7 @@ from jax_morph.utils import logistic
 
 
 
-def S_cell_division(state, params, fspace=None):
+def S_cell_division(state, params, fspace=None, **kwargs):
     '''
     Performs one cell division with probability proportional to the current state divrates.
     '''
