@@ -14,7 +14,7 @@ from jax_morph.diffusion import diffuse_allchem
 def _sec_onechem(chem, mumax, gammavec, kvec):  
     """
     Helper function.
-    Calculates secretion rate of one chemicals by each cell 
+    Calculates secretion rate of one chemical by each cell 
     from the concentrations of the other chemicals.
     
     Arg:
