@@ -1,7 +1,6 @@
 # jax-morph
 Simulation and optimization of clusters of cells growing in space. 
 
-[Ramya demo colab](https://colab.research.google.com/drive/1man19YTDKaXqiV6WiKWCdWxLCiYAymTr?authuser=1#scrollTo=uKWBYfQXF-YI)
 ## Random notes:
 
 - in order for `jax-morph` to work properly it needs to be installed by running
