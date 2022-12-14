@@ -2,6 +2,7 @@ import jax.numpy as np
 from jax import lax, jit
 
 from jax_morph.datastructures import CellState
+from numpy import format_float_scientific
 
 
 #TODO: define function signatures
@@ -55,7 +56,7 @@ def simulation(fstep, params, fspace, **kwargs):
 
 
 
-def sim_trajectory(istate, sim_init, sim_step, key=None, history=False):
+def sim_trajectory(istate, sim_init, sim_step, key=None, history=format_float_scientific):
     '''
     Runs a simulation trajectory for a given number of steps.
     The number of simulation steps is inferred from the size of the state datastructures before and after initialization.

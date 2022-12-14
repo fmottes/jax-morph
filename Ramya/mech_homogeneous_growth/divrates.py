@@ -57,7 +57,7 @@ def poly_gr(stresses, params):
     div = polynomial(stresses, params["div_coeffs"])
     return div 
 
-def div_mechanical(state, params, fspace, growth_fn=poly_gr) -> np.array:
+def div_mechanical(state, params, fspace, **kwargs) -> np.array:
     
     # Calculate stresses
     epsilon_matrix, sigma_matrix = _generate_morse_params_twotypes(state, params)
@@ -65,8 +65,10 @@ def div_mechanical(state, params, fspace, growth_fn=poly_gr) -> np.array:
     stresses = stress(fspace, state, sigma_matrix, epsilon_matrix, params["alpha"], params["r_onset"], params["r_cutoff"])
     
     # calculate "rates"
-    div = growth_fn(stresses, params)
-
+    if "growth_fn" in kwargs:
+        div = kwargs["growth_fn"](stresses, params)
+    else: 
+        div = logistic_gr(stresses, params)
     # create array with new divrates
     divrate = np.where(state.celltype>0,div, 0.0)
     max_divrate = logistic(state.chemical[:, 0], 0.1, 25.0)

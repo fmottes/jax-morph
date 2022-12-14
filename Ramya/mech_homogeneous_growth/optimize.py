@@ -2,7 +2,7 @@ import jax.numpy as np
 from jax import vmap, random, value_and_grad
 import optax
 import equinox as eqx
-from jax_morph.simulation import simulation, sim_trajectory
+from Ramya.mech_homogeneous_growth.simulation import simulation, sim_trajectory
 
 def cv_divrates(state):
     return np.std(state.divrate)/np.mean(state.divrate)
@@ -18,13 +18,12 @@ def _simple_loss_vk(params,
             **kwargs
            ):
     
-    
+        
         @eqx.filter_jit
-        def _simple_loss(sim_key=None, **kwargs):
+        def _simple_loss(sim_key=None):
             '''
             Only calculates the deterministic part of the square loss, does not manage stochastic nodes.
             '''
-
             # merge params dicts
             all_params = eqx.combine(params, hyper_params)
 
@@ -41,6 +40,7 @@ def _simple_loss_vk(params,
             return loss
         
         return vmap(_simple_loss)
+
 def avg_simple_loss(params, 
             hyper_params,
             fstep,
@@ -51,7 +51,6 @@ def avg_simple_loss(params,
             target_metric = 0.,
             **kwargs
            ):
-    
     
     loss_fn = _simple_loss_vk(params, 
             hyper_params,
@@ -73,7 +72,6 @@ def optimize(key, epochs, batch_size, lr, params, train_params, fstep, fspace, i
     p, hp = eqx.partition(params, train_params)
     optimizer = optax.adam(lr)
     opt_state = optimizer.init(p)
-
 
     #store initial params
     params_t = [p]
