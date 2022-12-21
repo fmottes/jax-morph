@@ -49,7 +49,7 @@ def diffuse_allchem(secretions, state, params, fspace):
     return new_chem
 
 
-def S_chem_diffusion(state, params, fspace=None):
+def S_chem_diffusion(state, params, fspace=None, **kwargs):
     
     new_chemical = diffuse_allchem(state.chemical, state, params, fspace)
     

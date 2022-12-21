@@ -28,6 +28,7 @@ def S_fixed_chemfield(istate,
   chemfield_disp = np.linalg.norm(chemfield_disp, axis=1)
   # TODO: Write these out as params
   chemfield_conc = 100.0/(2.0 + 0.4*np.power(chemfield_disp, 2.0))
-  chemfield_conc = np.reshape(np.where(istate.celltype > 0, chemfield_conc, 0.0), (-1, 1))
-  istate = jax_dataclasses.replace(istate, chemical=chemfield_conc)
+  chemfield_conc = np.where(istate.celltype > 0, chemfield_conc, 0.0)
+  chemical = istate.chemical.at[:, 0].set(chemfield_conc)
+  istate = jax_dataclasses.replace(istate, chemical=chemical)
   return istate
