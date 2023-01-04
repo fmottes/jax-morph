@@ -2,7 +2,7 @@ import jax.numpy as np
 from jax import vmap, random, value_and_grad
 import optax
 import equinox as eqx
-from Ramya.mech_homogeneous_growth.simulation import simulation, sim_trajectory
+from jax_morph.simulation import simulation, sim_trajectory
 
 def cv_divrates(state):
     return np.std(state.divrate)/np.mean(state.divrate)
