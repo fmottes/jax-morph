@@ -84,7 +84,8 @@ def div_combined(state, params, fspace, **kwargs) -> np.array:
     divrate = div_mechanical(state, params, fspace, **kwargs)
     # Get product of chemical contributions
     vmap_logistic = vmap(logistic, (1,0, 0),(1))
-    divrate = np.multiply(divrate, np.prod(vmap_logistic(state.chemical[:, 1:],params["div_gamma"][2:],params["div_    k"][2:]),axis=1,dtype=np.float32)) 
+    divrate = np.multiply(divrate, np.prod(vmap_logistic(state.chemical[:, 1:],
+    params["div_gamma"][2:],params["div_k"][2:]),axis=1,dtype=np.float32)) 
     divrate = divrate*logistic(state.radius+.06, 50, params['cellRad'])
     return divrate
 

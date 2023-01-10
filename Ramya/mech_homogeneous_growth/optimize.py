@@ -46,7 +46,6 @@ def avg_loss(params, hyper_params, vloss_fn, sim_keys, **kwargs):
 
 '''Optimization loop.'''
 def optimize(key, epochs, batch_size, lr, params, train_params, fstep, fspace, istate, **kwargs):
-
     # Separate params to be optimized.
     p, hp = eqx.partition(params, train_params)
 
@@ -58,7 +57,10 @@ def optimize(key, epochs, batch_size, lr, params, train_params, fstep, fspace, i
     key, *batch_subkeys = random.split(key, batch_size+1)
     batch_subkeys = np.array(batch_subkeys)
 
+    # JIT'ted grad function
+    #vg_jit = eqx.filter_jit(value_and_grad(avg_loss))
     # Get starting gradients and loss.
+    #l, grads = vg_jit(p, hp, simple_loss, batch_subkeys, fstep=fstep, fspace=fspace, istate=istate)
     l, grads = value_and_grad(avg_loss)(p, hp, simple_loss, batch_subkeys, fstep=fstep, fspace=fspace, istate=istate)
     print("loss: %s" % l)
     params_t = [p]
@@ -72,6 +74,7 @@ def optimize(key, epochs, batch_size, lr, params, train_params, fstep, fspace, i
         batch_subkeys = np.array(batch_subkeys)
         updates, opt_state = optimizer.update(grads, opt_state, p)
         p = eqx.apply_updates(p, updates)
+        #l, grads = vg_jit(p, hp, simple_loss, batch_subkeys, fstep=fstep, fspace=fspace, istate=istate)
         l, grads = value_and_grad(avg_loss)(p, hp, simple_loss, batch_subkeys, fstep=fstep, fspace=fspace, istate=istate)
         print("loss: %s" % l)
         
