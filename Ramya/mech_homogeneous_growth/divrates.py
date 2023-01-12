@@ -9,10 +9,18 @@ from jax_morph.utils import logistic, polynomial
 maybe_downcast = util.maybe_downcast
 
 def stress(fspace, state, sigma, epsilon, alpha, r_onset, r_cutoff):
+    # Per-particle morse energies.
     energy_fn = energy.morse_pair(fspace.displacement, epsilon=epsilon, alpha=alpha, sigma=sigma, r_onset=r_onset, r_cutoff=r_cutoff, per_particle=True)
+    # Removed the minus sign because we want F_ij = force on i (not by i)
     forces = jacrev(energy_fn)(state.position)
+    # Pairwise displacements
+    # So now we have F_ij = force on i by j
+    # and r_ij = displacement from i to j
     drs = space.map_product(fspace.displacement)(state.position, state.position)
+    # Multiply these to get force on particle x direction it's coming from
+    # Note this also masks self-forces
     stresses = np.sum(np.multiply(forces, np.sign(drs)), axis=(0, 2))
+    # Add all components and contributions for each particle.
     stresses = np.where(state.celltype > 0, stresses, 0.0)
     return stresses
 
