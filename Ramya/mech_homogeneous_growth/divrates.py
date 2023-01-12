@@ -1,4 +1,5 @@
 from IPython.core.formatters import ForwardDeclaredInstance
+from IPython.core.magics.code import find_source_lines
 import jax.numpy as np
 from jax import jit, lax, vmap, jacrev
 
@@ -9,11 +10,9 @@ maybe_downcast = util.maybe_downcast
 
 def stress(fspace, state, sigma, epsilon, alpha, r_onset, r_cutoff):
     energy_fn = energy.morse_pair(fspace.displacement, epsilon=epsilon, alpha=alpha, sigma=sigma, r_onset=r_onset, r_cutoff=r_cutoff, per_particle=True)
-    force_fn = jacrev(energy_fn)
-    forces = -1*force_fn(state.position)
+    forces = jacrev(energy_fn)(state.position)
     drs = space.map_product(fspace.displacement)(state.position, state.position)
-    drs = np.transpose(drs, axes=(1, 0, 2))
-    stresses = np.sum(np.multiply(forces, np.sign(drs)), axis=(1, 2))
+    stresses = np.sum(np.multiply(forces, np.sign(drs)), axis=(0, 2))
     stresses = np.where(state.celltype > 0, stresses, 0.0)
     return stresses
 
