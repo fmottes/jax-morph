@@ -38,9 +38,9 @@ def div_chemical(state: CellState,
     return divrate
 
 
-def S_set_divrate(state, params, fspace=None):
+def S_set_divrate(state, params, divrate_fn=div_chemical, fspace=None):
     
-    divrate = div_chemical(state,params)
+    divrate = divrate_fn(state, params)
     
     new_state = jax_dataclasses.replace(state, divrate=divrate)
     
