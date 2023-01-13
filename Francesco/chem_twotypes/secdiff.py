@@ -38,7 +38,7 @@ def _sec_onechem(chem, mumax, gammavec, kvec):
 
 #(sec x conc) x (conc x cell)
 # Function that returns secretion rates given current concentration
-def sec_chemical(state, params):
+def sec_chem_logistic(state, params):
     """
     Calculates secretion rate of chemicals by each cell.
     
@@ -88,9 +88,9 @@ def sec_chemical(state, params):
 #non jittable due to the bool mask based on celltype
 #substitute with simulation step index to sidestep masking (not sure works either)
 
-def S_ss_chemfield(state, params, fspace, n_iter=5):
+def S_ss_chemfield(state, params, fspace, sec_chemical=sec_chem_logistic, n_iter=5):
     '''
-    Heuristically, steady state is reached after 5 iterations
+    Heuristically, steady state is reached in less than 5 iterations.
     '''
     def _sec_diff_step(buff_state, i):
         
