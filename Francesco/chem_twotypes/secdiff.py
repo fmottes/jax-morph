@@ -91,7 +91,6 @@ def S_ss_chemfield(state, params, fspace, n_iter=5):
     '''
     Heuristically, steady state is reached after 5 iterations
     '''
-    
     def _sec_diff_step(buff_state, i):
         
         #calculate new secretions
@@ -102,15 +101,13 @@ def S_ss_chemfield(state, params, fspace, n_iter=5):
         
         return jax_dataclasses.replace(buff_state, chemical=chemfield), 0.#, chemfield
     
-    
     #buffer state for looping (not strictly necessary)
     new_state = CellState(*jax_dataclasses.unpack(state))
     
     iterations = np.arange(n_iter)
     
     new_state, _ = lax.scan(_sec_diff_step, new_state, iterations)
-    
     #uncomment line below and comment line above for history
     #new_state, chemfield = lax.scan(_sec_diff_step, new_state, iterations)
-    
+
     return new_state
