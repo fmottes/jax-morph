@@ -54,7 +54,7 @@ def simulation(fstep, params, fspace):
 
 
 
-def sim_trajectory(istate, sim_init, sim_step, key=None, history=False):
+def sim_trajectory(istate, sim_init, sim_step, ncells_add=100, key=None, history=False):
     '''
     Runs a simulation trajectory for a given number of steps.
     The number of simulation steps is inferred from the size of the state datastructures before and after initialization.
@@ -90,7 +90,9 @@ def sim_trajectory(istate, sim_init, sim_step, key=None, history=False):
             If history=True each entry is a tuple (state_t, logp_t) for all the steps in the simulation.
     
     '''
-    state = sim_init(istate, key)
+        
+    state = sim_init(istate, ncells_add, key)
+    
     if history:
         def scan_fn(state, i):
             state, logp = sim_step(state)
