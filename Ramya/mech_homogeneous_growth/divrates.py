@@ -1,4 +1,5 @@
 from IPython.core.formatters import ForwardDeclaredInstance
+from IPython.core.magics.code import find_source_lines
 import jax.numpy as np
 from jax import jit, lax, vmap, jacrev
 
@@ -8,12 +9,18 @@ from jax_morph.utils import logistic, polynomial
 maybe_downcast = util.maybe_downcast
 
 def stress(fspace, state, sigma, epsilon, alpha, r_onset, r_cutoff):
+    # Per-particle morse energies.
     energy_fn = energy.morse_pair(fspace.displacement, epsilon=epsilon, alpha=alpha, sigma=sigma, r_onset=r_onset, r_cutoff=r_cutoff, per_particle=True)
-    force_fn = jacrev(energy_fn)
-    forces = -1*force_fn(state.position)
+    # Removed the minus sign because we want F_ij = force on i (not by i)
+    forces = jacrev(energy_fn)(state.position)
+    # Pairwise displacements
+    # So now we have F_ij = force on i by j
+    # and r_ij = displacement from i to j
     drs = space.map_product(fspace.displacement)(state.position, state.position)
-    drs = np.transpose(drs, axes=(1, 0, 2))
-    stresses = np.sum(np.multiply(forces, np.sign(drs)), axis=(1, 2))
+    # Multiply these to get force on particle x direction it's coming from
+    # Note this also masks self-forces
+    stresses = np.sum(np.multiply(forces, np.sign(drs)), axis=(0, 2))
+    # Add all components and contributions for each particle.
     stresses = np.where(state.celltype > 0, stresses, 0.0)
     return stresses
 
@@ -71,7 +78,7 @@ def div_mechanical(state, params, fspace, **kwargs) -> np.array:
         div = logistic_gr(stresses, params)
     # create array with new divrates
     divrate = np.where(state.celltype>0,div, 0.0)
-    max_divrate = logistic(state.chemical[:, 0], 0.1, 25.0)
+    max_divrate = logistic(state.field, 0.1, 25.0)
     divrate = np.multiply(max_divrate, divrate)
 
     # cells cannot divide if they are too small
@@ -80,9 +87,18 @@ def div_mechanical(state, params, fspace, **kwargs) -> np.array:
     
     return divrate
 
-def S_set_divrate(state, params, fspace, **kwargs):
-    
+def div_combined(state, params, fspace, **kwargs) -> np.array:
     divrate = div_mechanical(state, params, fspace, **kwargs)
+    # Get product of chemical contributions
+    vmap_logistic = vmap(logistic, (1,0, 0),(1))
+    divrate = np.multiply(divrate, np.prod(vmap_logistic(state.chemical,
+    params["div_gamma"][2:],params["div_k"][2:]),axis=1,dtype=np.float32)) 
+    divrate = divrate*logistic(state.radius+.06, 50, params['cellRad'])
+    return divrate
+
+def S_set_divrate(state, params, fspace, divrate_fn=div_mechanical,**kwargs):
+    
+    divrate = divrate_fn(state, params, fspace, **kwargs)
     new_state = jax_dataclasses.replace(state, divrate=divrate)
     
     return new_state

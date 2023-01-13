@@ -26,15 +26,14 @@ def simulation(fstep, params, fspace):
         new_chemical = np.concatenate([istate.chemical, np.zeros((ncells_add,params['n_chem']))])
         new_celltype = np.concatenate([istate.celltype, np.zeros(ncells_add)])
         new_radius = np.concatenate([istate.radius, np.zeros(ncells_add)])
+        new_field = np.concatenate([istate.field, np.zeros(ncells_add)])
         new_divrate = np.concatenate([istate.divrate, np.zeros(ncells_add)])
 
         if None != key:
             new_key = key
         else:
             new_key = istate.key
-
-        new_istate = CellState(new_position, new_celltype, new_radius, new_chemical, new_divrate, new_key)
-
+        new_istate = CellState(new_position, new_celltype, new_radius, new_chemical, new_field, new_divrate, new_key)
         return new_istate
     
     
@@ -91,9 +90,7 @@ def sim_trajectory(istate, sim_init, sim_step, key=None, history=False):
             If history=True each entry is a tuple (state_t, logp_t) for all the steps in the simulation.
     
     '''
-    
     state = sim_init(istate, key)
-    
     if history:
         def scan_fn(state, i):
             state, logp = sim_step(state)
