@@ -13,14 +13,14 @@ def simulation(fstep, params, fspace):
     n_ops = len(fstep)
     #fstep = iter(fstep)
     
-    def sim_init(istate, key=None):
+    def sim_init(istate, ncells_add=100, key=None):
         '''
         If key is none use the key packed in initial state, else use the provided key.
         '''
 
         ### elongate data structures to account for cells to be added
 
-        ncells_add = params['ncells_add']
+        #ncells_add = params['ncells_add']
 
         new_position = np.concatenate([istate.position, np.zeros((ncells_add,2))])
         new_chemical = np.concatenate([istate.chemical, np.zeros((ncells_add,params['n_chem']))])
