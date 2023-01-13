@@ -79,7 +79,7 @@ def avg_loss(params, hyper_params, vloss_fn, sim_keys, **kwargs):
     return np.mean(lss)
 
 '''Optimization loop.'''
-def optimize(key, epochs, batch_size, lr, params, train_params, fstep, fspace, istate, **kwargs):
+def optimize(key, epochs, batch_size, lr, params, train_params, fstep, fspace, istate, opt_type='combined', **kwargs):
     # Separate params to be optimized.
     p, hp = eqx.partition(params, train_params)
 
@@ -93,8 +93,14 @@ def optimize(key, epochs, batch_size, lr, params, train_params, fstep, fspace, i
 
     # JIT'ted grad function
     vg_jit = eqx.filter_jit(value_and_grad(avg_loss))
+
+    if opt_type == "combined":
+        loss_fn = combined_loss
+    else:
+        loss_fn = simple_loss
+
     # Get starting gradients and loss.
-    ll, grads = vg_jit(p, hp, combined_loss, batch_subkeys, fstep=fstep, fspace=fspace, istate=istate)
+    ll, grads = vg_jit(p, hp, loss_fn, batch_subkeys, fstep=fstep, fspace=fspace, istate=istate)
     l = avg_loss(p, hp, simple_loss, batch_subkeys, fstep=fstep, fspace=fspace, istate=istate)
     #l, grads = value_and_grad(avg_loss)(p, hp, simple_loss, batch_subkeys, fstep=fstep, fspace=fspace, istate=istate)
     print("loss: %s, reinforce: %s" % (l, ll))
@@ -109,7 +115,7 @@ def optimize(key, epochs, batch_size, lr, params, train_params, fstep, fspace, i
         batch_subkeys = np.array(batch_subkeys)
         updates, opt_state = optimizer.update(grads, opt_state, p)
         p = eqx.apply_updates(p, updates)
-        ll, grads = vg_jit(p, hp, combined_loss, batch_subkeys, fstep=fstep, fspace=fspace, istate=istate)
+        ll, grads = vg_jit(p, hp, loss_fn, batch_subkeys, fstep=fstep, fspace=fspace, istate=istate)
         l = avg_loss(p, hp, simple_loss, batch_subkeys, fstep=fstep, fspace=fspace, istate=istate)
         #l, grads = value_and_grad(avg_loss)(p, hp, simple_loss, batch_subkeys, fstep=fstep, fspace=fspace, istate=istate)
         print("loss: %s, reinforce: %s" % (l, ll))
