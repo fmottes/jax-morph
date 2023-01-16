@@ -74,7 +74,10 @@ def div_nn(state, params, fspace, nn_fun_t):
     # Cell inputs: stress, field, chemicals
     stresses = stress(state, params, fspace)
     cell_inputs = np.hstack((stresses.reshape(-1, 1), state.chemical, state.field.reshape(-1, 1))) 
-    return nn_fun_t.apply(params["nn"], state.key, cell_inputs).reshape(-1,)
+    divrate = nn_fun_t.apply(params["nn"], state.key, cell_inputs).reshape(-1,)
+    divrate = np.where(state.celltype>0, divrate, 0.0)
+    divrate = divrate*logistic(state.radius+.06, 50, params['cellRad'])
+    return divrate
 
 def S_set_divrate(state, params, fspace, divrate_fn=div_mechanical,**kwargs):
     """ Sets divrates."""
