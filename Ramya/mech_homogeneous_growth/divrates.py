@@ -29,6 +29,7 @@ def logistic_divrates(stresses, params):
 def nn_divrates():
     """ Creates haiku NN that can be used to calculate divrates."""
     def nn_fun(cell_inputs):
+        # cell inputs is an array of size [num inputs, num cells]
         mlp = hk.Sequential([
             hk.Linear(3), nn.relu,
             hk.Linear(1), nn.sigmoid,
@@ -71,10 +72,15 @@ def div_combined(state, params, fspace, **kwargs) -> np.array:
     return divrate
 
 def div_nn(state, params, fspace, nn_fun_t):
-    # Cell inputs: stress, field, chemicals
+    # Cell inputs: stress, chemicals
     stresses = stress(state, params, fspace)
-    cell_inputs = np.hstack((stresses.reshape(-1, 1), state.chemical, state.field.reshape(-1, 1))) 
+    cell_inputs = np.hstack((stresses.reshape(-1, 1), state.chemical)) 
     divrate = nn_fun_t.apply(params["nn"], state.key, cell_inputs).reshape(-1,)
+    # For my case, the divrates HAVE to depend on field - the learned parameters
+    # will counteract this field (unsure how to make this more general)
+    max_divrate = logistic(state.field, 0.1, 25.0)
+    divrate = np.multiply(max_divrate, divrate)
+    # divrate is zero if celltype is zero
     divrate = np.where(state.celltype>0, divrate, 0.0)
     divrate = divrate*logistic(state.radius+.06, 50, params['cellRad'])
     return divrate
