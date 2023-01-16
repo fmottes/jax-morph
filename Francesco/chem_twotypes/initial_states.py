@@ -72,7 +72,7 @@ def init_state_grow(key, params, fspace):
     # calculate consistent chemfield
     state = S_ss_chemfield(state, params, fspace)
     #calculate consistent division rates
-    state = S_set_divrate(state, params, fspace)
+    state = S_set_divrate(state, params, fspace=fspace)
 
     
     return state
