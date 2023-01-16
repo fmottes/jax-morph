@@ -29,7 +29,7 @@ def _create_onecell_state(key, params):
     field = np.zeros(N, dtype=np.float32)
     divrate = np.zeros(N, dtype=np.float32)
     divrate = divrate.at[0].set(1.)
-        
+    
     onec_state = CellState(position, celltype, radius, chemical, field, divrate, key)
     
     return onec_state
