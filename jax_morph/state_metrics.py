@@ -34,3 +34,9 @@ def diff_n_ctypes(state, relative=False):
         diff = diff/np.where(state.celltype!=0,1,0).sum()
     
     return diff
+
+def cv_divrates(state):
+    ''' 
+    Coefficient of variation of division rates loss.
+    '''
+    return np.std(state.divrate)/np.mean(state.divrate)
