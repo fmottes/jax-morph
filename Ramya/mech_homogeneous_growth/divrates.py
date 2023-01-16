@@ -1,9 +1,9 @@
 import jax.numpy as np
-from jax import jit, lax, vmap, jacrev
-import jax_md.dataclasses as jax_dataclasses
-from jax_md import partition, util, smap, space, energy, quantity
-from jax_morph.utils import logistic, polynomial
+from jax import jit, lax, vmap, nn, jacrev
+from jax_md import partition, util, smap, space, energy, quantity, dataclasses
+from jax_morph.utils import logistic
 from Francesco.chem_twotypes.mechanical import _generate_morse_params_twotypes
+import haiku as hk
 maybe_downcast = util.maybe_downcast
 
 def stress(state, params, fspace):
@@ -18,7 +18,7 @@ def stress(state, params, fspace):
     stresses = np.where(state.celltype > 0, stresses, 0.0)
     return stresses
 
-# Functions to calculate divrates
+### Functions to calculate divrates
 
 def logistic_divrates(stresses, params):
     """ Calculates divrates using logistic functions on stress."""
@@ -26,7 +26,20 @@ def logistic_divrates(stresses, params):
     divrates = np.where(stresses > 0, logistic(stresses,params["div_gamma"][1],params["div_k"][1]), divrates)
     return divrates 
 
+def nn_divrates():
+    """ Creates haiku NN that can be used to calculate divrates."""
+    def nn_fun(cell_inputs):
+        mlp = hk.Sequential([
+            hk.Linear(3), nn.relu,
+            hk.Linear(1), nn.sigmoid,
+        ])
+        output = mlp(cell_inputs)
+        return output
+    nn_fun_t = hk.transform(nn_fun)
+    # Returned object contains init,apply functions
+    return nn_fun_t
 
+###
 
 def div_mechanical(state, params, fspace, **kwargs) -> np.array:
     """ Calculates divrates only based on stress."""
@@ -57,10 +70,15 @@ def div_combined(state, params, fspace, **kwargs) -> np.array:
     divrate = divrate*logistic(state.radius+.06, 50, params['cellRad'])
     return divrate
 
+def div_nn(state, params, fspace, nn_fun_t):
+    # Cell inputs: stress, field, chemicals
+    stresses = stress(state, params, fspace)
+    cell_inputs = np.hstack((stresses.reshape(-1, 1), state.chemical, state.field.reshape(-1, 1))) 
+    return nn_fun_t.apply(params["nn"], state.key, cell_inputs).reshape(-1,)
 
 def S_set_divrate(state, params, fspace, divrate_fn=div_mechanical,**kwargs):
     """ Sets divrates."""
     divrate = divrate_fn(state, params, fspace, **kwargs)
-    new_state = jax_dataclasses.replace(state, divrate=divrate)
+    new_state = dataclasses.replace(state, divrate=divrate)
     
     return new_state
