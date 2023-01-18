@@ -102,7 +102,6 @@ def optimize(key, epochs, batch_size, lr, params, train_params, fstep, fspace, i
     # Get starting gradients and loss.
     ll, grads = vg_jit(p, hp, loss_fn, batch_subkeys, fstep=fstep, fspace=fspace, istate=istate, **kwargs)
     l = avg_loss(p, hp, simple_loss, batch_subkeys, fstep=fstep, fspace=fspace, istate=istate, **kwargs)
-    print("grads: %s" % grads["nn"])
     #l, grads = value_and_grad(avg_loss)(p, hp, simple_loss, batch_subkeys, fstep=fstep, fspace=fspace, istate=istate)
     print("loss: %s, reinforce: %s" % (l, ll))
     params_t = [p]
