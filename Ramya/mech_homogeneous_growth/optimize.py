@@ -100,8 +100,8 @@ def optimize(key, epochs, batch_size, lr, params, train_params, fstep, fspace, i
         loss_fn = simple_loss
 
     # Get starting gradients and loss.
-    ll, grads = vg_jit(p, hp, loss_fn, batch_subkeys, fstep=fstep, fspace=fspace, istate=istate)
-    l = avg_loss(p, hp, simple_loss, batch_subkeys, fstep=fstep, fspace=fspace, istate=istate)
+    ll, grads = vg_jit(p, hp, loss_fn, batch_subkeys, fstep=fstep, fspace=fspace, istate=istate, **kwargs)
+    l = avg_loss(p, hp, simple_loss, batch_subkeys, fstep=fstep, fspace=fspace, istate=istate, **kwargs)
     #l, grads = value_and_grad(avg_loss)(p, hp, simple_loss, batch_subkeys, fstep=fstep, fspace=fspace, istate=istate)
     print("loss: %s, reinforce: %s" % (l, ll))
     params_t = [p]
@@ -115,13 +115,13 @@ def optimize(key, epochs, batch_size, lr, params, train_params, fstep, fspace, i
         batch_subkeys = np.array(batch_subkeys)
         updates, opt_state = optimizer.update(grads, opt_state, p)
         p = eqx.apply_updates(p, updates)
-        ll, grads = vg_jit(p, hp, loss_fn, batch_subkeys, fstep=fstep, fspace=fspace, istate=istate)
-        l = avg_loss(p, hp, simple_loss, batch_subkeys, fstep=fstep, fspace=fspace, istate=istate)
+        ll, grads = vg_jit(p, hp, loss_fn, batch_subkeys, fstep=fstep, fspace=fspace, istate=istate, **kwargs)
+        l = avg_loss(p, hp, simple_loss, batch_subkeys, fstep=fstep, fspace=fspace, istate=istate, **kwargs)
         #l, grads = value_and_grad(avg_loss)(p, hp, simple_loss, batch_subkeys, fstep=fstep, fspace=fspace, istate=istate)
         print("loss: %s, reinforce: %s" % (l, ll))
         
         # Store values for each epoch.
-        loss_t.append(float(l))
+        loss_t.append(l.astype(float))
         params_t.append(p)
         grads_t.append(grads)
 
