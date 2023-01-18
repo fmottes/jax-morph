@@ -57,7 +57,7 @@ def combined_loss(params,
 
     #forward pass - simulation
     sim_init, sim_step = simulation(fstep, all_params, fspace)
-    fstate, logp = sim_trajectory(istate, sim_init, sim_step, sim_key)
+    fstate, logp = sim_trajectory(istate, sim_init, sim_step, key=sim_key)
 
     # Calculate metric of final structure
     metric_final = metric_fn(fstate)
