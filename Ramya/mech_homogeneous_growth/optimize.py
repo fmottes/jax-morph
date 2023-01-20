@@ -85,7 +85,7 @@ def optimize(key, epochs, batch_size, lr, params, train_params, fstep, fspace, i
 
     l, grads = value_and_grad(avg_simple_loss)(p, hp, fstep, fspace, istate, batch_subkeys, **kwargs)
     print("loss: %s" % l)
-    loss_t = [].astype(float)]
+    loss_t = [l.astype(float)]
 
 
 
@@ -98,6 +98,7 @@ def optimize(key, epochs, batch_size, lr, params, train_params, fstep, fspace, i
         
         l, grads = value_and_grad(avg_simple_loss)(p, hp, fstep, fspace, istate, batch_subkeys, **kwargs)    
         print("loss: %s" % l)
+        print("hi!")
         loss_t.append(l.astype(float))
         params_t.append(p)
         grads_t.append(grads)
