@@ -54,7 +54,7 @@ def sec_chem_logistic(state, params):
     sec_max = params['sec_max']
     sec_gamma = params['sec_gamma']
     sec_k = params['sec_k']
-    sec_by_ctypes = params['secreted_by_ctypes']
+    #sec_by_ctypes = params['secreted_by_ctypes']
 
     
     #generalize secretion to n_chem cell types
@@ -67,16 +67,27 @@ def sec_chem_logistic(state, params):
         sec_onec = _sec_onechem(state.chemical, sec_max[c], sec_gamma[c,:], sec_k[c,:])
         
         #set sec to zero everywhere but where the secreting ctypes are
-        cts = np.array(sec_by_ctypes[c], dtype=int) #cast for safety
-        sec_onec = np.where(np.isin(state.celltype, cts), sec_onec, 0.)
+        #cts = np.array(sec_by_ctypes[c], dtype=int) #cast for safety
+        #sec_onec = np.where(np.isin(state.celltype, cts), sec_onec, 0.)
         
         #make into column vector
         sec_onec = np.reshape(sec_onec, (-1,1))
         
         sec_all.append(sec_onec)
         
+        
+    #mask secretions based on which ct secretes what
+    ctype_sec_chem = params['ctype_sec_chem']
+        
+    @vmap
+    def sec_mask(ct):
+        return ctype_sec_chem[ct-1] #change if we switch to dead cells = -1
+        
+    mask = sec_mask(state.celltype)
+    
+        
     #(cells x chemical) matrix with secretion
-    sec_all = np.concatenate(sec_all, axis=1)
+    sec_all = np.concatenate(sec_all, axis=1)*mask
     
 
     return sec_all
