@@ -105,7 +105,7 @@ def sec_nn(params,
         
         in_fields = np.hstack([f if len(f.shape)>1 else f[:,np.newaxis] for f in jax.tree_leaves(eqx.filter(state, use_state_fields))])
         
-        sec = _sec_nn.apply(params['sec_fn'], in_fields)#.flatten()
+        sec = _sec_nn.apply(params['sec_fn'], in_fields)
         sec = sec*params['sec_max']
         
         
