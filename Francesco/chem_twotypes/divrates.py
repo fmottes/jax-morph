@@ -1,3 +1,7 @@
+import haiku as hk
+import equinox as eqx
+
+import jax
 import jax.numpy as np
 from jax import jit, lax, vmap
 
@@ -7,12 +11,93 @@ from jax_morph.utils import logistic
 from jax_morph.datastructures import CellState
 
 
+def S_set_divrate(state, params, fspace=None, divrate_fn=None):
+    
+    if None == divrate_fn:
+        raise(ValueError('Need to pass a valid function for the calculation of the division rates.'))
 
-#DANGER: change of conventions for chemicals!!!!
+    divrate = divrate_fn(state, params)
+    
+    new_state = jax_dataclasses.replace(state, divrate=divrate)
+    
+    return new_state
+
+
+
+# GENERATE DIVISION FUNCTION WITH NEURAL NETWORK
+def div_nn(params, 
+           train_params=None, 
+           n_hidden=3,
+           use_state_fields=CellState(*tuple([False]*3+[True]*2+[False]*2)),
+           train=True,
+          ):
+    
+    assert type(n_hidden) == np.int_ or type(n_hidden) == int
+
+    
+    def _div_nn(in_fields):
+        mlp = hk.nets.MLP([n_hidden,1],
+                          activation=jax.nn.leaky_relu,
+                          activate_final=False
+                         )
+        out = jax.nn.sigmoid(mlp(in_fields))
+        return out
+
+    _div_nn = hk.without_apply_rng(hk.transform(_div_nn))
+
+
+    
+    def init(state, key):
+        
+        
+        in_fields = np.hstack([f if len(f.shape)>1 else f[:,np.newaxis] for f in jax.tree_leaves(eqx.filter(state, use_state_fields))])
+        
+        input_dim = in_fields.shape[1]
+            
+        p = _div_nn.init(key, np.zeros(input_dim))
+        
+        #add to param dict
+        params['div_fn'] = p
+        
+        # no need to update train_params when generating initial state
+        if type(train_params) is dict:
+            
+            #set trainability flag
+            train_p = jax.tree_map(lambda x: train, p)
+
+            train_params['div_fn'] = train_p
+        
+            return params, train_params
+            
+        else:
+            return params
+            
+        
+        
+    def fwd(state, params):
+        
+        in_fields = np.hstack([f if len(f.shape)>1 else f[:,np.newaxis] for f in jax.tree_leaves(eqx.filter(state, use_state_fields))])
+        
+        x = _div_nn.apply(params['div_fn'], in_fields).flatten()
+        
+        divrate = x*logistic(state.radius+.06, 50, params['cellRad'])
+        
+        divrate = np.where(state.celltype==0.,0,divrate)
+    
+        return divrate
+    
+    
+    return init, fwd
+
+
+
+
+#CHEMICAL DIVISION RATES BASED ON LOGISTICS
+
+#DANGER: change of conventions for chemicals (wrt Alma's code)!!!!
 #Now 
 #species 0 produces chemical 0 and divides according to chemical 1
 #species 1 produces chemical 1 and divides according to chemical 0
-
 
 def div_chemical(state: CellState,
                 params: dict,
@@ -38,10 +123,3 @@ def div_chemical(state: CellState,
     return divrate
 
 
-def S_set_divrate(state, params, fspace=None, divrate_fn=div_chemical):
-    
-    divrate = divrate_fn(state, params)
-    
-    new_state = jax_dataclasses.replace(state, divrate=divrate)
-    
-    return new_state
