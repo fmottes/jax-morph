@@ -8,8 +8,8 @@ from jax_morph.cell_division import S_cell_division
 from jax_morph.cell_growth import S_grow_cells
 
 from .mechanical import S_mechmin_twotypes
-from .secdiff import S_ss_chemfield
-from .divrates import S_set_divrate
+from .secdiff import S_ss_chemfield, sec_chem_logistic
+from .divrates import S_set_divrate, div_chemical
 
 
 
@@ -69,10 +69,12 @@ def init_state_grow(key, params, fspace):
     state = jax_dataclasses.replace(state, celltype=celltype, radius=radius)
     
     state = S_mechmin_twotypes(state, params, fspace)
+    
     # calculate consistent chemfield
-    state = S_ss_chemfield(state, params, fspace)
+    state = S_ss_chemfield(state, params, fspace, sec_fn=sec_chem_logistic)
+    
     #calculate consistent division rates
-    state = S_set_divrate(state, params, fspace=fspace)
+    state = S_set_divrate(state, params, divrate_fn=div_chemical)
 
     
     return state
