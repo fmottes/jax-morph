@@ -1,3 +1,7 @@
+import haiku as hk
+import equinox as eqx
+
+import jax
 import jax.numpy as np
 from jax import jit, lax, vmap
 
@@ -8,6 +12,121 @@ from jax_morph.utils import logistic
 from jax_morph.diffusion import diffuse_allchem
 
 
+
+#new version of Findcss
+
+#non jittable due to the bool mask based on celltype
+#substitute with simulation step index to sidestep masking (not sure works either)
+
+def S_ss_chemfield(state, params, fspace, sec_fn=None, n_iter=5):
+    '''
+    Heuristically, steady state is reached in less than 5 iterations.
+    '''
+    
+    if None == sec_fn:
+        raise(ValueError('Need to pass a valid function for the calculation of the secretion rates.'))
+    
+    def _sec_diff_step(buff_state, i):
+        
+        #calculate new secretions
+        sec = sec_fn(buff_state, params)
+        
+        #calculate new chemical concentrations
+        chemfield = diffuse_allchem(sec, buff_state, params, fspace)
+        
+        return jax_dataclasses.replace(buff_state, chemical=chemfield), 0.#, chemfield
+    
+    #buffer state for looping (not strictly necessary)
+    new_state = CellState(*jax_dataclasses.unpack(state))
+    
+    iterations = np.arange(n_iter)
+    
+    new_state, _ = lax.scan(_sec_diff_step, new_state, iterations)
+    #uncomment line below and comment line above for history
+    #new_state, chemfield = lax.scan(_sec_diff_step, new_state, iterations)
+
+    return new_state
+
+
+
+#------------------------------------------------------------------------------------
+#NEURAL NETWORK SECRETION
+
+def sec_nn(params, 
+           train_params=None, 
+           n_hidden=3,
+           use_state_fields=CellState(*tuple([False]*3+[True]*2+[False]*2)),
+           train=True,
+          ):
+    
+    assert type(n_hidden) == np.int_ or type(n_hidden) == int
+
+    def _sec_nn(in_fields):
+        mlp = hk.nets.MLP([n_hidden,params['n_chem']],
+                          activation=jax.nn.leaky_relu,
+                          activate_final=False
+                         )
+        out = jax.nn.sigmoid(mlp(in_fields))
+        return out
+
+    _sec_nn = hk.without_apply_rng(hk.transform(_sec_nn))
+
+
+    
+    def init(state, key):
+        
+        
+        in_fields = np.hstack([f if len(f.shape)>1 else f[:,np.newaxis] for f in jax.tree_leaves(eqx.filter(state, use_state_fields))])
+        
+        input_dim = in_fields.shape[1]
+            
+        p = _sec_nn.init(key, np.zeros(input_dim))
+        
+        #add to param dict
+        params['sec_fn'] = p
+        
+        
+        # no need to update train_params when generating initial state
+        if type(train_params) is dict:
+            
+            #set trainability flag
+            train_p = jax.tree_map(lambda x: train, p)
+
+            train_params['sec_fn'] = train_p
+            
+            return params, train_params
+        
+        else:
+            return params
+            
+        
+        
+    def fwd(state, params):
+        
+        in_fields = np.hstack([f if len(f.shape)>1 else f[:,np.newaxis] for f in jax.tree_leaves(eqx.filter(state, use_state_fields))])
+        
+        sec = _sec_nn.apply(params['sec_fn'], in_fields)#.flatten()
+        sec = sec*params['sec_max']
+        
+        
+        #mask secretions based on which ct secretes what
+        ctype_sec_chem = params['ctype_sec_chem']
+        
+        @vmap
+        def sec_mask(ct):
+            return ctype_sec_chem[np.int16(ct-1)] #change if we switch to dead cells = -1
+        
+        mask = sec_mask(state.celltype)
+    
+        return sec*mask
+    
+    
+    return init, fwd
+
+
+
+#------------------------------------------------------------------------------------
+#LOGISTIC PRODUCT SECRETION
 
 # Function for the secretion rate of one chemical 
 #as a function of concentration of all other chemicals
@@ -92,34 +211,5 @@ def sec_chem_logistic(state, params):
 
     return sec_all
 
+#------------------------------------------------------------------------------------
 
-
-#new version of Findcss
-
-#non jittable due to the bool mask based on celltype
-#substitute with simulation step index to sidestep masking (not sure works either)
-
-def S_ss_chemfield(state, params, fspace, sec_chemical=sec_chem_logistic, n_iter=5):
-    '''
-    Heuristically, steady state is reached in less than 5 iterations.
-    '''
-    def _sec_diff_step(buff_state, i):
-        
-        #calculate new secretions
-        sec = sec_chemical(buff_state, params)
-        
-        #calculate new chemical concentrations
-        chemfield = diffuse_allchem(sec, buff_state, params, fspace)
-        
-        return jax_dataclasses.replace(buff_state, chemical=chemfield), 0.#, chemfield
-    
-    #buffer state for looping (not strictly necessary)
-    new_state = CellState(*jax_dataclasses.unpack(state))
-    
-    iterations = np.arange(n_iter)
-    
-    new_state, _ = lax.scan(_sec_diff_step, new_state, iterations)
-    #uncomment line below and comment line above for history
-    #new_state, chemfield = lax.scan(_sec_diff_step, new_state, iterations)
-
-    return new_state
