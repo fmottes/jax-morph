@@ -28,6 +28,7 @@ class CellState:
     chemical: Array
     field: Array
     divrate: Array
+    stress: Array
     key: Array
     
     

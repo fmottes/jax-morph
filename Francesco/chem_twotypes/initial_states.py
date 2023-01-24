@@ -11,6 +11,7 @@ from .mechanical import S_mechmin_twotypes
 from .secdiff import S_ss_chemfield, sec_chem_logistic
 from .divrates import S_set_divrate, div_chemical
 
+from Ramya.mech_homogeneous_growth.divrates import S_set_stress
 
 
 def _create_onecell_state(key, params):
@@ -30,7 +31,8 @@ def _create_onecell_state(key, params):
     divrate = np.zeros(N, dtype=np.float32)
     divrate = divrate.at[0].set(1.)
     
-    onec_state = CellState(position, celltype, radius, chemical, field, divrate, key)
+    stress = np.zeros(N, dtype=np.float32)
+    onec_state = CellState(position, celltype, radius, chemical, field, divrate, stress, key)
     
     return onec_state
 
@@ -76,6 +78,8 @@ def init_state_grow(key, params, fspace):
     #calculate consistent division rates
     state = S_set_divrate(state, params, divrate_fn=div_chemical)
 
+    # calculate stresses
+    state = S_set_stress(state, params, fspace)
     
     return state
     

@@ -55,7 +55,7 @@ def S_ss_chemfield(state, params, fspace, sec_fn=None, n_iter=5):
 def sec_nn(params, 
            train_params=None, 
            n_hidden=3,
-           use_state_fields=CellState(*tuple([False]*3+[True]*2+[False]*2)),
+           use_state_fields=CellState(*tuple([False]*3+[True]*2+[False]*3)),
            train=True,
           ):
     

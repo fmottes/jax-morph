@@ -28,13 +28,14 @@ def simulation(fstep, params, fspace):
         new_radius = np.concatenate([istate.radius, np.zeros(ncells_add)])
         new_field = np.concatenate([istate.field, np.zeros(ncells_add)])
         new_divrate = np.concatenate([istate.divrate, np.zeros(ncells_add)])
+        new_stress = np.concatenate([istate.stress, np.zeros(ncells_add)])
 
         if None != key:
             new_key = key
         else:
             new_key = istate.key
             
-        new_istate = CellState(new_position, new_celltype, new_radius, new_chemical, new_field, new_divrate, new_key)
+        new_istate = CellState(new_position, new_celltype, new_radius, new_chemical, new_field, new_divrate, new_stress, new_key)
         
         return new_istate
     

@@ -1,9 +1,11 @@
 import jax.numpy as np
-from jax import jit, lax, vmap, nn, jacrev
+from jax import jit, lax, vmap, nn, jacrev, tree_leaves, tree_map
 from jax_md import partition, util, smap, space, energy, quantity, dataclasses
 from jax_morph.utils import logistic
+from jax_morph.datastructures import CellState
 from Francesco.chem_twotypes.mechanical import _generate_morse_params_twotypes
 import haiku as hk
+import equinox as eqx
 maybe_downcast = util.maybe_downcast
 
 def stress(state, params, fspace):
@@ -18,6 +20,10 @@ def stress(state, params, fspace):
     stresses = np.where(state.celltype > 0, stresses, 0.0)
     return stresses
 
+def S_set_stress(state, params, fspace):
+    stresses = stress(state, params, fspace)
+    new_state = dataclasses.replace(state, stress=stresses)
+    return new_state
 ### Functions to calculate divrates
 
 def logistic_divrates(stresses, params):
@@ -84,6 +90,75 @@ def div_nn(state, params, fspace, nn_fun_t):
     divrate = np.where(state.celltype>0, divrate, 0.0)
     divrate = divrate*logistic(state.radius+.06, 50, params['cellRad'])
     return divrate
+
+# GENERATE DIVISION FUNCTION WITH NEURAL NETWORK
+
+def div_nn_setup(in_fields, n_hidden):
+    mlp = hk.nets.MLP([n_hidden,1],
+                        activation=nn.leaky_relu,
+                        activate_final=False
+                        )
+    out = nn.sigmoid(mlp(in_fields))
+    return out
+
+def div_nn_setup_field(in_fields, n_hidden):
+    mlp = hk.nets.MLP([n_hidden,1],
+                        activation=nn.leaky_relu,
+                        activate_final=False
+                        )
+    # Add field value and then take sigmoid
+    out = mlp(in_fields)
+    field = in_fields if len(in_fields.shape)>1 else in_fields[np.newaxis, :]
+    out = out + field[:, 3].reshape(-1, 1)
+    out = nn.sigmoid(out)
+    return out
+
+def div_nn(params, 
+           div_nn_setup=div_nn_setup,
+           train_params=None, 
+           n_hidden=3,
+           use_state_fields=CellState(*tuple([False]*3+[True]*2+[False, True, False])),
+           train=True,
+          ):
+    
+    assert type(n_hidden) == np.int_ or type(n_hidden) == int
+    _div_nn = hk.without_apply_rng(hk.transform(div_nn_setup))
+
+    def init(state, key):
+        in_fields = np.hstack([f if len(f.shape)>1 else f[:,np.newaxis] for f in tree_leaves(eqx.filter(state, use_state_fields))])
+        input_dim = in_fields.shape[1]
+        p = _div_nn.init(key, np.zeros(input_dim), n_hidden)
+        
+        #add to param dict
+        params['div_fn'] = p
+        # no need to update train_params when generating initial state
+        if type(train_params) is dict:
+            
+            #set trainability flag
+            train_p = tree_map(lambda x: train, p)
+            train_params['div_fn'] = train_p
+            return params, train_params
+            
+        else:
+            return params
+            
+        
+        
+    def fwd(state, params):
+        
+        in_fields = np.hstack([f if len(f.shape)>1 else f[:,np.newaxis] for f in tree_leaves(eqx.filter(state, use_state_fields))])
+        
+        x = _div_nn.apply(params['div_fn'], in_fields, n_hidden).flatten()
+        
+        divrate = x*logistic(state.radius+.06, 50, params['cellRad'])
+        
+        divrate = np.where(state.celltype==0.,0,divrate)
+    
+        return divrate
+    
+    
+    return init, fwd
+
 
 def S_set_divrate(state, params, fspace, divrate_fn=div_mechanical,**kwargs):
     """ Sets divrates."""
