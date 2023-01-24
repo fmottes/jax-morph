@@ -10,8 +10,7 @@ from jax_morph.cell_growth import S_grow_cells
 from .mechanical import S_mechmin_twotypes
 from .secdiff import S_ss_chemfield, sec_chem_logistic
 from .divrates import S_set_divrate, div_chemical
-
-from Ramya.mech_homogeneous_growth.divrates import S_set_stress
+from .stress import S_set_stress
 
 
 def _create_onecell_state(key, params):

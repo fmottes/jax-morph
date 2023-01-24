@@ -28,7 +28,7 @@ def S_set_divrate(state, params, fspace=None, divrate_fn=None):
 def div_nn(params, 
            train_params=None, 
            n_hidden=3,
-           use_state_fields=CellState(*tuple([False]*3+[True]*2+[False]*2)),
+           use_state_fields=CellState(*tuple([False]*3+[True]*2+[False]*3)),
            train=True,
           ):
     
