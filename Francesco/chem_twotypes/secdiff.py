@@ -59,10 +59,11 @@ def sec_nn(params,
            train=True,
           ):
     
-    assert type(n_hidden) == np.int_ or type(n_hidden) == int
+    if type(n_hidden) == np.int_ or type(n_hidden) == int:
+        n_hidden = [int(n_hidden)]
 
     def _sec_nn(in_fields):
-        mlp = hk.nets.MLP([n_hidden,params['n_chem']],
+        mlp = hk.nets.MLP(n_hidden+[params['n_chem']],
                           activation=jax.nn.leaky_relu,
                           activate_final=False
                          )
