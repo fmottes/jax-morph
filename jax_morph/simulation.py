@@ -22,7 +22,7 @@ def simulation(fstep, params, fspace):
 
         #ncells_add = params['ncells_add']
 
-        new_position = np.concatenate([istate.position, np.zeros((ncells_add,2))])
+        new_position = np.concatenate([istate.position, np.zeros((ncells_add,istate.position.shape[1]))])
         new_chemical = np.concatenate([istate.chemical, np.zeros((ncells_add,params['n_chem']))])
         new_celltype = np.concatenate([istate.celltype, np.zeros(ncells_add)])
         new_radius = np.concatenate([istate.radius, np.zeros(ncells_add)])
