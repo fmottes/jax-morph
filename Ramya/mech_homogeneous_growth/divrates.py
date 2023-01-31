@@ -101,29 +101,17 @@ def div_nn_setup(in_fields, n_hidden):
     out = nn.sigmoid(mlp(in_fields))
     return out
 
-def div_nn_setup_field(in_fields, n_hidden):
-    mlp = hk.nets.MLP([n_hidden,1],
-                        activation=nn.leaky_relu,
-                        activate_final=False
-                        )
-    # Add field value and then take sigmoid
-    out = mlp(in_fields)
-    field = in_fields if len(in_fields.shape)>1 else in_fields[np.newaxis, :]
-    out = out + field[:, 3].reshape(-1, 1)
-    out = nn.sigmoid(out)
-    return out
 
 def div_nn(params, 
            div_nn_setup=div_nn_setup,
            train_params=None, 
            n_hidden=3,
-           use_state_fields=CellState(*tuple([False]*3+[True]*2+[False, True, False])),
+           use_state_fields=CellState(*tuple([False]*3+[True, False]+[False, True, False])),
            train=True,
           ):
     
     assert type(n_hidden) == np.int_ or type(n_hidden) == int
     _div_nn = hk.without_apply_rng(hk.transform(div_nn_setup))
-
     def init(state, key):
         in_fields = np.hstack([f if len(f.shape)>1 else f[:,np.newaxis] for f in tree_leaves(eqx.filter(state, use_state_fields))])
         input_dim = in_fields.shape[1]
@@ -149,7 +137,7 @@ def div_nn(params,
         in_fields = np.hstack([f if len(f.shape)>1 else f[:,np.newaxis] for f in tree_leaves(eqx.filter(state, use_state_fields))])
         
         x = _div_nn.apply(params['div_fn'], in_fields, n_hidden).flatten()
-        
+        x = x*logistic(state.field, 0.1, 25.0)
         divrate = x*logistic(state.radius+.06, 50, params['cellRad'])
         
         divrate = np.where(state.celltype==0.,0,divrate)
