@@ -42,7 +42,7 @@ def div_nn(params,
                           activation=jax.nn.leaky_relu,
                           activate_final=False
                          )
-        out = jax.nn.relu(mlp(in_fields)) + 1e-8
+        out = jax.nn.softplus(mlp(in_fields))
         return out
 
     _div_nn = hk.without_apply_rng(hk.transform(_div_nn))
@@ -84,7 +84,7 @@ def div_nn(params,
         
         divrate = x*logistic(state.radius+.06, 50, params['cellRad'])
         
-        divrate = np.where(state.celltype==0.,0,divrate)
+        divrate = np.where(state.celltype<1.,0,divrate)
     
         return divrate
     
