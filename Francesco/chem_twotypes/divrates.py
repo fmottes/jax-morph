@@ -42,7 +42,8 @@ def div_nn(params,
                           activation=jax.nn.leaky_relu,
                           activate_final=False
                          )
-        out = jax.nn.softplus(mlp(in_fields))
+        #out = jax.nn.softplus(mlp(in_fields))
+        out = jax.nn.sigmoid(mlp(in_fields))
         return out
 
     _div_nn = hk.without_apply_rng(hk.transform(_div_nn))
