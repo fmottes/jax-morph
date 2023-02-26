@@ -42,14 +42,14 @@ def _generate_morse_params_twotypes(state, params):
 
 
 
-def S_mechmin_twotypes(state, params, fspace, dt=.001):
+def S_mechmin(state, params, fspace, dt=.001, _morse_eps_sigma=_generate_morse_params_twotypes):
     '''
     Minimize mechanical energy with SGD. 
     Energy is given by the Morse potential with parameters calculated for the two-celltypes case.
     '''
     
     
-    epsilon_matrix, sigma_matrix = _generate_morse_params_twotypes(state, params)
+    epsilon_matrix, sigma_matrix = _morse_eps_sigma(state, params)
     
     energy_morse = energy.morse_pair(fspace.displacement,
                                      alpha=params['alpha'],
@@ -64,3 +64,7 @@ def S_mechmin_twotypes(state, params, fspace, dt=.001):
     new_state = jax_dataclasses.replace(state, position=new_position)
 
     return new_state
+
+
+#backwards compatibility
+S_mechmin_twotypes = S_mechmin
