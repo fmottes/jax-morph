@@ -19,23 +19,19 @@ def simulation(fstep, params, fspace):
         '''
 
         ### elongate data structures to account for cells to be added
+        ### ! assumes key is always the last field
 
         #ncells_add = params['ncells_add']
 
-        new_position = np.concatenate([istate.position, np.zeros((ncells_add,istate.position.shape[1]))])
-        new_chemical = np.concatenate([istate.chemical, np.zeros((ncells_add,params['n_chem']))])
-        new_celltype = np.concatenate([istate.celltype, np.zeros(ncells_add)])
-        new_radius = np.concatenate([istate.radius, np.zeros(ncells_add)])
-        new_field = np.concatenate([istate.field, np.zeros(ncells_add)])
-        new_divrate = np.concatenate([istate.divrate, np.zeros(ncells_add)])
-        new_stress = np.concatenate([istate.stress, np.zeros(ncells_add)])
+        fields = [np.concatenate([i, np.zeros((ncells_add,)+(i.shape[1:]))]) for i in jax.tree_leaves(istate)[:-1]]
+
 
         if None != key:
             new_key = key
         else:
             new_key = istate.key
             
-        new_istate = CellState(new_position, new_celltype, new_radius, new_chemical, new_field, new_divrate, new_stress, new_key)
+        new_istate = CellState(*fields, new_key)
         
         return new_istate
     
