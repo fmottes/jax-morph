@@ -118,7 +118,8 @@ def optimize(key, epochs, batch_size, lr, params, train_params, fstep, fspace, i
         ll, grads = vg_jit(p, hp, loss_fn, batch_subkeys, fstep=fstep, fspace=fspace, istate=istate, **kwargs)
         l = avg_loss(p, hp, simple_loss, batch_subkeys, fstep=fstep, fspace=fspace, istate=istate, **kwargs)
         #l, grads = value_and_grad(avg_loss)(p, hp, simple_loss, batch_subkeys, fstep=fstep, fspace=fspace, istate=istate)
-        print("loss: %s, reinforce: %s" %(l, ll))
+        if t % 5 == 0:
+            print("loss: %s, reinforce: %s" %(l, ll))
         # Store values for each epoch.
         loss_t.append(l.astype(float))
         params_t.append(p)

@@ -77,20 +77,6 @@ def div_combined(state, params, fspace, **kwargs) -> np.array:
     divrate = divrate*logistic(state.radius+.06, 50, params['cellRad'])
     return divrate
 
-def div_nn(state, params, fspace, nn_fun_t):
-    # Cell inputs: stress, chemicals
-    stresses = stress(state, params, fspace)
-    cell_inputs = np.hstack((stresses.reshape(-1, 1), state.chemical)) 
-    divrate = nn_fun_t.apply(params["nn"], state.key, cell_inputs).reshape(-1,)
-    # For my case, the divrates HAVE to depend on field - the learned parameters
-    # will counteract this field (unsure how to make this more general)
-    max_divrate = logistic(state.field, 0.1, 25.0)
-    divrate = np.multiply(max_divrate, divrate)
-    # divrate is zero if celltype is zero
-    divrate = np.where(state.celltype>0, divrate, 0.0)
-    divrate = divrate*logistic(state.radius+.06, 50, params['cellRad'])
-    return divrate
-
 # GENERATE DIVISION FUNCTION WITH NEURAL NETWORK
 
 def div_nn_setup(in_fields, n_hidden):

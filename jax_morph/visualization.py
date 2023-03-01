@@ -166,6 +166,52 @@ def draw_circles_divrate(state, ax=None, edges=False, **kwargs):
     plt.gcf().patch.set_facecolor(background_color)
     plt.gcf().set_size_inches(6, 6)
     
-    plt.tight_layout()
+    
+def draw_circles(state, state_values, min_val = None, max_val = None, min_coord=None, max_coord=None, ax=None, **kwargs):
+    
+    if None == ax:
+        ax = plt.axes()
+    
+    state_values = np.float32(state_values)    
+            
+    if min_val == None:
+        state_values = (state_values-state_values.min())/(state_values.max()-state_values.min())
+    else:
+        state_values = (state_values-min_val)/(max_val-min_val)
+
+    #only usable for two cell types
+    color = plt.cm.coolwarm(state_values)
+    for cell,radius,c in zip(state.position,state.radius,color):
+        circle = plt.Circle(cell, radius=radius, fc=c, alpha=.5, **kwargs)
+        ax.add_patch(circle)
+    
+    
+    ## calculate ax limits
+    xmin = np.min(state.position[:,0])
+    xmax = np.max(state.position[:,0])
+    
+    ymin = np.min(state.position[:,1])
+    ymax = np.max(state.position[:,1])
+    
+    if min_coord == None:
+        max_coord = max([xmax,ymax])+3
+        min_coord = min([xmin,ymin])-3
+    
+    ax.set_xlim(min_coord,max_coord)
+    ax.set_ylim(min_coord,max_coord)
+    
+    ax.set_xticks([])
+    ax.set_yticks([])
+    
+    #background_color = [56 / 256] * 3
+    #ax.set_facecolor(background_color)    
+    
+    #ax.get_xaxis().set_visible(False)
+    #ax.get_yaxis().set_visible(False)
+        
+    #plt.gcf().patch.set_facecolor(background_color)
+    plt.gcf().set_size_inches(6, 6)
+    
+    #plt.tight_layout()
     
     return ax
