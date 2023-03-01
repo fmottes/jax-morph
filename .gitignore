@@ -5,6 +5,8 @@ jax_morph.egg-info/
 jax_morph/__pycache__/
 jax_morph/.ipynb_checkpoints/
 Francesco/chem_twotypes/__pycache__/
+Francesco/gifs/
+Francesco/tmp_gif/
 Ramya/mech_homogeneous_growth/__pycache__/
 __pycache__/
 files.txt
