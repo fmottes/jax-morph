@@ -1,12 +1,6 @@
 import jax.numpy as np
 from jax import lax, jit
 
-from jax_morph.datastructures import CellState
-
-
-#TODO: define function signatures
-
-
 
 def simulation(fstep, params, fspace):
     
@@ -31,7 +25,7 @@ def simulation(fstep, params, fspace):
         else:
             new_key = istate.key
             
-        new_istate = CellState(*fields, new_key)
+        new_istate = type(istate)(*fields, new_key)
         
         return new_istate
     
