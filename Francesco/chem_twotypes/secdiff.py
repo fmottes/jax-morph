@@ -42,7 +42,7 @@ def S_ss_chemfield(state, params, fspace, sec_fn=None, n_iter=5):
     #uncomment line below and comment line above for history
     #new_state, chemfield = lax.scan(_sec_diff_step, new_state, iterations)
 
-    return new_state
+    return state
 
 
 
