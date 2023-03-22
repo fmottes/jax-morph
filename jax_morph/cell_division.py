@@ -3,7 +3,6 @@ from jax import random
 
 import jax_md.dataclasses as jax_dataclasses
 
-from jax_morph.datastructures import CellState
 from jax_morph.utils import logistic
 
 
