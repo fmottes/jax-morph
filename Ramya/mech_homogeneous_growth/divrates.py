@@ -3,7 +3,7 @@ from jax import jit, lax, vmap, nn, jacrev, tree_leaves, tree_map
 from jax_md import partition, util, smap, space, energy, quantity, dataclasses
 from jax_morph.utils import logistic
 from jax_morph.datastructures import CellState
-from Francesco.chem_twotypes.mechanical import _generate_morse_params_twotypes
+from jax_morph.mechanics.mechanical import _generate_morse_params_twotypes
 import haiku as hk
 import equinox as eqx
 maybe_downcast = util.maybe_downcast
