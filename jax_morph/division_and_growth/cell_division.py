@@ -3,9 +3,6 @@ from jax import random
 
 import jax_md.dataclasses as jax_dataclasses
 
-from jax_morph.utils import logistic
-
-
 
 
 def S_cell_division(state, params, fspace=None):

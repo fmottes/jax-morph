@@ -7,10 +7,10 @@ from jax_morph.datastructures import CellState
 from jax_morph.cell_division import S_cell_division
 from jax_morph.cell_growth import S_grow_cells
 
-from .mechanical import S_mechmin_twotypes
-from .secdiff import S_ss_chemfield, sec_chem_logistic
-from .divrates import S_set_divrate, div_chemical
-from .stress import S_set_stress
+from ...jax_morph.mechanics.mechanical import S_mechmin_twotypes
+from ...jax_morph.chemicals.secdiff import S_ss_chemfield, sec_chem_logistic
+from ...jax_morph.cell_internals.divrates import S_set_divrate, div_chemical
+from ...jax_morph.cell_internals.stress import S_set_stress
 
 
 def _create_onecell_state(key, params):

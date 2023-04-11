@@ -4,7 +4,7 @@ from jax import jacrev
 from jax_md import energy, space
 import jax_md.dataclasses as jax_dataclasses
 
-from .mechanical import _generate_morse_params_twotypes
+from ..mechanics.mechanical import _generate_morse_params_twotypes
 
 
 def stress(state, params, fspace):

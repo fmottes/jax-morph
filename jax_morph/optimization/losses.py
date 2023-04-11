@@ -4,7 +4,7 @@ from jax import lax
 import equinox as eqx
 
 from .state_metrics import *
-from .simulation import simulation, sim_trajectory
+from ..simulation import simulation, sim_trajectory
 
 ###----------------------------------------------------------
 

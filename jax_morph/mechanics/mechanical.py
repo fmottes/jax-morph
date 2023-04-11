@@ -4,7 +4,7 @@ from jax import jit, lax, vmap
 from jax_md import energy
 import jax_md.dataclasses as jax_dataclasses
 
-from jax_morph.mechmin import mechmin_sgd
+from jax_morph.mechanics.mechmin import mechmin_sgd
 
 
 
