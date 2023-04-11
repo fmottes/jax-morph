@@ -5,7 +5,9 @@ INSTALL_REQUIRES = [
     'jax>=0.1.73',
     'jaxlib>=0.1.52',
     'jax-md>=0.1.28',
-    'matplotlib'
+    'matplotlib',
+    'equinox',
+    'dm-haiku',
 ]
 
 
