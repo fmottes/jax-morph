@@ -1,9 +1,9 @@
 import jax.numpy as np
-from jax import jit, lax, vmap
+from jax import jit, lax
 
-import jax_md.dataclasses as jax_dataclasses
+import jax_md.dataclasses as jdc
 
-from jax_morph.chemicals.diffusion import diffuse_allchem
+from jax_morph.chemicals.diffusion import diffuse_allchem_ss
 
 
 #new version of Findcss
@@ -11,7 +11,7 @@ from jax_morph.chemicals.diffusion import diffuse_allchem
 #non jittable due to the bool mask based on celltype
 #substitute with simulation step index to sidestep masking (not sure works either)
 
-def S_ss_chemfield(state, params, fspace, sec_fn=None, diffusion_fn=diffuse_allchem, n_iter=5):
+def S_ss_chemfield(state, params, fspace, sec_fn=None, diffusion_fn=diffuse_allchem_ss, n_iter=5):
     '''
     Heuristically, steady state is reached in less than 5 iterations.
     '''
@@ -27,7 +27,7 @@ def S_ss_chemfield(state, params, fspace, sec_fn=None, diffusion_fn=diffuse_allc
         #calculate new chemical concentrations
         chemfield = diffusion_fn(sec, buff_state, params, fspace)
         
-        return jax_dataclasses.replace(buff_state, chemical=chemfield), 0.#, chemfield
+        return jdc.replace(buff_state, chemical=chemfield), 0.#, chemfield
     
     
     iterations = np.arange(n_iter)
