@@ -27,6 +27,11 @@ def simulation(fstep, params, fspace):
             new_key = istate.key
             
         new_istate = type(istate)(*fields, new_key)
+
+        #run one "void" simulation step to initialize the data structures with consistent values
+        #NO CELL DIVISION IS PERFORMED
+        for i in range(1,n_ops):
+            new_istate = fstep[i](new_istate, params, fspace)
         
         return new_istate
     
