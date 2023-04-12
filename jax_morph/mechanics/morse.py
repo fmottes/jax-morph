@@ -2,7 +2,7 @@ import jax.numpy as np
 from jax import jit, lax, vmap
 
 from jax_md import energy
-import jax_md.dataclasses as jax_dataclasses
+import jax_md.dataclasses as jdc
 
 from jax_morph.mechanics.minimizers import mechmin_sgd
 
@@ -113,7 +113,7 @@ def S_mech_morse_relax(state, params, fspace, dt=.001, morse_eps_sigma='onetype'
                                n_steps,
                                dt)
     
-    new_state = jax_dataclasses.replace(state, position=new_position)
+    new_state = jdc.replace(state, position=new_position)
 
     return new_state
 

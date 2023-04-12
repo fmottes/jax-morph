@@ -1,7 +1,7 @@
 import jax.numpy as np
 from jax import random
 
-import jax_md.dataclasses as jax_dataclasses
+import jax_md.dataclasses as jdc
 
 
 
@@ -51,7 +51,7 @@ def S_cell_division(state, params, fspace=None):
     new_divrate = state.divrate.at[idx_new_cell].set(state.divrate[idx_dividing_cell]) 
     
     #build new state of the system
-    new_state = jax_dataclasses.replace(state, 
+    new_state = jdc.replace(state, 
                                         position=new_position,
                                         radius=new_radius,
                                         celltype=new_celltype,

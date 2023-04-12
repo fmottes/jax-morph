@@ -1,5 +1,5 @@
 import jax.numpy as np
-import jax_md.dataclasses as jax_dataclasses
+import jax_md.dataclasses as jdc
 
 
 def S_grow_cells(state, params, fspace=None, grate=.1):
@@ -10,6 +10,6 @@ def S_grow_cells(state, params, fspace=None, grate=.1):
     #set max radius
     new_radius = np.where(new_radius<params['cellRad'], new_radius, params['cellRad'])
     
-    new_state = jax_dataclasses.replace(state, radius=new_radius)
+    new_state = jdc.replace(state, radius=new_radius)
     
     return new_state

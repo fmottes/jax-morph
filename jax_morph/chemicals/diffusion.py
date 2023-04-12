@@ -2,7 +2,7 @@ import jax.numpy as np
 from jax import jit, lax, vmap
 
 from jax_md import space, energy
-import jax_md.dataclasses as jax_dataclasses
+import jax_md.dataclasses as jdc
 
 
 
@@ -53,6 +53,6 @@ def S_chem_diffusion(state, params, fspace=None, diffusion_fn=diffuse_allchem_ss
     
     new_chemical = diffusion_fn(state.chemical, state, params, fspace)
     
-    new_state = jax_dataclasses.replace(state, chemical=new_chemical)
+    new_state = jdc.replace(state, chemical=new_chemical)
     
     return new_state

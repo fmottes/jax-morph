@@ -2,7 +2,7 @@ import jax.numpy as np
 from jax import jit, lax, vmap
 
 from jax_md import minimize
-import jax_md.dataclasses as jax_dataclasses
+import jax_md.dataclasses as jdc
 
 
 
