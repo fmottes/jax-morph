@@ -58,7 +58,7 @@ def draw_circles_chem(state, chem=0, ax=None, cm=None, edges=False, cm_edges=plt
         ax = plt.axes()
     
     chemical = np.float32(state.chemical[:,chem])    
-    chemical = (chemical-chemical.min())/(chemical.max()-chemical.min())
+    chemical = (chemical-chemical.min()+1e-20)/(chemical.max()-chemical.min()+1e-20)
         
     #only usable for two cell types
     if cm is None:
@@ -123,7 +123,7 @@ def draw_circles_divrate(state, ax=None, cm=plt.cm.coolwarm, edges=False, cm_edg
         ax = plt.axes()
     
     divrate = np.float32(state.divrate)    
-    divrate = (divrate-divrate.min())/(divrate.max()-divrate.min())
+    divrate = (divrate-divrate.min()+1e-20)/(divrate.max()-divrate.min()+1e-20)
         
     #only usable for two cell types
     color = cm(divrate)
@@ -178,9 +178,9 @@ def draw_circles(state, state_values, min_val = None, max_val = None, min_coord=
     state_values = np.float32(state_values)    
             
     if min_val == None:
-        state_values = (state_values-state_values.min())/(state_values.max()-state_values.min())
+        state_values = (state_values-state_values.min()+1e-20)/(state_values.max()-state_values.min()+1e-20)
     else:
-        state_values = (state_values-min_val)/(max_val-min_val)
+        state_values = (state_values-min_val+1e-20)/(max_val-min_val+1e-20)
 
     #only usable for two cell types
     color = cm(state_values)
