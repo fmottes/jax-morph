@@ -29,7 +29,7 @@ def diffuse_allchem_ss(secretions, state, params, fspace):
     
     # loop over all chemicals (vmap in future)
     new_chem = []
-    for i in np.arange(params['n_chem']):
+    for i in np.arange(secretions.shape[1]):
         
         c = diffuse_onechem_ss(dist,
                             secretions[:,i],
