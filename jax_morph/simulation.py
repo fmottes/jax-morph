@@ -2,6 +2,8 @@ import jax
 import jax.numpy as np
 from jax import lax, jit
 
+import jax_md.dataclasses as jdc
+
 
 def simulation(fstep, params, fspace):
     
@@ -14,19 +16,31 @@ def simulation(fstep, params, fspace):
         '''
 
         ### elongate data structures to account for cells to be added
-        ### ! assumes key is always the last field
-
-        #ncells_add = params['ncells_add']
-
-        fields = [np.concatenate([i, np.zeros((ncells_add,)+(i.shape[1:]))]) for i in jax.tree_leaves(istate)[:-1]]
 
 
-        if None != key:
-            new_key = key
-        else:
-            new_key = istate.key
-            
-        new_istate = type(istate)(*fields, new_key)
+        new_fields = []
+        for field in jdc.fields(istate):
+
+            if field.name == 'key':
+                new_fields.append(key)
+
+            else:
+                #retrieve the value of the field
+                value = getattr(istate, field.name)
+
+                if isinstance(value, np.ndarray):
+
+                    if len(value.shape) > 0:
+                        shape = (ncells_add,)+(value.shape[1:])
+                        new_fields.append(np.concatenate([value, np.zeros(shape, dtype=value.dtype)]))
+                        
+                    else:
+                        new_fields.append(value)
+                else:
+                    new_fields.append(value)
+
+        new_istate = type(istate)(*new_fields)
+
 
         #run one "void" simulation step to initialize the data structures with consistent values
         #NO CELL DIVISION IS PERFORMED

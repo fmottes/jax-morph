@@ -39,9 +39,13 @@ def init_state_grow(key, onecell_state, params, fspace, n_cells=5):
             value = getattr(onecell_state, field.name)
 
             if jax_md.util.is_array(value):
-                shape = (n_cells,)+(value.shape[1:])
-                new_fields.append(np.concatenate([value, np.zeros(shape)]))
 
+                if len(value.shape) > 0:
+                    shape = (n_cells,)+(value.shape[1:])
+                    new_fields.append(np.concatenate([value, np.zeros(shape, dtype=value.dtype)]))
+                    
+                else:
+                    new_fields.append(value)
             else:
                 new_fields.append(value)
 
@@ -57,7 +61,11 @@ def init_state_grow(key, onecell_state, params, fspace, n_cells=5):
     # initialize the first cell
     celltype = onecell_state.celltype.at[0].set(1)
     radius = onecell_state.radius.at[0].set(params['cellRad'])
+
+
     divrate = onecell_state.divrate.at[0].set(1.)
+
+
 
     onecell_state = jdc.replace(onecell_state, celltype=celltype, radius=radius, divrate=divrate)
 
