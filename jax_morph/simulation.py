@@ -8,38 +8,48 @@ import jax_md.dataclasses as jdc
 def simulation(fstep, params, fspace):
     
     n_ops = len(fstep)
-    #fstep = iter(fstep)
-    
-    def sim_init(istate, ncells_add=100, key=None):
+
+
+    def sim_init(istate, ncells_add=0, key=None):
         '''
         If key is none use the key packed in initial state, else use the provided key.
         '''
 
-        ### elongate data structures to account for cells to be added
-
-
-        new_fields = []
-        for field in jdc.fields(istate):
-
-            if field.name == 'key':
-                new_fields.append(key)
-
+        if key is None:
+            if istate.key is None:
+                raise ValueError('No key provided for the RNG and no key found in the initial state.')
             else:
-                #retrieve the value of the field
-                value = getattr(istate, field.name)
+                key = istate.key
 
-                if isinstance(value, np.ndarray):
 
-                    if len(value.shape) > 0:
-                        shape = (ncells_add,)+(value.shape[1:])
-                        new_fields.append(np.concatenate([value, np.zeros(shape, dtype=value.dtype)]))
-                        
-                    else:
-                        new_fields.append(value)
+        ### elongate data structures to account for cells to be added
+        if ncells_add > 0:
+
+            new_fields = {}
+            for field in jdc.fields(istate):
+
+                if field.name == 'key':
+                    new_fields[field.name] = key
+
                 else:
-                    new_fields.append(value)
+                    #retrieve the value of the field
+                    value = getattr(istate, field.name)
 
-        new_istate = type(istate)(*new_fields)
+                    if isinstance(value, np.ndarray):
+
+                        if len(value.shape) > 0:
+                            shape = (ncells_add,)+(value.shape[1:])
+                            new_fields[field.name] = np.concatenate([value, np.zeros(shape, dtype=value.dtype)])
+                            
+                        else:
+                            new_fields[field.name] = value
+                    else:
+                        new_fields[field.name] = value
+
+            new_istate = type(istate)(**new_fields)
+
+        elif 0 == ncells_add:
+            new_istate = istate
 
 
         #run one "void" simulation step to initialize the data structures with consistent values
