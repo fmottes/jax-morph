@@ -15,7 +15,7 @@ def simulation(fstep, params, fspace):
         If key is none use the key packed in initial state, else use the provided key.
 
         If ncells_add > 0 elongate the data structures to account for the cells to be added. 
-        If ncells_add == 0 run one simulation step to initialize the data structures with consistent values (NO CELL DIVISION IS PERFORMED).
+        If ncells_add == 0 run one simulation step to initialize the data structures with consistent values and set random key (NO CELL DIVISION IS PERFORMED).
 
         '''
 
@@ -33,8 +33,7 @@ def simulation(fstep, params, fspace):
             for field in jdc.fields(istate):
 
                 if field.name == 'key':
-                    new_fields[field.name] = key
-
+                    new_fields['key'] = key
                 else:
                     #retrieve the value of the field
                     value = getattr(istate, field.name)
@@ -53,7 +52,7 @@ def simulation(fstep, params, fspace):
             new_istate = type(istate)(**new_fields)
 
         elif 0 == ncells_add:
-            new_istate = istate
+            new_istate = jdc.replace(istate, key=key)
 
 
         #run one "void" simulation step to initialize the data structures with consistent values
