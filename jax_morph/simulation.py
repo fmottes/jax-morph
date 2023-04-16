@@ -13,6 +13,10 @@ def simulation(fstep, params, fspace):
     def sim_init(istate, ncells_add=0, key=None):
         '''
         If key is none use the key packed in initial state, else use the provided key.
+
+        If ncells_add > 0 elongate the data structures to account for the cells to be added. 
+        If ncells_add == 0 run one simulation step to initialize the data structures with consistent values (NO CELL DIVISION IS PERFORMED).
+
         '''
 
         if key is None:
