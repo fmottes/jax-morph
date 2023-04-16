@@ -32,7 +32,7 @@ def init_state_grow(key, onecell_state, params, fspace, n_cells=5):
     for field in jdc.fields(onecell_state):
 
         if field.name == 'key':
-            new_fields.append(key)
+            new_fields[field.name] = key
 
         else:
             #retrieve the value of the field
