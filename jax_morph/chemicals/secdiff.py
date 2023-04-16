@@ -17,7 +17,10 @@ def S_ss_chemfield(state, params, fspace, sec_fn=None, diffusion_fn=diffuse_allc
     '''
     
     if None == sec_fn:
-        raise(ValueError('Need to pass a valid function for the calculation of the secretion rates.'))
+        raise(ValueError('Need a valid function for the calculation of the secretion rates.'))
+    
+    if n_iter < 1:
+        raise(Warning('S_ss_chemfield is doing nothing (need at least one iteration).'))
     
     def _sec_diff_step(buff_state, i):
         
