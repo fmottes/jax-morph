@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 
 
 #set global properties of plots
-plt.rcParams.update({'font.size': 15})
+plt.rcParams.update({'font.size': 18})
 
 
 
@@ -36,23 +36,30 @@ def draw_circles_ctype(state, ax=None, cm=plt.cm.coolwarm, **kwargs):
     
     plt.xticks([])
     plt.yticks([])
-    
-    
-    background_color = [56 / 256] * 3
-    #ax.set_facecolor(background_color)    
-    
-    #ax.get_xaxis().set_visible(False)
-    #ax.get_yaxis().set_visible(False)
-    
+
+    #scale x and y in the same way
+    ax.set_aspect('equal', adjustable='box')
+
+    #white bg color for ax
+    ax.set_facecolor([1,1,1])
+
+    #remove axis spines
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.spines['bottom'].set_visible(False)
+    ax.spines['left'].set_visible(False)
+
+
+    background_color = [56 / 256] * 3        
     plt.gcf().patch.set_facecolor(background_color)
-    plt.gcf().set_size_inches(6, 6)
+    plt.gcf().patch.set_alpha(0)
+
+    plt.gcf().set_size_inches(8, 8)
     
-    plt.tight_layout()
-    
-    return ax
+    return plt.gcf(), ax
 
 
-def draw_circles_chem(state, chem=0, ax=None, cm=None, edges=False, cm_edges=plt.cm.coolwarm, **kwargs):
+def draw_circles_chem(state, chem=0, colorbar=True, ax=None, cm=None, edges=False, cm_edges=plt.cm.coolwarm, **kwargs):
     
     if None == ax:
         ax = plt.axes()
@@ -63,13 +70,13 @@ def draw_circles_chem(state, chem=0, ax=None, cm=None, edges=False, cm_edges=plt
     #only usable for two cell types
     if cm is None:
         if 0 == chem:
-            color = plt.cm.YlGn(chemical)
+            cm = plt.cm.YlGn
         elif 1 == chem:
-            color = plt.cm.BuPu(chemical)
+            cm = plt.cm.BuPu
         else:
-            color = plt.cm.coolwarm(chemical)
-    else:
-        color = cm(chemical)
+            cm = plt.cm.coolwarm
+        
+    color = cm(chemical)
         
     if edges:
         #only usable for two cell types
@@ -83,6 +90,14 @@ def draw_circles_chem(state, chem=0, ax=None, cm=None, edges=False, cm_edges=plt
         for cell,radius,c in zip(state.position,state.radius,color):
             circle = plt.Circle(cell, radius=radius, fc=c, alpha=.5, **kwargs)
             ax.add_patch(circle)
+
+    #show colorbar
+    if colorbar:    
+        sm = plt.cm.ScalarMappable(cmap=cm, norm=plt.Normalize(vmin=state.chemical.min(), vmax=state.chemical.max()))
+        sm._A = []
+        cbar = plt.colorbar(sm, shrink=0.7) # rule of thumb
+        cbar.set_label('Concentration Chem. '+str(chem), labelpad=20)
+
             
     
     ## calculate ax limits
@@ -101,31 +116,40 @@ def draw_circles_chem(state, chem=0, ax=None, cm=None, edges=False, cm_edges=plt
     plt.xticks([])
     plt.yticks([])
     
-    
-    background_color = [56 / 256] * 3
-    #ax.set_facecolor(background_color)    
-    
-    #ax.get_xaxis().set_visible(False)
-    #ax.get_yaxis().set_visible(False)
-        
+    #scale x and y in the same way
+    ax.set_aspect('equal', adjustable='box')
+
+    #white bg color for ax
+    ax.set_facecolor([1,1,1])
+
+    #remove axis spines
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.spines['bottom'].set_visible(False)
+    ax.spines['left'].set_visible(False)
+
+
+    background_color = [56 / 256] * 3        
     plt.gcf().patch.set_facecolor(background_color)
-    plt.gcf().set_size_inches(6, 6)
+    plt.gcf().patch.set_alpha(0)
+
+    plt.gcf().set_size_inches(8, 8)
     
-    plt.tight_layout()
-    
-    return ax
+    return plt.gcf(), ax
 
 
     
-def draw_circles_divrate(state, ax=None, cm=plt.cm.coolwarm, edges=False, cm_edges=plt.cm.coolwarm, **kwargs):
+def draw_circles_divrate(state, probability=True, colorbar=True, ax=None, cm=plt.cm.coolwarm, edges=False, cm_edges=plt.cm.coolwarm, **kwargs):
     
     if None == ax:
         ax = plt.axes()
     
-    divrate = np.float32(state.divrate)    
-    divrate = (divrate-divrate.min()+1e-20)/(divrate.max()-divrate.min()+1e-20)
+    if probability:
+        divrate = state.divrate/state.divrate.sum()
+    else:
+        divrate = np.float32(state.divrate)    
+        divrate = (divrate-divrate.min()+1e-20)/(divrate.max()-divrate.min()+1e-20)
         
-    #only usable for two cell types
     color = cm(divrate)
     
     if edges:
@@ -140,9 +164,23 @@ def draw_circles_divrate(state, ax=None, cm=plt.cm.coolwarm, edges=False, cm_edg
         for cell,radius,c in zip(state.position,state.radius,color):
             circle = plt.Circle(cell, radius=radius, fc=c, alpha=.5, **kwargs)
             ax.add_patch(circle)
+
+
     
+    #show colorbar
+    if colorbar:    
+        if probability:
+            sm = plt.cm.ScalarMappable(cmap=cm, norm=plt.Normalize(vmin=0, vmax=1))
+            sm._A = []
+            cbar_text = 'Division Probability'
+        else:
+            sm = plt.cm.ScalarMappable(cmap=cm, norm=plt.Normalize(vmin=state.divrate.min(), vmax=state.divrate.max()))
+            sm._A = []
+            cbar_text = 'Division Propensity'
+
     
-    
+        cbar = plt.colorbar(sm, shrink=0.7) # rule of thumb
+        cbar.set_label(cbar_text, labelpad=20)
     
     ## calculate ax limits
     xmin = np.min(state.position[:,0])
@@ -160,15 +198,29 @@ def draw_circles_divrate(state, ax=None, cm=plt.cm.coolwarm, edges=False, cm_edg
     plt.xticks([])
     plt.yticks([])
     
-    background_color = [56 / 256] * 3
-    #ax.set_facecolor(background_color)    
-    
-    #ax.get_xaxis().set_visible(False)
-    #ax.get_yaxis().set_visible(False)
-        
+    #scale x and y in the same way
+    ax.set_aspect('equal', adjustable='box')
+
+    #white bg color for ax
+    ax.set_facecolor([1,1,1])
+
+    #remove axis spines
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.spines['bottom'].set_visible(False)
+    ax.spines['left'].set_visible(False)
+
+
+    background_color = [56 / 256] * 3        
     plt.gcf().patch.set_facecolor(background_color)
-    plt.gcf().set_size_inches(6, 6)
+    plt.gcf().patch.set_alpha(0)
+
+    plt.gcf().set_size_inches(8, 8)
+
+    return plt.gcf(), ax
     
+
+
     
 def draw_circles(state, state_values, min_val = None, max_val = None, min_coord=None, max_coord=None, ax=None, cm=plt.cm.coolwarm, **kwargs):
     
@@ -206,15 +258,23 @@ def draw_circles(state, state_values, min_val = None, max_val = None, min_coord=
     ax.set_xticks([])
     ax.set_yticks([])
     
-    #background_color = [56 / 256] * 3
-    #ax.set_facecolor(background_color)    
-    
-    #ax.get_xaxis().set_visible(False)
-    #ax.get_yaxis().set_visible(False)
-        
-    #plt.gcf().patch.set_facecolor(background_color)
-    plt.gcf().set_size_inches(6, 6)
-    
-    #plt.tight_layout()
-    
-    return ax
+    #scale x and y in the same way
+    ax.set_aspect('equal', adjustable='box')
+
+    #white bg color for ax
+    ax.set_facecolor([1,1,1])
+
+    #remove axis spines
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.spines['bottom'].set_visible(False)
+    ax.spines['left'].set_visible(False)
+
+
+    background_color = [56 / 256] * 3        
+    plt.gcf().patch.set_facecolor(background_color)
+    plt.gcf().patch.set_alpha(0)
+
+    plt.gcf().set_size_inches(8, 8)
+
+    return plt.gcf(), ax
