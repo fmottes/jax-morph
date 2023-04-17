@@ -7,8 +7,8 @@ import jax_md.dataclasses as jax_dataclasses
 from ..mechanics.morse import _generate_morse_params_twotypes
 
 
-def stress(state, params, fspace):
-    """ Calculates stress on each cell."""
+def morse_stress(state, params, fspace):
+    """ Calculates stress on each cell assuming interactions with Morse potential."""
     
     epsilon_matrix, sigma_matrix = _generate_morse_params_twotypes(state, params)
     
@@ -27,7 +27,7 @@ def stress(state, params, fspace):
 
 
 
-def S_set_stress(state, params, fspace, stress_fn=stress):
+def S_set_stress(state, params, fspace, stress_fn=morse_stress):
     
     stresses = stress_fn(state, params, fspace)
     
