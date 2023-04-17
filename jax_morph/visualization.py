@@ -95,7 +95,7 @@ def draw_circles_chem(state, chem=0, colorbar=True, ax=None, cm=None, edges=Fals
     if colorbar:    
         sm = plt.cm.ScalarMappable(cmap=cm, norm=plt.Normalize(vmin=state.chemical.min(), vmax=state.chemical.max()))
         sm._A = []
-        cbar = plt.colorbar(sm, shrink=0.7) # rule of thumb
+        cbar = plt.colorbar(sm, shrink=0.7, alpha=.5) # rule of thumb
         cbar.set_label('Concentration Chem. '+str(chem), labelpad=20)
 
             
@@ -179,7 +179,7 @@ def draw_circles_divrate(state, probability=True, colorbar=True, ax=None, cm=plt
             cbar_text = 'Division Propensity'
 
     
-        cbar = plt.colorbar(sm, shrink=0.7) # rule of thumb
+        cbar = plt.colorbar(sm, shrink=0.7, alpha=.5) # rule of thumb
         cbar.set_label(cbar_text, labelpad=20)
     
     ## calculate ax limits
