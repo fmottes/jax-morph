@@ -3,6 +3,7 @@ from jax import vmap, random, value_and_grad, lax
 import optax
 import equinox as eqx
 from jax_morph.simulation import simulation, sim_trajectory
+from jax.flatten_util import ravel_pytree
 
 ''' Coefficient of variation of division rates loss.'''
 def cv_divrates(state):
@@ -10,7 +11,7 @@ def cv_divrates(state):
 
 '''Run simulation with given parameters and calculate loss of final state.'''
 @eqx.filter_jit
-@eqx.filter_vmap(default=None, kwargs=dict(sim_key=0))
+@eqx.filter_vmap(in_axes=dict(params=None, hyper_params=None, fstep=None, fspace=None, istate=None, sim_key=0, metric_fn=None, target_metric=None))
 def simple_loss(params, 
             hyper_params,
             fstep,
@@ -32,12 +33,12 @@ def simple_loss(params,
     metric_final = metric_fn(fstate)
 
     # Measure difference between final state and target. 
-    loss = np.sum(np.power(metric_final - target_metric,2))
+    loss = np.sum(np.power(metric_final - target_metric,2)) #+ 0.1*np.sum(np.abs(ravel_pytree(params["div_fn"])[0]))
 
     return loss
 
 @eqx.filter_jit
-@eqx.filter_vmap(default=None, kwargs=dict(sim_key=0))
+@eqx.filter_vmap(in_axes=dict(params=None, hyper_params=None, fstep=None, fspace=None, istate=None, sim_key=0, metric_fn=None, target_metric=None, GAMMA=None))
 def combined_loss(params, 
             hyper_params,
             fstep,
@@ -63,12 +64,12 @@ def combined_loss(params,
     metric_final = metric_fn(fstate)
 
     # measure difference between final state and target 
-    loss = np.sum(np.power(metric_final - target_metric,2))
+    loss = np.sum(np.power(metric_final - target_metric,2)) #+ 0.1*np.sum(np.abs(ravel_pytree(params["div_fn"])[0]))
     
     #discount losses (loss only given at last timestep)
     steps = len(logp)
     discounted_losses = np.array([(GAMMA**(steps-i))*loss for i in np.arange(steps)])
-    return loss + np.sum(logp*lax.stop_gradient(discounted_losses))
+    return loss + np.sum(logp*lax.stop_gradient(discounted_losses)) 
 
 '''Average loss over a batch of simulations with different seeds.'''
 @eqx.filter_jit #NO JIT IS FASTER IN THIS CASE
@@ -79,12 +80,13 @@ def avg_loss(params, hyper_params, vloss_fn, sim_keys, **kwargs):
     return np.mean(lss)
 
 '''Optimization loop.'''
-def optimize(key, epochs, batch_size, lr, params, train_params, fstep, fspace, istate, opt_type='combined', **kwargs):
+def optimize(key, epochs, batch_size, lr, params, train_params, fstep, fspace, istate, opt_type='combined', print_every=10, **kwargs):
     # Separate params to be optimized.
     p, hp = eqx.partition(params, train_params)
 
     # Set up optimizer.
-    optimizer = optax.chain(optax.clip_by_global_norm(1.0), optax.adam(lr)) 
+    #optimizer = optax.chain(optax.clip_by_global_norm(1.0), optax.adam(lr)) 
+    optimizer = optax.adam(lr)
     opt_state = optimizer.init(p)
 
     # Generate batch keys.
@@ -118,7 +120,7 @@ def optimize(key, epochs, batch_size, lr, params, train_params, fstep, fspace, i
         ll, grads = vg_jit(p, hp, loss_fn, batch_subkeys, fstep=fstep, fspace=fspace, istate=istate, **kwargs)
         l = avg_loss(p, hp, simple_loss, batch_subkeys, fstep=fstep, fspace=fspace, istate=istate, **kwargs)
         #l, grads = value_and_grad(avg_loss)(p, hp, simple_loss, batch_subkeys, fstep=fstep, fspace=fspace, istate=istate)
-        if t % 5 == 0:
+        if t % print_every == 0:
             print("loss: %s, reinforce: %s" %(l, ll))
         # Store values for each epoch.
         loss_t.append(l.astype(float))
