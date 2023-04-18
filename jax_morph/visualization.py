@@ -8,7 +8,7 @@ plt.rcParams.update({'font.size': 18})
 
 
 
-def draw_circles_ctype(state, ax=None, cm=plt.cm.coolwarm, **kwargs):
+def draw_circles_ctype(state, ax=None, cm=plt.cm.coolwarm, grid=False, **kwargs):
     
     if None == ax:
         ax = plt.axes()
@@ -34,8 +34,6 @@ def draw_circles_ctype(state, ax=None, cm=plt.cm.coolwarm, **kwargs):
     plt.xlim(min_coord,max_coord)
     plt.ylim(min_coord,max_coord)
     
-    plt.xticks([])
-    plt.yticks([])
 
     #scale x and y in the same way
     ax.set_aspect('equal', adjustable='box')
@@ -43,11 +41,17 @@ def draw_circles_ctype(state, ax=None, cm=plt.cm.coolwarm, **kwargs):
     #white bg color for ax
     ax.set_facecolor([1,1,1])
 
-    #remove axis spines
-    ax.spines['top'].set_visible(False)
-    ax.spines['right'].set_visible(False)
-    ax.spines['bottom'].set_visible(False)
-    ax.spines['left'].set_visible(False)
+    if grid:
+        ax.grid(alpha=.2)
+    else:
+        #remove axis spines
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+        ax.spines['bottom'].set_visible(False)
+        ax.spines['left'].set_visible(False)
+
+        plt.xticks([])
+        plt.yticks([])
 
 
     background_color = [56 / 256] * 3        
@@ -59,7 +63,7 @@ def draw_circles_ctype(state, ax=None, cm=plt.cm.coolwarm, **kwargs):
     return plt.gcf(), ax
 
 
-def draw_circles_chem(state, chem=0, colorbar=True, ax=None, cm=None, edges=False, cm_edges=plt.cm.coolwarm, **kwargs):
+def draw_circles_chem(state, chem=0, colorbar=True, ax=None, cm=None, grid=False, edges=False, cm_edges=plt.cm.coolwarm, **kwargs):
     
     if None == ax:
         ax = plt.axes()
@@ -113,8 +117,6 @@ def draw_circles_chem(state, chem=0, colorbar=True, ax=None, cm=None, edges=Fals
     plt.xlim(min_coord,max_coord)
     plt.ylim(min_coord,max_coord)
     
-    plt.xticks([])
-    plt.yticks([])
     
     #scale x and y in the same way
     ax.set_aspect('equal', adjustable='box')
@@ -122,11 +124,17 @@ def draw_circles_chem(state, chem=0, colorbar=True, ax=None, cm=None, edges=Fals
     #white bg color for ax
     ax.set_facecolor([1,1,1])
 
-    #remove axis spines
-    ax.spines['top'].set_visible(False)
-    ax.spines['right'].set_visible(False)
-    ax.spines['bottom'].set_visible(False)
-    ax.spines['left'].set_visible(False)
+    if grid:
+        ax.grid(alpha=.2)
+    else:
+        #remove axis spines
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+        ax.spines['bottom'].set_visible(False)
+        ax.spines['left'].set_visible(False)
+
+        plt.xticks([])
+        plt.yticks([])
 
 
     background_color = [56 / 256] * 3        
@@ -139,7 +147,7 @@ def draw_circles_chem(state, chem=0, colorbar=True, ax=None, cm=None, edges=Fals
 
 
     
-def draw_circles_divrate(state, probability=True, colorbar=True, ax=None, cm=plt.cm.coolwarm, edges=False, cm_edges=plt.cm.coolwarm, **kwargs):
+def draw_circles_divrate(state, probability=False, colorbar=True, ax=None, cm=plt.cm.coolwarm, grid=False, edges=False, cm_edges=plt.cm.coolwarm, **kwargs):
     
     if None == ax:
         ax = plt.axes()
@@ -195,8 +203,7 @@ def draw_circles_divrate(state, probability=True, colorbar=True, ax=None, cm=plt
     plt.xlim(min_coord,max_coord)
     plt.ylim(min_coord,max_coord)
     
-    plt.xticks([])
-    plt.yticks([])
+
     
     #scale x and y in the same way
     ax.set_aspect('equal', adjustable='box')
@@ -204,11 +211,17 @@ def draw_circles_divrate(state, probability=True, colorbar=True, ax=None, cm=plt
     #white bg color for ax
     ax.set_facecolor([1,1,1])
 
-    #remove axis spines
-    ax.spines['top'].set_visible(False)
-    ax.spines['right'].set_visible(False)
-    ax.spines['bottom'].set_visible(False)
-    ax.spines['left'].set_visible(False)
+    if grid:
+        ax.grid(alpha=.2)
+    else:
+        #remove axis spines
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+        ax.spines['bottom'].set_visible(False)
+        ax.spines['left'].set_visible(False)
+
+        plt.xticks([])
+        plt.yticks([])
 
 
     background_color = [56 / 256] * 3        
@@ -222,7 +235,7 @@ def draw_circles_divrate(state, probability=True, colorbar=True, ax=None, cm=plt
 
 
     
-def draw_circles(state, state_values, min_val = None, max_val = None, min_coord=None, max_coord=None, ax=None, cm=plt.cm.coolwarm, **kwargs):
+def draw_circles(state, state_values, min_val = None, max_val = None, min_coord=None, max_coord=None, ax=None, cm=plt.cm.coolwarm, grid=False, **kwargs):
     
     if None == ax:
         ax = plt.axes()
@@ -255,8 +268,6 @@ def draw_circles(state, state_values, min_val = None, max_val = None, min_coord=
     ax.set_xlim(min_coord,max_coord)
     ax.set_ylim(min_coord,max_coord)
     
-    ax.set_xticks([])
-    ax.set_yticks([])
     
     #scale x and y in the same way
     ax.set_aspect('equal', adjustable='box')
@@ -264,11 +275,17 @@ def draw_circles(state, state_values, min_val = None, max_val = None, min_coord=
     #white bg color for ax
     ax.set_facecolor([1,1,1])
 
-    #remove axis spines
-    ax.spines['top'].set_visible(False)
-    ax.spines['right'].set_visible(False)
-    ax.spines['bottom'].set_visible(False)
-    ax.spines['left'].set_visible(False)
+    if grid:
+        ax.grid(alpha=.2)
+    else:
+        #remove axis spines
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+        ax.spines['bottom'].set_visible(False)
+        ax.spines['left'].set_visible(False)
+
+        ax.set_xticks([])
+        ax.set_yticks([])
 
 
     background_color = [56 / 256] * 3        
