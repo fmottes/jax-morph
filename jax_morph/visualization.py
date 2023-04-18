@@ -8,13 +8,13 @@ plt.rcParams.update({'font.size': 15})
 
 
 
-def draw_circles_ctype(state, ax=None, **kwargs):
+def draw_circles_ctype(state, ax=None, cm=plt.cm.coolwarm, **kwargs):
     
     if None == ax:
         ax = plt.axes()
     
     #only usable for two cell types
-    color = plt.cm.coolwarm(np.float32(state.celltype-1))
+    color = cm(np.float32(state.celltype-1))
 
     for cell,radius,c in zip(state.position,state.radius,color):
         circle = plt.Circle(cell, radius=radius, color=c, alpha=.5, **kwargs)
@@ -52,7 +52,7 @@ def draw_circles_ctype(state, ax=None, **kwargs):
     return ax
 
 
-def draw_circles_chem(state, chem=0, ax=None, edges=False, **kwargs):
+def draw_circles_chem(state, chem=0, ax=None, cm=None, edges=False, cm_edges=plt.cm.coolwarm, **kwargs):
     
     if None == ax:
         ax = plt.axes()
@@ -61,16 +61,19 @@ def draw_circles_chem(state, chem=0, ax=None, edges=False, **kwargs):
     chemical = (chemical-chemical.min())/(chemical.max()-chemical.min())
         
     #only usable for two cell types
-    if 0 == chem:
-        color = plt.cm.YlGn(chemical)
-    elif 1 == chem:
-        color = plt.cm.BuPu(chemical)
+    if cm is None:
+        if 0 == chem:
+            color = plt.cm.YlGn(chemical)
+        elif 1 == chem:
+            color = plt.cm.BuPu(chemical)
+        else:
+            color = plt.cm.coolwarm(chemical)
     else:
-        color = plt.cm.coolwarm(chemical)
+        color = cm(chemical)
         
     if edges:
         #only usable for two cell types
-        ct_color = plt.cm.coolwarm(np.float32(state.celltype-1))
+        ct_color = cm_edges(np.float32(state.celltype-1))
 
         for cell,radius,c,ctc in zip(state.position,state.radius,color,ct_color):
             circle = plt.Circle(cell, radius=radius, fc=c, ec=ctc, lw=2, alpha=.5, **kwargs)
@@ -114,7 +117,7 @@ def draw_circles_chem(state, chem=0, ax=None, edges=False, **kwargs):
 
 
     
-def draw_circles_divrate(state, ax=None, edges=False, **kwargs):
+def draw_circles_divrate(state, ax=None, cm=plt.cm.coolwarm, edges=False, cm_edges=plt.cm.coolwarm, **kwargs):
     
     if None == ax:
         ax = plt.axes()
@@ -123,11 +126,11 @@ def draw_circles_divrate(state, ax=None, edges=False, **kwargs):
     divrate = (divrate-divrate.min())/(divrate.max()-divrate.min())
         
     #only usable for two cell types
-    color = plt.cm.coolwarm(divrate)
+    color = cm(divrate)
     
     if edges:
         #only usable for two cell types
-        ct_color = plt.cm.coolwarm(np.float32(state.celltype-1))
+        ct_color = cm_edges(np.float32(state.celltype-1))
 
         for cell,radius,c,ctc in zip(state.position,state.radius,color,ct_color):
             circle = plt.Circle(cell, radius=radius, fc=c, ec=ctc, lw=2, alpha=.5, **kwargs)
@@ -167,7 +170,7 @@ def draw_circles_divrate(state, ax=None, edges=False, **kwargs):
     plt.gcf().set_size_inches(6, 6)
     
     
-def draw_circles(state, state_values, min_val = None, max_val = None, min_coord=None, max_coord=None, ax=None, **kwargs):
+def draw_circles(state, state_values, min_val = None, max_val = None, min_coord=None, max_coord=None, ax=None, cm=plt.cm.coolwarm, **kwargs):
     
     if None == ax:
         ax = plt.axes()
@@ -180,7 +183,7 @@ def draw_circles(state, state_values, min_val = None, max_val = None, min_coord=
         state_values = (state_values-min_val)/(max_val-min_val)
 
     #only usable for two cell types
-    color = plt.cm.coolwarm(state_values)
+    color = cm(state_values)
     for cell,radius,c in zip(state.position,state.radius,color):
         circle = plt.Circle(cell, radius=radius, fc=c, alpha=.5, **kwargs)
         ax.add_patch(circle)

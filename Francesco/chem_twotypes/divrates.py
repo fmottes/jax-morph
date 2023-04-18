@@ -8,7 +8,6 @@ from jax import jit, lax, vmap
 import jax_md.dataclasses as jax_dataclasses
 
 from jax_morph.utils import logistic
-from jax_morph.datastructures import CellState
 
 
 def S_set_divrate(state, params, fspace=None, divrate_fn=None):
@@ -28,9 +27,12 @@ def S_set_divrate(state, params, fspace=None, divrate_fn=None):
 def div_nn(params, 
            train_params=None, 
            n_hidden=3,
-           use_state_fields=CellState(*tuple([False]*3+[True]*2+[False]*3)),
+           use_state_fields=None,
            train=True,
           ):
+    
+    if use_state_fields is None:
+        raise ValueError('Input fields flags must be passed explicitly as a CellState dataclass.')
     
     if type(n_hidden) == np.int_ or type(n_hidden) == int:
         n_hidden = [int(n_hidden)]
@@ -52,7 +54,6 @@ def div_nn(params,
 
     
     def init(state, key):
-        
         
         in_fields = np.hstack([f if len(f.shape)>1 else f[:,np.newaxis] for f in jax.tree_leaves(eqx.filter(state, use_state_fields))])
         
@@ -103,9 +104,7 @@ def div_nn(params,
 #species 0 produces chemical 0 and divides according to chemical 1
 #species 1 produces chemical 1 and divides according to chemical 0
 
-def div_chemical(state: CellState,
-                params: dict,
-                ) -> np.array:
+def div_chemical(state, params):
 
     div_gamma = params['div_gamma']
     div_k = params['div_k']

@@ -7,7 +7,6 @@ from jax import jit, lax, vmap
 
 import jax_md.dataclasses as jax_dataclasses
 
-from jax_morph.datastructures import CellState
 from jax_morph.utils import logistic
 from jax_morph.diffusion import diffuse_allchem
 
@@ -36,16 +35,14 @@ def S_ss_chemfield(state, params, fspace, sec_fn=None, n_iter=5):
         
         return jax_dataclasses.replace(buff_state, chemical=chemfield), 0.#, chemfield
     
-    #buffer state for looping (not strictly necessary)
-    new_state = CellState(*jax_dataclasses.unpack(state))
     
     iterations = np.arange(n_iter)
     
-    new_state, _ = lax.scan(_sec_diff_step, new_state, iterations)
+    state, _ = lax.scan(_sec_diff_step, state, iterations)
     #uncomment line below and comment line above for history
     #new_state, chemfield = lax.scan(_sec_diff_step, new_state, iterations)
 
-    return new_state
+    return state
 
 
 
@@ -55,9 +52,12 @@ def S_ss_chemfield(state, params, fspace, sec_fn=None, n_iter=5):
 def sec_nn(params, 
            train_params=None, 
            n_hidden=3,
-           use_state_fields=CellState(*tuple([False]*3+[True]*2+[False]*3)),
+           use_state_fields=None,
            train=True,
           ):
+    
+    if use_state_fields is None:
+        raise ValueError('Input fields flags must be passed explicitly as a CellState dataclass.')
     
     if type(n_hidden) == np.int_ or type(n_hidden) == int:
         n_hidden = [int(n_hidden)]
@@ -75,8 +75,7 @@ def sec_nn(params,
 
 
     
-    def init(state, key):
-        
+    def init(state, key):     
         
         in_fields = np.hstack([f if len(f.shape)>1 else f[:,np.newaxis] for f in jax.tree_leaves(eqx.filter(state, use_state_fields))])
         
