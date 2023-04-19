@@ -4,11 +4,8 @@ from jax import random
 
 import jax_md.dataclasses as jdc
 
-from jax_morph.utils import to_int
 
-
-
-def S_cell_division(state, params, fspace=None, ST_grad=False):
+def S_cell_division(state, params, fspace=None):#, ST_grad=False):
     '''
     Performs one cell division with probability proportional to the current state divrates.
     '''
@@ -22,17 +19,20 @@ def S_cell_division(state, params, fspace=None, ST_grad=False):
         
         p = state.divrate/state.divrate.sum()
         
-        # straight-through estimator set grad of sampling to 1
-        if ST_grad:
-            def _sample_ST(p, subkey):
-                #select cells that divides
-                idx_dividing_cell = random.choice(subkey, a=len(p), p=p)
-                zero = np.sum(p - jax.lax.stop_gradient(p))
-                return to_int(zero + jax.lax.stop_gradient(idx_dividing_cell))
+
+        ### DOESN'T WORK SINCE ALL NUMBERS IN GRAD CALCULATION ARE CONVERTED TO FLOAT32
+        ### SO OBV USELESS TO INDEX ARRAYS
+        # # straight-through estimator set grad of sampling to 1
+        # if ST_grad:
+        #     def _sample_ST(p, subkey):
+        #         #select cells that divides
+        #         idx_dividing_cell = random.choice(subkey, a=len(p), p=p)
+        #         zero = np.sum(p - jax.lax.stop_gradient(p))
+        #         return zero + jax.lax.stop_gradient(idx_dividing_cell)
             
-            idx_dividing_cell = _sample_ST(p, subkey_div)
-        else:
-            idx_dividing_cell = random.choice(subkey_div, a=len(p), p=p)
+        #     idx_dividing_cell = _sample_ST(p, subkey_div).astype(np.int32)
+        # else:
+        idx_dividing_cell = random.choice(subkey_div, a=len(p), p=p)
 
         #save logp for optimization purposes
         log_p = np.log(p[idx_dividing_cell])
