@@ -1,3 +1,4 @@
+from jax import custom_jvp
 import jax.numpy as np
 
 
@@ -17,3 +18,20 @@ def logistic(x,gamma,k):
 # Polynomial function
 def polynomial(x, coeffs):
     return np.polyval(coeffs, x)
+
+
+################################################
+# Straight-Through Estimator for integer casting
+################################################
+
+@custom_jvp
+def to_int(x):
+    return np.int32(x)
+
+@to_int.defjvp
+def to_int_jvp(primals, tangents):
+    x, = primals
+    x_dot, = tangents
+    ans = x
+    ans_dot = x_dot
+    return ans, ans_dot
