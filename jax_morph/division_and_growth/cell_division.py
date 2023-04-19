@@ -20,9 +20,14 @@ def S_cell_division(state, params, fspace=None):
         
         p = state.divrate/state.divrate.sum()
         
-        #select cells that divides
-        idx_dividing_cell = random.choice(subkey_div, a=len(p), p=p)
+        def _sample_ST(p, subkey):
+            #select cells that divides
+            idx_dividing_cell = random.choice(subkey, a=len(p), p=p)
+            zero = p - jax.lax.stop_gradient(p)
+            return zero + jax.lax.stop_gradient(idx_dividing_cell)
         
+        idx_dividing_cell = _sample_ST(p, subkey_div)
+
         #save logp for optimization purposes
         log_p = np.log(p[idx_dividing_cell])
         
@@ -38,12 +43,6 @@ def S_cell_division(state, params, fspace=None):
         pos1 = state.position[idx_dividing_cell] + cellRadBirth*first_cell
         pos2 = state.position[idx_dividing_cell] + cellRadBirth*second_cell
         
-        # new_position = state.position.at[idx_dividing_cell].set(pos1)
-        # new_position = new_position.at[idx_new_cell].set(pos2)
-        
-        # ### NEW RADII
-        # new_radius = state.radius.at[idx_dividing_cell].set(cellRadBirth)
-        # new_radius = new_radius.at[idx_new_cell].set(cellRadBirth)
         
         new_fields = {}
         for field in jdc.fields(state):
@@ -60,25 +59,6 @@ def S_cell_division(state, params, fspace=None):
                 new_fields[field.name] = value.at[idx_new_cell].set(value[idx_dividing_cell])
 
         new_state = type(state)(**new_fields)
-
-
-        # ### INHERIT CELLTYPE
-        # new_celltype = state.celltype.at[idx_new_cell].set(state.celltype[idx_dividing_cell])
-        
-        # # INHERIT CHEMICAL AND DIVRATES
-        # # useless, recalculated right after, but just in case
-        # new_chemical = state.chemical.at[idx_new_cell].set(state.chemical[idx_dividing_cell])  
-        # new_divrate = state.divrate.at[idx_new_cell].set(state.divrate[idx_dividing_cell]) 
-        
-        # #build new state of the system
-        # new_state = jdc.replace(state, 
-        #                                     position=new_position,
-        #                                     radius=new_radius,
-        #                                     celltype=new_celltype,
-        #                                     chemical=new_chemical,
-        #                                     divrate=new_divrate,
-        #                                     key=new_key
-        #                                 )
         
         return new_state, log_p
     
