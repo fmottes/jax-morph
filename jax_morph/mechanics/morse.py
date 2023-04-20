@@ -51,7 +51,10 @@ def _generate_morse_params_onetype(state, params):
       epsilon_matrix: Depth of Morse well. 
     '''
 
-    epsilon_OneOne = params['epsilon']
+    if 'epsilon' in params:
+        epsilon_OneOne = params['epsilon']
+    else:
+        epsilon_OneOne = 3.
 
 
     #minimum energy when the two cells barely touch
