@@ -1,6 +1,5 @@
 import jax
 import jax.numpy as np
-from jax import lax
 
 import jax_md
 import jax_md.dataclasses as jdc
@@ -69,7 +68,7 @@ def init_state_grow(key, empty_state, params, fspace, n_cells=5):
         return state, 0.
     
     iterations = np.arange(n_cells-1)
-    state, _ = lax.scan(_init_add, state, iterations)
+    state, _ = jax.lax.scan(_init_add, state, iterations)
     
     
     #set all cells to max radius and relax the system
