@@ -97,7 +97,7 @@ def draw_circles_chem(state, chem=0, colorbar=True, ax=None, cm=None, grid=False
 
     #show colorbar
     if colorbar:    
-        sm = plt.cm.ScalarMappable(cmap=cm, norm=plt.Normalize(vmin=state.chemical.min(), vmax=state.chemical.max()))
+        sm = plt.cm.ScalarMappable(cmap=cm, norm=plt.Normalize(vmin=state.chemical[:,chem].min(), vmax=state.chemical[:,chem].max()))
         sm._A = []
         cbar = plt.colorbar(sm, shrink=0.7, alpha=.5) # rule of thumb
         cbar.set_label('Concentration Chem. '+str(chem), labelpad=20)
