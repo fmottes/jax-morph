@@ -5,6 +5,13 @@ from jax import random
 import jax_md.dataclasses as jdc
 
 
+def S_no_division(state, params, fspace):
+    '''
+    Does nothing. Needed for the case where no division happens since simulation still expects a state and log_p.
+    '''
+    return state, 0.
+
+
 def S_cell_division(state, params, fspace=None):#, ST_grad=False):
     '''
     Performs one cell division with probability proportional to the current state divrates.
@@ -32,6 +39,7 @@ def S_cell_division(state, params, fspace=None):#, ST_grad=False):
             
         #     idx_dividing_cell = _sample_ST(p, subkey_div).astype(np.int32)
         # else:
+        
         idx_dividing_cell = random.choice(subkey_div, a=len(p), p=p)
 
         #save logp for optimization purposes
