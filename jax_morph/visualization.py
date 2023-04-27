@@ -152,11 +152,9 @@ def draw_circles_divrate(state, probability=False, colorbar=True, ax=None, cm=pl
     if None == ax:
         ax = plt.axes()
     
-    if probability:
-        divrate = state.divrate/(state.divrate.sum()+1e-20)
-    else:
-        divrate = np.float32(state.divrate)    
-        divrate = (divrate-divrate.min()+1e-20)/(divrate.max()-divrate.min()+1e-20)
+
+    divrate = np.float32(state.divrate)    
+    divrate = (divrate-divrate.min()+1e-20)/(divrate.max()-divrate.min()+1e-20)
         
     color = cm(divrate)
     
@@ -178,6 +176,7 @@ def draw_circles_divrate(state, probability=False, colorbar=True, ax=None, cm=pl
     #show colorbar
     if colorbar:    
         if probability:
+            divrate = state.divrate/(state.divrate.sum()+1e-20)
             sm = plt.cm.ScalarMappable(cmap=cm, norm=plt.Normalize(vmin=divrate.min(), vmax=divrate.max()))
             sm._A = []
             cbar_text = 'Division Probability'
