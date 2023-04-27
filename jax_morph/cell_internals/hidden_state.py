@@ -81,23 +81,21 @@ def hidden_state_nn(params,
 
 
 # STATE UPDATE FUNCTION
-def S_hidden_state(state, params, fspace=None, dhidden_fn=None, state_decay=.9):
+def S_hidden_state(state, params, fspace=None, dhidden_fn=None, state_decay=.8):
     
     if None == dhidden_fn:
         raise(ValueError('Need to pass a valid function for the calculation of the new hidden state.'))
 
-
-    # hidden_state = state.hidden_state
-    # hidden_state = np.log(hidden_state/(1-hidden_state)+1e-5)
-    # hidden_state = hidden_state + hidden_fn(state, params)
-    # hidden_state = jax.nn.sigmoid(hidden_state)
-
-    # normalize hidden state ?
-
     regulation = state_decay*state.regulation + dhidden_fn(state, params)
+    #regulation = regulation / np.sum(np.abs(regulation), axis=1, keepdims=True)
 
-    hidden_state = jax.nn.sigmoid(regulation)
+
+    hidden_state = jax.nn.softplus(regulation)
+        
+    # normalize hidden state
+    #hidden_state = hidden_state / np.sum(np.abs(hidden_state), axis=1, keepdims=True)
+
     
-    new_state = jdc.replace(state, regulation=regulation, hidden_state=hidden_state)
+    state = jdc.replace(state, regulation=regulation, hidden_state=hidden_state)
     
-    return new_state
+    return state
