@@ -83,16 +83,15 @@ def reinforce_loss(params,
         
         loss = -np.sum(logp*jax.lax.stop_gradient(returns))
 
+        # possibly L2-regularize NN weights
+        if LAMBDA > 0.:
+            if 'div_fn' in params:
+                loss += LAMBDA*np.array(jax.tree_leaves(jax.tree_map(lambda x: np.sum(x**2), params['div_fn']))).sum()
+            if 'sec_fn' in params:
+                loss += LAMBDA*np.array(jax.tree_leaves(jax.tree_map(lambda x: np.sum(x**2), params['sec_fn']))).sum()
+
     else:
         loss = losses[-1]
-
-    # possibly L2-regularize NN weights
-    if LAMBDA > 0.:
-        if 'div_fn' in params:
-            loss += LAMBDA*np.array(jax.tree_leaves(jax.tree_map(lambda x: np.sum(x**2), params['div_fn']))).sum()
-        if 'sec_fn' in params:
-            loss += LAMBDA*np.array(jax.tree_leaves(jax.tree_map(lambda x: np.sum(x**2), params['sec_fn']))).sum()
-
 
     return loss
 
