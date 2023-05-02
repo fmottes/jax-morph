@@ -12,21 +12,23 @@ def draw_circles_ctype(state, ax=None, cm=plt.cm.coolwarm, grid=False, **kwargs)
     
     if None == ax:
         ax = plt.axes()
+
+    alive_cells = state.celltype > 0
     
     #only usable for two cell types
-    color = cm(np.float32(state.celltype-1))
+    color = cm(np.float32(state.celltype-1)[alive_cells])
 
-    for cell,radius,c in zip(state.position,state.radius,color):
+    for cell,radius,c in zip(state.position[alive_cells],state.radius[alive_cells],color):
         circle = plt.Circle(cell, radius=radius, color=c, alpha=.5, **kwargs)
         ax.add_patch(circle)
     
     
     ## calculate ax limits
-    xmin = np.min(state.position[:,0])
-    xmax = np.max(state.position[:,0])
+    xmin = np.min(state.position[:,0][alive_cells])
+    xmax = np.max(state.position[:,0][alive_cells])
     
-    ymin = np.min(state.position[:,1])
-    ymax = np.max(state.position[:,1])
+    ymin = np.min(state.position[:,1][alive_cells])
+    ymax = np.max(state.position[:,1][alive_cells])
     
     max_coord = max([xmax,ymax])+3
     min_coord = min([xmin,ymin])-3
@@ -67,8 +69,10 @@ def draw_circles_chem(state, chem=0, colorbar=True, ax=None, cm=None, grid=False
     
     if None == ax:
         ax = plt.axes()
+
+    alive_cells = state.celltype > 0
     
-    chemical = np.float32(state.chemical[:,chem])    
+    chemical = state.chemical[:,chem][alive_cells]
     chemical = (chemical-chemical.min()+1e-20)/(chemical.max()-chemical.min()+1e-20)
         
     #only usable for two cell types
@@ -84,20 +88,20 @@ def draw_circles_chem(state, chem=0, colorbar=True, ax=None, cm=None, grid=False
         
     if edges:
         #only usable for two cell types
-        ct_color = cm_edges(np.float32(state.celltype-1))
+        ct_color = cm_edges(np.float32(state.celltype-1)[alive_cells])
 
-        for cell,radius,c,ctc in zip(state.position,state.radius,color,ct_color):
+        for cell,radius,c,ctc in zip(state.position[alive_cells],state.radius[alive_cells],color,ct_color):
             circle = plt.Circle(cell, radius=radius, fc=c, ec=ctc, lw=2, alpha=.5, **kwargs)
             ax.add_patch(circle)
             
     else:
-        for cell,radius,c in zip(state.position,state.radius,color):
+        for cell,radius,c in zip(state.position[alive_cells],state.radius[alive_cells],color):
             circle = plt.Circle(cell, radius=radius, fc=c, alpha=.5, **kwargs)
             ax.add_patch(circle)
 
     #show colorbar
     if colorbar:    
-        sm = plt.cm.ScalarMappable(cmap=cm, norm=plt.Normalize(vmin=state.chemical[:,chem].min(), vmax=state.chemical[:,chem].max()))
+        sm = plt.cm.ScalarMappable(cmap=cm, norm=plt.Normalize(vmin=state.chemical[:,chem][alive_cells].min(), vmax=state.chemical[:,chem][alive_cells].max()))
         sm._A = []
         cbar = plt.colorbar(sm, shrink=0.7, alpha=.5) # rule of thumb
         cbar.set_label('Concentration Chem. '+str(chem), labelpad=20)
@@ -105,11 +109,11 @@ def draw_circles_chem(state, chem=0, colorbar=True, ax=None, cm=None, grid=False
             
     
     ## calculate ax limits
-    xmin = np.min(state.position[:,0])
-    xmax = np.max(state.position[:,0])
+    xmin = np.min(state.position[:,0][alive_cells])
+    xmax = np.max(state.position[:,0][alive_cells])
     
-    ymin = np.min(state.position[:,1])
-    ymax = np.max(state.position[:,1])
+    ymin = np.min(state.position[:,1][alive_cells])
+    ymax = np.max(state.position[:,1][alive_cells])
     
     max_coord = max([xmax,ymax])+3
     min_coord = min([xmin,ymin])-3
@@ -152,22 +156,23 @@ def draw_circles_divrate(state, probability=False, colorbar=True, ax=None, cm=pl
     if None == ax:
         ax = plt.axes()
     
+    alive_cells = state.celltype > 0
 
-    divrate = np.float32(state.divrate)    
+    divrate = state.divrate[alive_cells]
     divrate = (divrate-divrate.min()+1e-20)/(divrate.max()-divrate.min()+1e-20)
         
     color = cm(divrate)
     
     if edges:
         #only usable for two cell types
-        ct_color = cm_edges(np.float32(state.celltype-1))
+        ct_color = cm_edges(np.float32(state.celltype-1)[alive_cells])
 
-        for cell,radius,c,ctc in zip(state.position,state.radius,color,ct_color):
+        for cell,radius,c,ctc in zip(state.position[alive_cells],state.radius[alive_cells],color,ct_color):
             circle = plt.Circle(cell, radius=radius, fc=c, ec=ctc, lw=2, alpha=.5, **kwargs)
             ax.add_patch(circle)
             
     else:
-        for cell,radius,c in zip(state.position,state.radius,color):
+        for cell,radius,c in zip(state.position[alive_cells],state.radius[alive_cells],color):
             circle = plt.Circle(cell, radius=radius, fc=c, alpha=.5, **kwargs)
             ax.add_patch(circle)
 
@@ -176,12 +181,12 @@ def draw_circles_divrate(state, probability=False, colorbar=True, ax=None, cm=pl
     #show colorbar
     if colorbar:    
         if probability:
-            divrate = state.divrate/(state.divrate.sum()+1e-20)
+            divrate = state.divrate[alive_cells]/(state.divrate[alive_cells].sum()+1e-20)
             sm = plt.cm.ScalarMappable(cmap=cm, norm=plt.Normalize(vmin=divrate.min(), vmax=divrate.max()))
             sm._A = []
             cbar_text = 'Division Probability'
         else:
-            sm = plt.cm.ScalarMappable(cmap=cm, norm=plt.Normalize(vmin=state.divrate.min(), vmax=state.divrate.max()))
+            sm = plt.cm.ScalarMappable(cmap=cm, norm=plt.Normalize(vmin=state.divrate[alive_cells].min(), vmax=state.divrate[alive_cells].max()))
             sm._A = []
             cbar_text = 'Division Propensity'
 
@@ -190,11 +195,11 @@ def draw_circles_divrate(state, probability=False, colorbar=True, ax=None, cm=pl
         cbar.set_label(cbar_text, labelpad=20)
     
     ## calculate ax limits
-    xmin = np.min(state.position[:,0])
-    xmax = np.max(state.position[:,0])
+    xmin = np.min(state.position[:,0][alive_cells])
+    xmax = np.max(state.position[:,0][alive_cells])
     
-    ymin = np.min(state.position[:,1])
-    ymax = np.max(state.position[:,1])
+    ymin = np.min(state.position[:,1][alive_cells])
+    ymax = np.max(state.position[:,1][alive_cells])
     
     max_coord = max([xmax,ymax])+3
     min_coord = min([xmin,ymin])-3
@@ -239,7 +244,10 @@ def draw_circles(state, state_values, min_val = None, max_val = None, min_coord=
     if None == ax:
         ax = plt.axes()
     
-    state_values = np.float32(state_values)    
+
+    alive_cells = state.celltype > 0
+
+    state_values = np.float32(state_values)[alive_cells]    
             
     if min_val == None:
         state_values = (state_values-state_values.min()+1e-20)/(state_values.max()-state_values.min()+1e-20)
@@ -248,17 +256,17 @@ def draw_circles(state, state_values, min_val = None, max_val = None, min_coord=
 
     #only usable for two cell types
     color = cm(state_values)
-    for cell,radius,c in zip(state.position,state.radius,color):
+    for cell,radius,c in zip(state.position[alive_cells],state.radius[alive_cells],color):
         circle = plt.Circle(cell, radius=radius, fc=c, alpha=.5, **kwargs)
         ax.add_patch(circle)
     
     
     ## calculate ax limits
-    xmin = np.min(state.position[:,0])
-    xmax = np.max(state.position[:,0])
+    xmin = np.min(state.position[:,0][alive_cells])
+    xmax = np.max(state.position[:,0][alive_cells])
     
-    ymin = np.min(state.position[:,1])
-    ymax = np.max(state.position[:,1])
+    ymin = np.min(state.position[:,1][alive_cells])
+    ymax = np.max(state.position[:,1][alive_cells])
     
     if min_coord == None:
         max_coord = max([xmax,ymax])+3
