@@ -79,11 +79,11 @@ def sec_nn(params,
         
         
         #mask secretions based on which ct secretes what
-        ctype_sec_chem = params['ctype_sec_chem']
+        ctype_sec_chem = np.vstack((np.zeros(params['n_chem']), params['ctype_sec_chem']))
         
         @vmap
         def sec_mask(ct):
-            return ctype_sec_chem[np.int16(ct-1)] #change if we switch to dead cells = -1
+            return ctype_sec_chem[np.int16(ct)] #change if we switch to dead cells = -1
         
         mask = sec_mask(state.celltype)
     
@@ -165,11 +165,11 @@ def sec_chem_logistic(state, params):
         
         
     #mask secretions based on which ct secretes what
-    ctype_sec_chem = params['ctype_sec_chem']
+    ctype_sec_chem = np.vstack((np.zeros(params['n_chem']), params['ctype_sec_chem']))
         
     @vmap
     def sec_mask(ct):
-        return ctype_sec_chem[ct-1] #change if we switch to dead cells = -1
+        return ctype_sec_chem[ct] #change if we switch to dead cells = -1
         
     mask = sec_mask(state.celltype)
     
