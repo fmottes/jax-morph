@@ -23,6 +23,7 @@ def reinforce_loss(params,
                    REINFORCE=True,
                    LAMBDA=0., #no regularization by default
                    GAMMA=.95,
+                   ncells_add=None
                    ):
     '''
     Reinforce loss on trajectory (with discounting). Rewards based on l2 loss on metric_fn.
@@ -34,6 +35,9 @@ def reinforce_loss(params,
     GAMMA is the discount factor for the calculation of the returns.
 
     '''
+
+    #simulation length
+    ncells_add = hyper_params['ncells_add'] if ncells_add is None else ncells_add
     
     def _sim_trajectory(istate, sim_init, sim_step, ncells_add, key=None):
 
@@ -54,10 +58,6 @@ def reinforce_loss(params,
 
     # merge params dicts
     all_params = eqx.combine(params, hyper_params)
-    
-    #simulation length
-    ncells_add = all_params['ncells_add']
-
 
     #forward pass - simulation
     sim_init, sim_step = simulation(fstep, all_params, fspace)
@@ -127,6 +127,7 @@ def l2_loss(params,
             sim_key=None,
             metric_fn=None,
             target_metric=0.,
+            ncells_add=None,
            ):
     '''
     DEPRECATED.
@@ -139,7 +140,7 @@ def l2_loss(params,
     all_params = eqx.combine(params, hyper_params)
     
     #simulation length
-    ncells_add = all_params['ncells_add']
+    ncells_add = hyper_params['ncells_add'] if ncells_add is None else ncells_add
 
     #forward pass - simulation
     sim_init, sim_step = simulation(fstep, all_params, fspace)
