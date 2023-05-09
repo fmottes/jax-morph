@@ -7,6 +7,12 @@ import haiku as hk
 import equinox as eqx
 
 
+def _standardize(x):
+    #numpy std spits errors when taking gradients
+    m = np.mean(x)
+    std = np.sqrt(np.mean((x - m)**2)+1e-10)
+    return (x - m) / std  #, axis=1, keepdims=True
+
 
 def hidden_state_nn(params, 
            train_params=None, 
@@ -30,6 +36,7 @@ def hidden_state_nn(params,
                           activation=jax.nn.leaky_relu,
                           activate_final=False
                          )
+        
         out = mlp(in_fields)
         out = transform_mlp_out(out)
 
@@ -66,10 +73,11 @@ def hidden_state_nn(params,
             
         
         
-    def fwd(state, params):
-        
+    def fwd(state, params):        
+
         in_fields = np.hstack([f if len(f.shape)>1 else f[:,np.newaxis] for f in jax.tree_leaves(eqx.filter(state, use_state_fields))])
-        
+        #in_fields = standardize(in_fields)
+
         delta_hidden_state = _hidden_nn.apply(params['hidden_fn'], in_fields)
     
         return delta_hidden_state
@@ -81,21 +89,25 @@ def hidden_state_nn(params,
 
 
 # STATE UPDATE FUNCTION
-def S_hidden_state(state, params, fspace=None, dhidden_fn=None, state_decay=.8):
+def S_hidden_state(state, params, fspace=None, dhidden_fn=None, state_decay=.9):
     
     if None == dhidden_fn:
         raise(ValueError('Need to pass a valid function for the calculation of the new hidden state.'))
 
-    regulation = state_decay*state.regulation + dhidden_fn(state, params)
-    #regulation = regulation / np.sum(np.abs(regulation), axis=1, keepdims=True)
+    #regulation = state_decay*state.regulation + dhidden_fn(state, params)
+    #regulation = regulation / np.sum(np.abs(regulation), axis=1, keepdims=True) 
 
-
-    hidden_state = jax.nn.softplus(regulation)
+    # regulation = dhidden_fn(state, params)
+    # hidden_state = jax.nn.sigmoid(regulation)
         
     # normalize hidden state
     #hidden_state = hidden_state / np.sum(np.abs(hidden_state), axis=1, keepdims=True)
 
-    
-    state = jdc.replace(state, regulation=regulation, hidden_state=hidden_state)
+    # state = jdc.replace(state, regulation=regulation, hidden_state=hidden_state)
+
+
+    hidden_state = dhidden_fn(state, params)
+
+    state = jdc.replace(state, hidden_state=hidden_state)
     
     return state
