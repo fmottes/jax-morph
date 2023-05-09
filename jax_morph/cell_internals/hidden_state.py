@@ -13,6 +13,9 @@ def _standardize(x):
     std = np.sqrt(np.mean((x - m)**2)+1e-10)
     return (x - m) / std  #, axis=1, keepdims=True
 
+def _normalize(x):
+    return x / (np.sqrt(np.sum(x**2, axis=1, keepdims=True))+1e-10)
+
 
 def hidden_state_nn(params, 
            train_params=None, 
@@ -73,9 +76,10 @@ def hidden_state_nn(params,
             
         
         
-    def fwd(state, params):        
+    def fwd(state, params):    
 
         in_fields = np.hstack([f if len(f.shape)>1 else f[:,np.newaxis] for f in jax.tree_leaves(eqx.filter(state, use_state_fields))])
+        #in_fields = np.hstack([_normalize(f) if len(f.shape)>1 else _normalize(f[:,np.newaxis]) for f in jax.tree_leaves(eqx.filter(state, use_state_fields))])
         #in_fields = standardize(in_fields)
 
         delta_hidden_state = _hidden_nn.apply(params['hidden_fn'], in_fields)
