@@ -72,13 +72,37 @@ def _generate_morse_params_onetype(state, params):
 
 
 
+def build_morse_energy(state, params, fspace, morse_eps_sigma='onetype'):
+    '''
+    Build the Morse energy function for the current state and parameters. 
+    '''
+
+    if morse_eps_sigma == 'onetype':
+        morse_eps_sigma = _generate_morse_params_onetype
+    elif morse_eps_sigma == 'twotypes':
+        morse_eps_sigma = _generate_morse_params_twotypes
+    #else:
+    # it is assumed that morse_eps_sigma is a function that returns the epsilon and sigma matrices
+
+    epsilon_matrix, sigma_matrix = morse_eps_sigma(state, params)
+
+    energy_morse = energy.morse_pair(fspace.displacement,
+                                     alpha=params['alpha'],
+                                     epsilon=epsilon_matrix,
+                                     sigma=sigma_matrix, 
+                                     r_onset=params['r_onset'], 
+                                     r_cutoff=params['r_cutoff'])
+
+    return energy_morse
+
+
 
 ##############################################################
 # STATE UPDATES
 ##############################################################
 
 
-def S_mech_morse_relax(state, params, fspace, dt=.001, morse_eps_sigma='onetype'):
+def S_mech_morse_relax(state, params, fspace, dt=.001, morse_eps_sigma='onetype', n_steps=None):
     '''
     Minimize mechanical energy with SGD. 
     Energy is given by the Morse potential with parameters calculated for the two-celltypes case.
@@ -89,6 +113,9 @@ def S_mech_morse_relax(state, params, fspace, dt=.001, morse_eps_sigma='onetype'
       function: a function that returns the epsilon and sigma matrices
 
     '''
+
+    n_steps = n_steps if n_steps is not None else params['mech_relaxation_steps']
+
     
     if morse_eps_sigma == 'onetype':
         morse_eps_sigma = _generate_morse_params_onetype
@@ -107,8 +134,6 @@ def S_mech_morse_relax(state, params, fspace, dt=.001, morse_eps_sigma='onetype'
                                      r_onset=params['r_onset'], 
                                      r_cutoff=params['r_cutoff'])
     
-    
-    n_steps = params['mech_relaxation_steps']
     
     new_position = mechmin_sgd(energy_morse, 
                                state.position, 
