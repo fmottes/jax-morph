@@ -26,7 +26,7 @@ def _generate_morse_params_twotypes(state, params):
 
     #minimum energy when the two cells barely touch
     #minimum of the well is (approx) at the sum of the two radii
-    radii = np.array([state.radius]) 
+    radii = np.array([state.radius-params['cellRad']*.02]) 
     sigma_matrix = radii+radii.T
 
     #calculate epsilon (well depth) for each pair based on type
@@ -59,7 +59,7 @@ def _generate_morse_params_onetype(state, params):
 
     #minimum energy when the two cells barely touch
     #minimum of the well is (approx) at the sum of the two radii
-    radii = np.array([state.radius]) 
+    radii = np.array([state.radius-params['cellRad']*.02]) 
     sigma_matrix = radii+radii.T
 
     #calculate epsilon (well depth) for each pair based on type
