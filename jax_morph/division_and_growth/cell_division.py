@@ -147,8 +147,13 @@ def S_cell_div_indep(state, params, fspace=None):#, ST_grad=False):
 
     log_p = np.sum(np.log(np.where(dividing_cells, state.divrate, 1-state.divrate)))
 
-    for i in np.arange(state.celltype.shape[0]):
+    def _step(state, i):
         state = jax.lax.cond(dividing_cells[i], _divide, _no_division, (state, i))
+        return state, 0.
+    
+    iters = np.arange(state.celltype.shape[0])
+
+    state, _ = jax.lax.scan(_step, state, iters)
 
     
     return state, log_p
