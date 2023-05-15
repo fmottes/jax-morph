@@ -80,7 +80,7 @@ def simulation(fstep, params, fspace):
 
 
 
-def sim_trajectory(istate, sim_init, sim_step, ncells_add=100, key=None, history=False):
+def sim_trajectory(istate, sim_init, sim_step, n_steps=100, init_mutiplier=1., key=None, history=False):
     '''
     Runs a simulation trajectory for a given number of steps.
     The number of simulation steps is inferred from the size of the state datastructures before and after initialization.
@@ -96,6 +96,13 @@ def sim_trajectory(istate, sim_init, sim_step, ncells_add=100, key=None, history
             
     sim_step : Callable
             Function performing one simulation step (created by the simulation.simulation function).
+
+    n_steps : int
+            Number of simulation steps to perform.
+
+    init_mutiplier : float
+            Multiplier for memory allocation during initialization.
+            init_mutiplier=1. if only one cell division is expected at each step.
             
     key : PRNGKey
             Key for the JAX RNG. If None (default) consumes and repalces the key stored in istate.
@@ -117,7 +124,7 @@ def sim_trajectory(istate, sim_init, sim_step, ncells_add=100, key=None, history
     
     '''
         
-    state = sim_init(istate, ncells_add, key)
+    state = sim_init(istate, int(n_steps*init_mutiplier), key)
     
     if history:
         def scan_fn(state, i):
@@ -130,8 +137,7 @@ def sim_trajectory(istate, sim_init, sim_step, ncells_add=100, key=None, history
             return state, logp
     
     
-    iterations = len(state.celltype)-len(istate.celltype)
-    iterations = np.arange(iterations)
+    iterations = np.arange(int(n_steps))
     fstate, aux = lax.scan(scan_fn, state, iterations)
     
     return fstate, aux
