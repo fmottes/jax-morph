@@ -109,7 +109,7 @@ def draw_circles_chem(state, chem=0, ax=None, cm=None, edges=False, cm_edges=plt
     ax.get_yaxis().set_visible(False)
         
     plt.gcf().patch.set_facecolor(background_color)
-    plt.gcf().set_size_inches(6, 6)
+    #plt.gcf().set_size_inches(6, 6)
     
     plt.tight_layout()
     
@@ -213,7 +213,7 @@ def draw_circles(state, state_values, min_val = None, max_val = None, min_coord=
     ax.get_yaxis().set_visible(False)
         
     #plt.gcf().patch.set_facecolor(background_color)
-    #plt.gcf().set_size_inches(6, 6)
+    plt.gcf().set_size_inches(6, 6)
     
     #plt.tight_layout()
     
