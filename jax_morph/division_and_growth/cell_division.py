@@ -87,9 +87,7 @@ def S_cell_division(state, params, fspace=None):#, ST_grad=False):
 
 
 def S_cell_div_indep(state, params, fspace=None):#, ST_grad=False):
-    '''
-    Performs one cell division with probability proportional to the current state divrates.
-    '''
+    
 
     def _divide(args):
 
@@ -156,4 +154,98 @@ def S_cell_div_indep(state, params, fspace=None):#, ST_grad=False):
     state, _ = jax.lax.scan(_step, state, iters)
 
     
+    return state, log_p
+
+
+
+
+
+def S_cell_div_indep_MC(state, params, fspace=None):#, ST_grad=False):
+
+
+    def _divide(args):
+
+        state, idx_dividing_cell = args
+    
+        cellRadBirth = params['cellRadBirth'] #easier to reuse
+        
+        idx_new_cell = np.count_nonzero(state.celltype)
+        
+        ### POSITION OF NEW CELLS
+        #note that cell positions will be symmetric so max is pi
+
+        key, subkey_place = random.split(state.key)
+
+        angle = random.uniform(subkey_place, minval=0., maxval=np.pi, dtype=np.float32)
+
+        first_cell = np.array([np.cos(angle),np.sin(angle)])
+        second_cell = np.array([-np.cos(angle),-np.sin(angle)])
+        
+        pos1 = state.position[idx_dividing_cell] + cellRadBirth*first_cell
+        pos2 = state.position[idx_dividing_cell] + cellRadBirth*second_cell
+        
+        
+        new_fields = {}
+        for field in jdc.fields(state):
+
+            value = getattr(state, field.name)
+
+            if 'position' == field.name:
+                new_fields[field.name] = value.at[idx_dividing_cell].set(pos1).at[idx_new_cell].set(pos2)
+            elif 'radius' == field.name:
+                new_fields[field.name] = value.at[idx_dividing_cell].set(cellRadBirth).at[idx_new_cell].set(cellRadBirth)
+            elif 'key' == field.name:
+                new_fields[field.name] = key
+            else:
+                new_fields[field.name] = value.at[idx_new_cell].set(value[idx_dividing_cell])
+
+        new_state = type(state)(**new_fields)
+        
+        return new_state
+    
+    
+    def _no_division(args):
+        state, _ = args
+        return state
+    
+
+    #split key
+    key, subkey = random.split(state.key)
+    rnd_idx = random.shuffle(subkey, np.arange(state.celltype.shape[0]))
+
+    key, subkey = random.split(state.key)
+    dividing_cells = random.uniform(subkey, (state.celltype.shape)) < state.divrate
+
+
+    def _step(arg):
+        state, i, _ = arg
+
+        idx = rnd_idx[i]
+
+        divide = dividing_cells[idx]
+
+        state = jax.lax.cond(divide, _divide, _no_division, (state, idx))
+
+        i += 1
+
+        return state, i, divide
+    
+
+    def _cond(arg):
+
+        _, i, divided = arg
+
+        not_divided = np.logical_not(divided)
+        no_overflow = i <= state.celltype.shape[0]
+
+        return np.logical_and(not_divided, no_overflow) 
+
+
+
+    state, i, _ = jax.lax.while_loop(_cond, _step, (state, 0, False))
+
+    log_p = np.log(state.divrate[rnd_idx[i]])
+    state = jdc.replace(state, key=key)
+
+
     return state, log_p
