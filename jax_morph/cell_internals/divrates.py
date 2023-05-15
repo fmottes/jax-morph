@@ -29,6 +29,7 @@ def div_nn(params,
            n_hidden=3,
            use_state_fields=None,
            train=True,
+           transform_mlp_out=jax.nn.softplus,
           ):
     
     if use_state_fields is None:
@@ -36,17 +37,20 @@ def div_nn(params,
     
     if type(n_hidden) == np.int_ or type(n_hidden) == int:
         n_hidden = [int(n_hidden)]
-    
 
+    if transform_mlp_out is None:
+        transform_mlp_out = lambda x: x
+    
     
     def _div_nn(in_fields):
         mlp = hk.nets.MLP(n_hidden+[1],
                           activation=jax.nn.leaky_relu,
                           activate_final=False
                          )
-        out = jax.nn.softplus(mlp(in_fields))
-        #out = jax.nn.sigmoid(mlp(in_fields))
-        out = np.exp(-out)
+        
+        out = mlp(in_fields)
+        out = transform_mlp_out(out)
+
         return out
 
     _div_nn = hk.without_apply_rng(hk.transform(_div_nn))

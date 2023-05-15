@@ -2,11 +2,11 @@ import jax.numpy as np
 from jax import jit, lax, vmap
 
 from jax_md import space, energy
-import jax_md.dataclasses as jax_dataclasses
+import jax_md.dataclasses as jdc
 
 
 
-def diffuse_onechem(r,secRate,degRate,diffCoeff):
+def diffuse_onechem_ss(r,secRate,degRate,diffCoeff):
     '''
     NOTE: it is assumed that r is a pairwise distance
     '''
@@ -15,9 +15,9 @@ def diffuse_onechem(r,secRate,degRate,diffCoeff):
     return diff
 
 
-def diffuse_allchem(secretions, state, params, fspace):
+def diffuse_allchem_ss(secretions, state, params, fspace):
 
-    diff = energy.multiplicative_isotropic_cutoff(diffuse_onechem,
+    diff = energy.multiplicative_isotropic_cutoff(diffuse_onechem_ss,
                                                   r_onset = params['r_onsetDiff'],
                                                   r_cutoff = params['r_cutoffDiff'])
     
@@ -29,9 +29,9 @@ def diffuse_allchem(secretions, state, params, fspace):
     
     # loop over all chemicals (vmap in future)
     new_chem = []
-    for i in np.arange(params['n_chem']):
+    for i in np.arange(secretions.shape[1]):
         
-        c = diffuse_onechem(dist,
+        c = diffuse_onechem_ss(dist,
                             secretions[:,i],
                             params['degRate'][i],
                             params['diffCoeff'][i])
@@ -49,10 +49,10 @@ def diffuse_allchem(secretions, state, params, fspace):
     return new_chem
 
 
-def S_chem_diffusion(state, params, fspace=None, **kwargs):
+def S_chem_diffusion(state, params, fspace=None, diffusion_fn=diffuse_allchem_ss):
     
-    new_chemical = diffuse_allchem(state.chemical, state, params, fspace)
+    new_chemical = diffusion_fn(state.chemical, state, params, fspace)
     
-    new_state = jax_dataclasses.replace(state, chemical=new_chemical)
+    new_state = jdc.replace(state, chemical=new_chemical)
     
     return new_state
