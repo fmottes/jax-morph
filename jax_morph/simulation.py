@@ -80,7 +80,7 @@ def simulation(fstep, params, fspace):
 
 
 
-def sim_trajectory(istate, sim_init, sim_step, n_steps=100, init_mutiplier=1., key=None, history=False):
+def sim_trajectory(istate, sim_init, sim_step, n_steps=100, key=None, history=False, init_mutiplier=1., ncells_add=None):
     '''
     Runs a simulation trajectory for a given number of steps.
     The number of simulation steps is inferred from the size of the state datastructures before and after initialization.
@@ -109,6 +109,10 @@ def sim_trajectory(istate, sim_init, sim_step, n_steps=100, init_mutiplier=1., k
             
     history : bool
             Whether to return all of the intermediate states in the simulations in addition to the log probabilities of cell divisions.
+
+    n_cells_add : int
+            Number of cells to add to the simulation.
+            Same as n_steps, just there for backward compatibility.
             
             
     Returns
@@ -123,6 +127,10 @@ def sim_trajectory(istate, sim_init, sim_step, n_steps=100, init_mutiplier=1., k
             If history=True each entry is a tuple (state_t, logp_t) for all the steps in the simulation.
     
     '''
+
+    if ncells_add is not None:
+        n_steps = ncells_add
+
         
     state = sim_init(istate, int(n_steps*init_mutiplier), key)
     
