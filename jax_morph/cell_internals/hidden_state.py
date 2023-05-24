@@ -6,6 +6,7 @@ import jax_md.dataclasses as jdc
 import haiku as hk
 import equinox as eqx
 
+from jax_morph.utils import differentiable_clip
 
 def _standardize(x):
     #numpy std spits errors when taking gradients
@@ -37,6 +38,7 @@ def hidden_state_nn(params,
     def _hidden_nn(in_fields):
         mlp = hk.nets.MLP(n_hidden+[params['hidden_state_size']],
                           activation=jax.nn.leaky_relu,
+                          w_init=hk.initializers.Orthogonal(),
                           activate_final=False
                          )
         
@@ -93,7 +95,7 @@ def hidden_state_nn(params,
 
 
 # STATE UPDATE FUNCTION
-def S_hidden_state(state, params, fspace=None, dhidden_fn=None, state_decay=.9):
+def S_hidden_state(state, params, fspace=None, dhidden_fn=None, state_decay=.8):
     
     if None == dhidden_fn:
         raise(ValueError('Need to pass a valid function for the calculation of the new hidden state.'))
@@ -111,6 +113,10 @@ def S_hidden_state(state, params, fspace=None, dhidden_fn=None, state_decay=.9):
 
 
     hidden_state = dhidden_fn(state, params)
+
+    # hidden_state = state_decay*state.hidden_state + dhidden_fn(state, params)
+
+    # hidden_state = differentiable_clip(hidden_state, -1e2, 1e2)
 
     state = jdc.replace(state, hidden_state=hidden_state)
     
