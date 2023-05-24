@@ -28,6 +28,6 @@ def S_fixed_chemfield(istate,
   chemfield_disp = np.linalg.norm(chemfield_disp, axis=1)
   # TODO: Write these out as params
   chemfield = params["chem_max"]/(params["chem_k"] + params["chem_gamma"]*np.power(chemfield_disp, 2.0))
-  chemfield = np.where(istate.celltype > 0, chemfield, 0.0) + noise*random.normal(istate.key, chemfield.shape)
+  chemfield = np.where(istate.celltype > 0, chemfield, 0.0) #+ noise*random.normal(istate.key, chemfield.shape)
   istate = jax_dataclasses.replace(istate, field=chemfield)
   return istate

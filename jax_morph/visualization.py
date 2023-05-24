@@ -275,23 +275,6 @@ def draw_circles(state, state_values, min_val = None, max_val = None, min_coord=
     ax.set_xlim(min_coord,max_coord)
     ax.set_ylim(min_coord,max_coord)
     
-<<<<<<< HEAD
-    ax.set_xticks([])
-    ax.set_yticks([])
-    
-    background_color = [56 / 256] * 3
-    #ax.set_facecolor(background_color)    
-    
-    ax.get_xaxis().set_visible(False)
-    ax.get_yaxis().set_visible(False)
-        
-    #plt.gcf().patch.set_facecolor(background_color)
-    plt.gcf().set_size_inches(6, 6)
-    
-    #plt.tight_layout()
-    
-    return ax
-=======
     
     #scale x and y in the same way
     ax.set_aspect('equal', adjustable='box')
@@ -319,4 +302,3 @@ def draw_circles(state, state_values, min_val = None, max_val = None, min_coord=
     plt.gcf().set_size_inches(8, 8)
 
     return plt.gcf(), ax
->>>>>>> dce5b668c2ef3576e0623d94278ae2aae17ef57e

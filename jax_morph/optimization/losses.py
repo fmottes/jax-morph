@@ -81,7 +81,8 @@ def reinforce_loss(params,
         #discount rewards
         returns = _returns_rec(rewards)
         
-        loss = -np.sum(logp*jax.lax.stop_gradient(returns))
+        #loss = -np.sum(logp*jax.lax.stop_gradient(returns))
+        loss = np.sum(logp*jax.lax.stop_gradient(returns))
 
         # possibly L2-regularize NN weights
         if LAMBDA > 0.:
