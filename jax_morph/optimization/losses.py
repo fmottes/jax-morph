@@ -6,6 +6,95 @@ import equinox as eqx
 from ..simulation import simulation, sim_trajectory
 
 
+##########################################################################
+
+
+@eqx.filter_jit
+@eqx.filter_vmap(default=None, kwargs=dict(sim_key=0))
+def loss(params, 
+         hyper_params,
+         fstep,
+         fspace,
+         istate,
+         sim_key=None,
+         metric_fn=None,
+         metric_type='reward',
+         REINFORCE=True,
+         GAMMA=.99,
+         ncells_add=None
+         ):
+    '''
+    Reinforce loss on trajectory (with discounting). Rewards are differences in successive state metrics.
+
+    If REINFORCE=False, then the loss is just the state measure on the final state.
+
+    GAMMA is the discount factor for the calculation of the returns.
+
+    If metric_type='reward', it is maximized, if metric_type='cost', it is minimized.
+
+    '''
+
+    #simulation length
+    ncells_add = hyper_params['ncells_add'] if ncells_add is None else ncells_add
+    
+    def _sim_trajectory(istate, sim_init, sim_step, ncells_add, key=None):
+
+        state = sim_init(istate, ncells_add, key)
+
+        def scan_fn(state, i):
+            state, logp = sim_step(state)
+            measure = metric_fn(state)
+            return state, (logp, measure)
+
+
+        iterations = np.arange(ncells_add)
+        fstate, aux = jax.lax.scan(scan_fn, state, iterations)
+
+        return fstate, aux
+
+    # merge params dicts
+    all_params = eqx.combine(params, hyper_params)
+
+    #forward pass - simulation
+    sim_init, sim_step = simulation(fstep, all_params, fspace)
+    _, (logp, measures) = _sim_trajectory(istate, sim_init, sim_step, ncells_add, sim_key)
+
+    
+    if REINFORCE:
+        
+        def _returns_rec(rewards):
+            Gs=[]
+            G=0
+            for r in rewards[::-1]:
+                G = r+G*GAMMA
+                Gs.append(G)
+
+            return np.array(Gs)[::-1]
+        
+        
+        measures = np.append(np.array([metric_fn(istate)]),measures)
+        
+        if metric_type=='reward':
+            rewards = np.diff(measures)
+        elif metric_type=='cost':
+            rewards = -np.diff(measures)
+
+
+        returns = _returns_rec(rewards)
+
+        # standardizing returns helps with convergence
+        returns = (returns-returns.mean())/(returns.std()+1e-8)
+
+        loss = -np.sum(logp*jax.lax.stop_gradient(returns))
+
+        return loss
+
+    else:
+        return measures[-1]
+
+
+
+
 
 ##########################################################################
 # (REINFORCE LOSS ON TRAJECTORY | L2 LOSS ON FINAL STATE) + REGULARIZATION
