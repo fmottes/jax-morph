@@ -65,7 +65,7 @@ def draw_circles_ctype(state, ax=None, cm=plt.cm.coolwarm, grid=False, **kwargs)
     return plt.gcf(), ax
 
 
-def draw_circles_chem(state, chem=0, colorbar=True, ax=None, cm=None, grid=False, edges=False, cm_edges=plt.cm.coolwarm, **kwargs):
+def draw_circles_chem(state, chem=0, colorbar=True, ax=None, cm=None, grid=False, labels=False, edges=False, cm_edges=plt.cm.coolwarm, **kwargs):
     
     if None == ax:
         ax = plt.axes()
@@ -95,9 +95,11 @@ def draw_circles_chem(state, chem=0, colorbar=True, ax=None, cm=None, grid=False
             ax.add_patch(circle)
             
     else:
-        for cell,radius,c in zip(state.position[alive_cells],state.radius[alive_cells],color):
+        for i, (cell,radius,c) in enumerate(zip(state.position[alive_cells],state.radius[alive_cells],color)):
             circle = plt.Circle(cell, radius=radius, fc=c, alpha=.5, **kwargs)
             ax.add_patch(circle)
+            if labels:
+                ax.text(*cell, str(i), horizontalalignment='center', verticalalignment='center')
 
     #show colorbar
     if colorbar:    
@@ -151,7 +153,7 @@ def draw_circles_chem(state, chem=0, colorbar=True, ax=None, cm=None, grid=False
 
 
     
-def draw_circles_divrate(state, probability=False, colorbar=True, ax=None, cm=plt.cm.coolwarm, grid=False, edges=False, cm_edges=plt.cm.coolwarm, **kwargs):
+def draw_circles_divrate(state, probability=False, colorbar=True, ax=None, cm=plt.cm.coolwarm, grid=False, labels=False, edges=False, cm_edges=plt.cm.coolwarm, **kwargs):
     
     if None == ax:
         ax = plt.axes()
@@ -172,9 +174,13 @@ def draw_circles_divrate(state, probability=False, colorbar=True, ax=None, cm=pl
             ax.add_patch(circle)
             
     else:
-        for cell,radius,c in zip(state.position[alive_cells],state.radius[alive_cells],color):
+        # 
+        for i,(cell,radius,c) in enumerate(zip(state.position[alive_cells],state.radius[alive_cells],color)):
             circle = plt.Circle(cell, radius=radius, fc=c, alpha=.5, **kwargs)
             ax.add_patch(circle)
+            if labels:
+                ax.text(*cell, str(i), horizontalalignment='center', verticalalignment='center')
+
 
 
     

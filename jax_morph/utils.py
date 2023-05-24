@@ -1,4 +1,4 @@
-from jax import custom_jvp
+import jax
 import jax.numpy as np
 
 
@@ -20,11 +20,16 @@ def polynomial(x, coeffs):
     return np.polyval(coeffs, x)
 
 
+def differentiable_clip(x, min=0., max=1.):
+    zero = x - jax.lax.stop_gradient(x)
+    return zero + jax.lax.stop_gradient(np.clip(x, min, max))
+
+
 ################################################
 # Straight-Through Estimator for integer casting
 ################################################
 
-@custom_jvp
+@jax.custom_jvp
 def to_int(x):
     return np.int32(x)
 
