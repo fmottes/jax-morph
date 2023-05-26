@@ -79,12 +79,14 @@ def div_combined(state, params, fspace, **kwargs) -> np.array:
 
 # GENERATE DIVISION FUNCTION WITH NEURAL NETWORK
 
-def div_nn_setup(in_fields, n_hidden):
+def div_nn_setup(in_fields, n_hidden, train=False):
     mlp = hk.nets.MLP([n_hidden,1],
                         activation=nn.leaky_relu,
-                        activate_final=False
-                        )
-    out = nn.sigmoid(mlp(in_fields))
+                        activate_final=False)
+    out = mlp(in_fields)
+    if train:
+        out = hk.dropout(hk.next_rng_key(), 0.0, out)
+    out = nn.sigmoid(out)
     return out
 
 
@@ -95,13 +97,12 @@ def div_nn(params,
            use_state_fields=CellState(*tuple([False]*3+[True, False]+[False, True, False])),
            train=True,
           ):
-    
     assert type(n_hidden) == np.int_ or type(n_hidden) == int
-    _div_nn = hk.without_apply_rng(hk.transform(div_nn_setup))
+    _div_nn = hk.transform(div_nn_setup)
     def init(state, key):
         in_fields = np.hstack([f if len(f.shape)>1 else f[:,np.newaxis] for f in tree_leaves(eqx.filter(state, use_state_fields))])
         input_dim = in_fields.shape[1]
-        p = _div_nn.init(key, np.zeros(input_dim), n_hidden)
+        p = _div_nn.init(key, np.zeros(input_dim), n_hidden, train)
         
         #add to param dict
         params['div_fn'] = p
@@ -118,11 +119,11 @@ def div_nn(params,
             
         
         
-    def fwd(state, params):
+    def fwd(state, params, key):
         
         in_fields = np.hstack([f if len(f.shape)>1 else f[:,np.newaxis] for f in tree_leaves(eqx.filter(state, use_state_fields))])
         
-        x = _div_nn.apply(params['div_fn'], in_fields, n_hidden).flatten()
+        x = _div_nn.apply(params['div_fn'], key, in_fields, n_hidden, train).flatten()
         x = x*logistic(state.field, 0.1, 25.0)
         divrate = x*logistic(state.radius+.06, 50, params['cellRad'])
         
@@ -136,7 +137,7 @@ def div_nn(params,
 
 def S_set_divrate(state, params, fspace, divrate_fn=div_mechanical,**kwargs):
     """ Sets divrates."""
-    divrate = divrate_fn(state, params, fspace, **kwargs)
+    divrate = divrate_fn(state, params, state.key)
     new_state = dataclasses.replace(state, divrate=divrate)
     
     return new_state

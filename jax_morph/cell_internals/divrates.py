@@ -30,6 +30,7 @@ def div_nn(params,
            use_state_fields=None,
            train=True,
            transform_mlp_out=jax.nn.softplus,
+           transform_fwd=None,
           ):
     
     if use_state_fields is None:
@@ -40,7 +41,9 @@ def div_nn(params,
 
     if transform_mlp_out is None:
         transform_mlp_out = lambda x: x
-    
+        
+    if transform_fwd is None:
+        transform_fwd = lambda state,divrate: divrate
     
     def _div_nn(in_fields):
         mlp = hk.nets.MLP(n_hidden+[1],
@@ -90,7 +93,7 @@ def div_nn(params,
         x = _div_nn.apply(params['div_fn'], in_fields).flatten()
         
         divrate = x*logistic(state.radius+.06, 50, params['cellRad'])
-        
+        divrate = transform_fwd(state, divrate)
         divrate = np.where(state.celltype<1.,0,divrate)
     
         return divrate
