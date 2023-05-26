@@ -6,6 +6,7 @@ import jax_md.dataclasses as jdc
 import haiku as hk
 import equinox as eqx
 
+from jax_morph.utils import differentiable_clip
 
 def _standardize(x):
     #numpy std spits errors when taking gradients
@@ -37,6 +38,7 @@ def hidden_state_nn(params,
     def _hidden_nn(in_fields):
         mlp = hk.nets.MLP(n_hidden+[params['hidden_state_size']],
                           activation=jax.nn.leaky_relu,
+                          w_init=hk.initializers.Orthogonal(),
                           activate_final=False
                          )
         
@@ -80,7 +82,7 @@ def hidden_state_nn(params,
 
         in_fields = np.hstack([f if len(f.shape)>1 else f[:,np.newaxis] for f in jax.tree_leaves(eqx.filter(state, use_state_fields))])
         #in_fields = np.hstack([_normalize(f) if len(f.shape)>1 else _normalize(f[:,np.newaxis]) for f in jax.tree_leaves(eqx.filter(state, use_state_fields))])
-        #in_fields = standardize(in_fields)
+        #in_fields = _standardize(in_fields)
 
         delta_hidden_state = _hidden_nn.apply(params['hidden_fn'], in_fields)
     
@@ -93,7 +95,7 @@ def hidden_state_nn(params,
 
 
 # STATE UPDATE FUNCTION
-def S_hidden_state(state, params, fspace=None, dhidden_fn=None, state_decay=.9):
+def S_hidden_state(state, params, fspace=None, dhidden_fn=None, state_decay=.8):
     
     if None == dhidden_fn:
         raise(ValueError('Need to pass a valid function for the calculation of the new hidden state.'))
@@ -110,7 +112,12 @@ def S_hidden_state(state, params, fspace=None, dhidden_fn=None, state_decay=.9):
     # state = jdc.replace(state, regulation=regulation, hidden_state=hidden_state)
 
 
-    hidden_state = dhidden_fn(state, params)
+    if state_decay > 0.:
+        hidden_state = state_decay*state.hidden_state + (1-state_decay)*dhidden_fn(state, params)  #(1-state_decay)*dhidden_fn(state, params)
+    else:
+        hidden_state = dhidden_fn(state, params)
+
+    hidden_state = differentiable_clip(hidden_state, -1e2, 1e2)
 
     state = jdc.replace(state, hidden_state=hidden_state)
     

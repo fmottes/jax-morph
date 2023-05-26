@@ -63,7 +63,7 @@ def _generate_morse_params_onetype(state, params):
     sigma_matrix = radii+radii.T
 
     #calculate epsilon (well depth) for each pair based on type
-    celltypeOne = np.array([np.where(state.celltype==1,1,0)]) 
+    celltypeOne = np.array([np.where(state.celltype>0,1,0)]) 
 
 
     epsilon_matrix = np.outer(celltypeOne , celltypeOne)*epsilon_OneOne
