@@ -16,6 +16,8 @@ def sec_nn(params,
            n_hidden=3,
            use_state_fields=None,
            train=True,
+           w_init=None,
+           with_bias=True,
            transform_mlp_out=jax.nn.sigmoid,
           ):
     
@@ -31,6 +33,8 @@ def sec_nn(params,
     def _sec_nn(in_fields):
         mlp = hk.nets.MLP(n_hidden+[params['n_chem']],
                           activation=jax.nn.leaky_relu,
+                          w_init=w_init,
+                          with_bias=with_bias,
                           activate_final=False
                          )
         
