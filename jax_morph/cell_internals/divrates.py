@@ -29,6 +29,8 @@ def div_nn(params,
            n_hidden=3,
            use_state_fields=None,
            train=True,
+           w_init=None,
+           with_bias=True,
            transform_mlp_out=jax.nn.softplus,
            transform_fwd=None,
            w_init=None
@@ -49,8 +51,9 @@ def div_nn(params,
     def _div_nn(in_fields, w_init=None):
         mlp = hk.nets.MLP(n_hidden+[1],
                           activation=jax.nn.leaky_relu,
-                          activate_final=False,
-                          w_init=None,
+                          w_init=w_init,
+                          with_bias=with_bias,
+                          activate_final=False
                          )
         
         out = mlp(in_fields)

@@ -23,6 +23,8 @@ def hidden_state_nn(params,
            n_hidden=3,
            use_state_fields=None,
            train=True,
+           w_init=None,
+           with_bias=True,
            transform_mlp_out=None,
           ):
     
@@ -38,7 +40,8 @@ def hidden_state_nn(params,
     def _hidden_nn(in_fields):
         mlp = hk.nets.MLP(n_hidden+[params['hidden_state_size']],
                           activation=jax.nn.leaky_relu,
-                          w_init=hk.initializers.Orthogonal(),
+                          w_init=w_init,
+                          with_bias=with_bias,
                           activate_final=False
                          )
         
