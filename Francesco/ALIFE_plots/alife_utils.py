@@ -442,10 +442,11 @@ def train(key,
             # surrogate loss and grads
             ll, grads = value_and_grad(avg_loss)(p, hp, train_loss, batch_subkeys, fstep=fstep, fspace=fspace, istate=istate)
 
+            loss_t += [float(l)]
+
 
             #store
             if t%save_every==0:
-                loss_t += [float(l)]
                 params_t += [p]
                 if save_grads:
                     grads_t += [grads]
