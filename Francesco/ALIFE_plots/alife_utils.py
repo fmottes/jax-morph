@@ -446,10 +446,16 @@ def train(key,
 
 
             #store
-            if t%save_every==0:
+            if t == EPOCHS-1:
                 params_t += [p]
                 if save_grads:
                     grads_t += [grads]
+                    
+            elif t%save_every==0:
+                params_t += [p]
+                if save_grads:
+                    grads_t += [grads]
+
 
             pbar.set_description('Loss: {:.4f}'.format(l))
 
