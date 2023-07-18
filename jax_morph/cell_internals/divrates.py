@@ -31,6 +31,7 @@ def div_nn(params,
            train=True,
            transform_mlp_out=jax.nn.softplus,
            transform_fwd=None,
+           w_init=None
           ):
     
     if use_state_fields is None:
@@ -45,10 +46,11 @@ def div_nn(params,
     if transform_fwd is None:
         transform_fwd = lambda state,divrate: divrate
     
-    def _div_nn(in_fields):
+    def _div_nn(in_fields, w_init=None):
         mlp = hk.nets.MLP(n_hidden+[1],
                           activation=jax.nn.leaky_relu,
-                          activate_final=False
+                          activate_final=False,
+                          w_init=None,
                          )
         
         out = mlp(in_fields)
@@ -91,9 +93,8 @@ def div_nn(params,
         in_fields = np.hstack([f if len(f.shape)>1 else f[:,np.newaxis] for f in jax.tree_leaves(eqx.filter(state, use_state_fields))])
         
         x = _div_nn.apply(params['div_fn'], in_fields).flatten()
-        
-        divrate = x*logistic(state.radius+.06, 50, params['cellRad'])
-        divrate = transform_fwd(state, divrate)
+        divrate = transform_fwd(state, x)
+        divrate = divrate*logistic(state.radius+.06, 50, params['cellRad'])
         divrate = np.where(state.celltype<1.,0,divrate)
     
         return divrate
