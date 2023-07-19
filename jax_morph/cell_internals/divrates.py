@@ -33,8 +33,7 @@ def div_nn(params,
            with_bias=True,
            transform_mlp_out=jax.nn.softplus,
            transform_fwd=None,
-           w_init=None
-          ):
+        ):
     
     if use_state_fields is None:
         raise ValueError('Input fields flags must be passed explicitly as a CellState dataclass.')
