@@ -100,13 +100,14 @@ def run_experiment():
                                             save_every=SAVE_EVERY
                                             )
 
-        log.opt_runs += [LogRep(loss_t=loss_t, params_t=params_t, grads_t=None)]
+        log.opt_runs.append(LogRep(loss_t=loss_t, params_t=params_t, grads_t=None))
 
 
     with open('log_opt_reps.pkl', 'wb') as f:
         pickle.dump(log, f)
 
     return
+
 
 if __name__ == '__main__':
     run_experiment()
