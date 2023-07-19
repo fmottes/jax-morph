@@ -42,15 +42,18 @@ from jax_morph.cell_internals.hidden_state import hidden_state_nn, S_hidden_stat
 
 
 ### CREATE DEFAULT PARAMS ###
-def default_params(key):
+def default_params(key, n_chem=2):
+    '''
+    To change n_chem you need to rebuild all the params.
+    '''
 
+    
 
     # Initialization and number of added cells. 
     ncells_init = 1 
     ncells_add = 149
 
 
-    n_chem = 2
     hidden_state_size = 32
     hidden_state_decay = .8
 
