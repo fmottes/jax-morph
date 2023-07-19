@@ -13,3 +13,6 @@ __pycache__/
 files.txt
 ..gitignore.swp
 *.pkl
+*.gif
+*.err
+*.out
