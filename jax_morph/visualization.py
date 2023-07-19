@@ -151,6 +151,87 @@ def draw_circles_chem(state, chem=0, colorbar=True, ax=None, cm=None, grid=False
     
     return plt.gcf(), ax
 
+def draw_circles_stress(state, colorbar=True, ax=None, cm=None, grid=False, labels=False, edges=False, cm_edges=plt.cm.coolwarm, **kwargs):
+    
+    if None == ax:
+        ax = plt.axes()
+
+    alive_cells = state.celltype > 0
+    
+    stress = state.stress[alive_cells]
+    stress = (stress-stress.min()+1e-20)/(stress.max()-stress.min()+1e-20)
+        
+    #only usable for two cell types
+    if cm is None:
+        cm = plt.cm.coolwarm
+        
+    color = cm(stress)
+        
+    if edges:
+        #only usable for two cell types
+        ct_color = cm_edges(np.float32(state.celltype-1)[alive_cells])
+
+        for cell,radius,c,ctc in zip(state.position[alive_cells],state.radius[alive_cells],color,ct_color):
+            circle = plt.Circle(cell, radius=radius, fc=c, ec=ctc, lw=2, alpha=.5, **kwargs)
+            ax.add_patch(circle)
+            
+    else:
+        for i, (cell,radius,c) in enumerate(zip(state.position[alive_cells],state.radius[alive_cells],color)):
+            circle = plt.Circle(cell, radius=radius, fc=c, alpha=.5, **kwargs)
+            ax.add_patch(circle)
+            if labels:
+                ax.text(*cell, str(i), horizontalalignment='center', verticalalignment='center')
+
+    #show colorbar
+    if colorbar:    
+        sm = plt.cm.ScalarMappable(cmap=cm, norm=plt.Normalize(vmin=state.stress[alive_cells].min(), vmax=state.stress[alive_cells].max()))
+        sm._A = []
+        cbar = plt.colorbar(sm, shrink=0.7, alpha=.5) # rule of thumb
+        cbar.set_label('Stress', labelpad=20)
+
+            
+    
+    ## calculate ax limits
+    xmin = np.min(state.position[:,0][alive_cells])
+    xmax = np.max(state.position[:,0][alive_cells])
+    
+    ymin = np.min(state.position[:,1][alive_cells])
+    ymax = np.max(state.position[:,1][alive_cells])
+    
+    max_coord = max([xmax,ymax])+3
+    min_coord = min([xmin,ymin])-3
+    
+    plt.xlim(min_coord,max_coord)
+    plt.ylim(min_coord,max_coord)
+    
+    
+    #scale x and y in the same way
+    ax.set_aspect('equal', adjustable='box')
+
+    #white bg color for ax
+    ax.set_facecolor([1,1,1])
+
+    if grid:
+        ax.grid(alpha=.2)
+    else:
+        #remove axis spines
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+        ax.spines['bottom'].set_visible(False)
+        ax.spines['left'].set_visible(False)
+
+        plt.xticks([])
+        plt.yticks([])
+
+
+    background_color = [56 / 256] * 3        
+    plt.gcf().patch.set_facecolor(background_color)
+    plt.gcf().patch.set_alpha(0)
+
+    plt.gcf().set_size_inches(8, 8)
+    
+    return plt.gcf(), ax
+
 
     
 def draw_circles_divrate(state, probability=False, colorbar=True, ax=None, cm=plt.cm.coolwarm, grid=False, labels=False, edges=False, cm_edges=plt.cm.coolwarm, **kwargs):
