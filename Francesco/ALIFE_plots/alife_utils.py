@@ -514,3 +514,23 @@ def run_optimization(train_key,
                                     )
     
     return loss_t, params_t, grads_t
+
+
+
+def mask_metric(mask_fn=None, reward=3., penalty=-1., xasym_penalty=.5):
+        
+    def metric(state):
+        
+        alive = state.celltype > 0
+        n = np.sum(alive)
+        
+        mask = mask_fn(state.position)
+
+        m = np.sum(np.where(mask, reward, penalty)*alive)
+
+        # penalize asymmetric growth
+        m -= xasym_penalty*np.abs(np.sum(state.position[:, 0] * alive))
+            
+        return m
+    
+    return metric
