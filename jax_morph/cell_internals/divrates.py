@@ -45,9 +45,9 @@ def div_nn(params,
         transform_mlp_out = lambda x: x
         
     if transform_fwd is None:
-        transform_fwd = lambda state,divrate: divrate
+        transform_fwd = lambda state, divrate: divrate
     
-    def _div_nn(in_fields, w_init=None):
+    def _div_nn(in_fields):
         mlp = hk.nets.MLP(n_hidden+[1],
                           activation=jax.nn.leaky_relu,
                           w_init=w_init,
