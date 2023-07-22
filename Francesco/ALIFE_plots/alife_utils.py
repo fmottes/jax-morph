@@ -11,9 +11,13 @@ import jax_md
 import jax_md.dataclasses as jdc
 from jax_md import space
 
-from tqdm import trange
+from tqdm import trange, tqdm
 from functools import partial
 from collections import namedtuple
+
+import imageio, os, shutil
+
+import matplotlib.pyplot as plt
 
 
 ### JAX-MORPH IMPORTS ###
@@ -24,7 +28,7 @@ from jax_morph.datastructures import SpaceFunc
 from jax_morph.utils import _maybe_array
 
 from jax_morph.initial_states import init_state_grow
-from jax_morph.simulation import simulation
+from jax_morph.simulation import simulation, sim_trajectory
 
 # state update functions
 from jax_morph.division_and_growth.cell_division import S_cell_division
@@ -37,7 +41,7 @@ from jax_morph.cell_internals.divrates import S_set_divrate, div_nn
 from jax_morph.cell_internals.secretion import sec_nn
 from jax_morph.cell_internals.grad_estimate import S_chemical_gradients
 from jax_morph.cell_internals.hidden_state import hidden_state_nn, S_hidden_state
-
+from jax_morph.visualization import draw_circles_ctype
 
 
 
@@ -58,7 +62,7 @@ def default_params(key, n_chem=2):
     hidden_state_decay = .8
 
 
-    HID_HIDDEN = [128]
+    HID_HIDDEN = [128,64]
     DIV_HIDDEN = []
     SEC_HIDDEN = []
 
@@ -91,7 +95,9 @@ def default_params(key, n_chem=2):
     ### SECRETION
 
     key, subkey = split(key)
-    sec_max = 5*jax.random.uniform(subkey, (n_chem,)) 
+    #sec_max = 5*jax.random.uniform(subkey, (n_chem,))
+    sec_max = 2*np.ones((n_chem,)) 
+
 
     #rows are ctypes, cols are chemicals
     ctype_sec_chem = np.ones((n_celltype,n_chem), dtype=np.int16)
@@ -120,7 +126,7 @@ def default_params(key, n_chem=2):
         'hidden_state_size':        False,
         'hidden_state_decay':       False,
         
-        'sec_max':                      True,
+        'sec_max':                      False,
         
         'cellRad' :                 False,
         'cellRadBirth' :            False,
@@ -304,7 +310,7 @@ def build_sim_from_params(params, train_params, key):
                                     DIV_HIDDEN,
                                     use_state_fields,
                                     train=True,
-                                    w_init=hk.initializers.Constant(0.),
+                                    w_init=hk.initializers.Constant(0),
                                     transform_mlp_out=jax.nn.softplus
                                     )
 
@@ -329,6 +335,7 @@ def build_sim_from_params(params, train_params, key):
                                     use_state_fields,
                                     train=True,
                                     w_init=hk.initializers.Orthogonal(),
+                                    #w_init=hk.initializers.Constant(0)
                                     )
 
     key, init_key = split(key)
@@ -454,7 +461,7 @@ def train(key,
                 if save_grads:
                     grads_t += [grads]
                     
-            elif t%save_every==0:
+            elif t%save_every==0 and t>0:
                 params_t += [p]
                 if save_grads:
                     grads_t += [grads]
@@ -537,3 +544,70 @@ def mask_metric(mask_fn=None, reward=3., penalty=-1., xasym_penalty=.5):
         return m
     
     return metric
+
+
+
+
+
+def make_gif(key, sim, params=None, gif_name='jax_morph', initial_state=None, ncells_add=None, frame_duration=200):
+    
+    ncells_add = ncells_add if ncells_add is not None else sim.params['ncells_add']
+    all_params = eqx.combine(params, sim.params) if params is not None else sim.params
+    initial_state = sim.istate if initial_state is None else initial_state
+
+    key, subkey = split(key)
+
+    #forward pass - simulation
+    sim_init, sim_step = simulation(sim.fstep, all_params, sim.fspace)
+    _, (state_t,_) = sim_trajectory(sim.istate, sim_init, sim_step, ncells_add=ncells_add, key=subkey, history=True)
+
+    st = [sim_init(sim.istate, ncells_add, subkey)]+[CellState(*[f[i] for f in jdc.unpack(state_t)]) for i in range(ncells_add)]
+
+
+    xmin = np.min(st[-1].position[:,0]) - 1
+    xmax = np.max(st[-1].position[:,0]) + 1
+    ymin = np.min(st[-1].position[:,1]) - 1
+    ymax = np.max(st[-1].position[:,1]) + 1
+
+    #create tmp folder and delete old one with all content if present
+    if os.path.exists('./tmp_gif'):
+        shutil.rmtree('./tmp_gif')
+    os.mkdir('./tmp_gif')
+
+
+    #save images
+    for i in tqdm(list(range(ncells_add+1))):
+        
+        _, ax = draw_circles_ctype(st[i])
+        
+        ax.set_xlim(xmin,xmax)
+        ax.set_ylim(ymin,ymax)
+        
+        
+        ax.set_aspect('equal', 'box')
+        
+        ax.spines['top'].set_visible(False)
+        ax.spines['bottom'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+        ax.spines['left'].set_visible(False)
+        
+        fig=plt.gcf()
+        fig.savefig(f'./tmp_gif/img_{i}.png', transparent=False, facecolor='white', edgecolor='white')
+        plt.close()
+
+
+
+    frames = []
+    for i in list(range(ncells_add+1)):
+        image = imageio.imread(f'./tmp_gif/img_{i}.png')
+        frames.append(image)
+
+    imageio.mimsave(f'{gif_name}.gif',
+                    frames,          
+                    duration = frame_duration,
+                    loop = 1)
+
+    #delete tmp folder 
+    shutil.rmtree('./tmp_gif')
+
+    return
