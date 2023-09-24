@@ -381,7 +381,12 @@ def draw_circles(state, state_values, min_val = None, max_val = None, min_coord=
         ax.set_xticks([])
         ax.set_yticks([])
 
+    sm = plt.cm.ScalarMappable(cmap=cm, norm=plt.Normalize(vmin=min_val, vmax=max_val))
+    sm._A = []
 
+    cbar = plt.colorbar(sm, shrink=0.7, alpha=.5) # rule of thumb
+    cbar.set_label("Value", labelpad=20)
+    
     background_color = [56 / 256] * 3        
     plt.gcf().patch.set_facecolor(background_color)
     plt.gcf().patch.set_alpha(0)
