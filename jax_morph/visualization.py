@@ -326,7 +326,7 @@ def draw_circles_divrate(state, probability=False, colorbar=True, ax=None, cm=pl
 
 
     
-def draw_circles(state, state_values, min_val = None, max_val = None, min_coord=None, max_coord=None, ax=None, cm=plt.cm.coolwarm, grid=False, **kwargs):
+def draw_circles(state, state_values, min_val = None, max_val = None, min_coord=None, max_coord=None, ax=None, cm=plt.cm.coolwarm, grid=False, plt_cbar=True, cbar_title=None, **kwargs):
     
     if None == ax:
         ax = plt.axes()
@@ -383,9 +383,10 @@ def draw_circles(state, state_values, min_val = None, max_val = None, min_coord=
 
     sm = plt.cm.ScalarMappable(cmap=cm, norm=plt.Normalize(vmin=min_val, vmax=max_val))
     sm._A = []
-
-    cbar = plt.colorbar(sm, shrink=0.7, alpha=.5) # rule of thumb
-    cbar.set_label("Value", labelpad=20)
+    if plt_cbar:
+        cbar = plt.colorbar(sm, shrink=0.7, alpha=.5) # rule of thumb
+        if cbar_title != None:
+            cbar.set_label(cbar_title, labelpad=20)
     
     background_color = [56 / 256] * 3        
     plt.gcf().patch.set_facecolor(background_color)

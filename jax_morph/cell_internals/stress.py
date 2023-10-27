@@ -4,13 +4,13 @@ from jax import jacrev
 from jax_md import energy, space
 import jax_md.dataclasses as jax_dataclasses
 
-from ..mechanics.morse import _generate_morse_params_twotypes
+from ..mechanics.morse import _generate_morse_params_onetype
 
 
 def morse_stress(state, params, fspace):
     """ Calculates stress on each cell assuming interactions with Morse potential."""
     
-    epsilon_matrix, sigma_matrix = _generate_morse_params_twotypes(state, params)
+    epsilon_matrix, sigma_matrix = _generate_morse_params_onetype(state, params)
     
     energy_fn = energy.morse_pair(fspace.displacement, epsilon=epsilon_matrix, alpha=params["alpha"], sigma=sigma_matrix, r_onset=params["r_onset"], r_cutoff=params["r_cutoff"], per_particle=True)
     

@@ -1,3 +1,9 @@
+import sys
+sys.path.append('../')
+sys.path.append('/n/home10/rdeshpande/morphogenesis/jax-morph')
+ROOT_DIR = 'n/home10/rdeshpande/morphogenesis/data/paper/'
+
+
 import jax.numpy as np
 from jax import random, tree_map, value_and_grad
 from jax.nn import tanh, softplus, sigmoid
@@ -37,8 +43,7 @@ import optax
 # For saving data
 import pickle
 from pathlib import Path
-import sys
-ROOT_DIR = '../data/paper/'
+
 
 
 ########## DEFINE PARAMETERS ##########
@@ -66,10 +71,7 @@ r_cutoffDiff = 5.*cellRad
 r_onsetDiff = r_cutoffDiff - .5
 
 # CHEMICAL FIELD
-chem_max = 100.0
-chem_k = 2.0
-chem_gamma = 0.4 #3.0
-
+chem_max = 50.0
 ### SECRETION
 
 sec_max = np.ones((n_chem,), dtype=np.float32)
@@ -77,10 +79,7 @@ ctype_sec_chem = np.ones((1, 2))
 
 # MORSE POTENTIAL
 alpha = 3.0
-epsilon = 3.
 eps_OneOne = 3.
-eps_OneTwo = 3.
-eps_TwoTwo = 3.
 
 # morse cutoff
 r_cutoff = 5.*cellRad
@@ -93,7 +92,6 @@ mech_relaxation_steps = 10
 
 # Initialization and number of added cells. 
 ncells_init = 100 #number of cells in the initial cluster
-n_ones_init = 100 #number of type-1 cell in the initail cluster
 ncells_add = 100
 
 hidden_state_size = 8
@@ -115,22 +113,15 @@ train_params = {
     'r_cutoffDiff' : False,
     
     'alpha': False, 
-    'epsilon': False,
     'eps_OneOne': False,
-    'eps_OneTwo': False,
-    'eps_TwoTwo': False,
     'r_onset' : False,
     'r_cutoff' : False,
     'mech_relaxation_steps' : False,
     
-    'ncells_init' : False,
-    'n_ones_init': False, 
+    'ncells_init' : False, 
     'ncells_add': False,
 
     'chem_max': False, 
-    'chem_k': False,
-    'chem_gamma': False,
-
     'hidden_state_size': False
 }
 
@@ -150,22 +141,15 @@ params = {
     'r_cutoffDiff' : r_cutoffDiff,
     
     'alpha': _maybe_array('alpha', alpha, train_params), 
-    'epsilon':  _maybe_array('epsilon', epsilon, train_params),
     'eps_OneOne': _maybe_array('eps_OneOne', eps_OneOne, train_params),
-    'eps_OneTwo': _maybe_array('eps_OneTwo', eps_OneTwo, train_params),
-    'eps_TwoTwo': _maybe_array('eps_TwoTwo', eps_TwoTwo, train_params),
     'r_onset' : r_onset,
     'r_cutoff' : r_cutoff,
     'mech_relaxation_steps' : mech_relaxation_steps,
     
-    'ncells_init' : ncells_init,
-    'n_ones_init': n_ones_init, 
+    'ncells_init' : ncells_init, 
     'ncells_add': ncells_add,
 
     'chem_max': chem_max,
-    'chem_k': chem_k,
-    'chem_gamma': chem_gamma,
-
     'hidden_state_size':  hidden_state_size,
 
 }
@@ -262,8 +246,7 @@ ichem = random.uniform(init_key, istate.chemical.shape)*params['sec_max']
 istate = jdc.replace(istate, chemical=ichem)
 
 #hidden neurons per layer
-HID_HIDDEN = [8]
-
+HID_HIDDEN = 8
 
 #input fields to the network
 use_state_fields = CellState(position=      False, 
@@ -309,7 +292,7 @@ use_state_fields_div = CellState(position=   False,
                              divrate=    False, 
                              key=        False
                             )
-transform_fwd = lambda state, divrates: divrates*logistic(state.field, 0.1, 25.0)
+transform_fwd = lambda state, divrates: divrates*state.field
 #transform_fwd=None
 # init nn functions
 div_init, div_nn_apply = div_nn(params,
@@ -365,7 +348,7 @@ fstep = [
     S_cell_division,
     #S_cell_div_indep_MC,
     S_grow_cells,
-    partial(S_mech_morse_relax, morse_eps_sigma='twotypes', dt=.0001),
+    partial(S_mech_morse_relax, dt=.0001),
     partial(S_ss_chemfield, sec_fn=sec_nn_apply, n_iter=3),
 
     # SENSING
@@ -493,9 +476,9 @@ def main():
         loss_tt.append(loss_i)
         grads_tt.append(grads_i)
 
-    pickle.dump(params_tt, open(ROOT_DIR + "homogeneous_growth_" + str(NUM_OPT) + "_params", 'wb'))
-    pickle.dump(loss_tt, open(ROOT_DIR + "homogeneous_growth_" + str(NUM_OPT) + "_loss", 'wb'))
-    pickle.dump(grads_tt, open(ROOT_DIR + "homogeneous_growth_" + str(NUM_OPT) + "_grads", 'wb'))
+    pickle.dump(params_tt, open(ROOT_DIR + "homogeneous_growth_" + str(NUM_OPT) + "_hidden_" + str(HID_HIDDEN) + "_params_power_law", 'wb'))
+    pickle.dump(loss_tt, open(ROOT_DIR + "homogeneous_growth_" + str(NUM_OPT) + "_hidden_" + str(HID_HIDDEN) + "_loss_power_law", 'wb'))
+    pickle.dump(grads_tt, open(ROOT_DIR + "homogeneous_growth_" + str(NUM_OPT) + "_hidden_" + str(HID_HIDDEN) + "_grads_power_law", 'wb'))
 
 if __name__ == "__main__":
     main()
