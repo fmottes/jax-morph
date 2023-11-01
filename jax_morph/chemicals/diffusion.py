@@ -1,3 +1,4 @@
+import jax
 import jax.numpy as np
 from jax import jit, vmap
 
@@ -71,7 +72,7 @@ def diffuse_allchem_ss(secretions, state, params, fspace):
     L = np.diag(np.sum(A, axis=0)) - A
 
 
-    def ss_chemfield(P, D, K):
+    def _ss_chemfield(P, D, K, L):
 
         #update laplacian
         L = D*L + K*np.eye(L.shape[0])
@@ -81,7 +82,11 @@ def diffuse_allchem_ss(secretions, state, params, fspace):
 
         return x
 
-    new_chem = vmap(ss_chemfield, in_axes=(0, 0, 1), out_axes=(1,))(params['diffCoeff'], params['degRate'], secretions)
+    new_chem = vmap(_ss_chemfield, in_axes=(1, 0, 0, None), out_axes=1)(secretions, 
+                                                                        params['diffCoeff'], 
+                                                                        params['degRate'], 
+                                                                        L
+                                                                        )
 
     return new_chem
 
