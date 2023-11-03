@@ -86,7 +86,7 @@ def S_cell_division(state, params, fspace=None):#, ST_grad=False):
 
 
 
-def S_cell_div_indep(state, params, fspace=None):#, ST_grad=False):
+def S_cell_div_indep(state, params, fspace=None, logp_per_cell=False):#, ST_grad=False):
     
 
     def _divide(args):
@@ -143,7 +143,10 @@ def S_cell_div_indep(state, params, fspace=None):#, ST_grad=False):
 
     dividing_cells = random.uniform(subkey_div, (state.celltype.shape)) < state.divrate
 
-    log_p = np.sum(np.log(np.where(dividing_cells, state.divrate, 1-state.divrate)))
+    log_p = np.log(np.where(dividing_cells, state.divrate, 1-state.divrate))
+
+    if not logp_per_cell:
+        log_p = np.sum(log_p)
 
     def _step(state, i):
         state = jax.lax.cond(dividing_cells[i], _divide, _no_division, (state, i))

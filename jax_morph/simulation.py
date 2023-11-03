@@ -64,10 +64,10 @@ def simulation(fstep, params, fspace):
     
     
 
-    def sim_step(state):
+    def sim_step(state, **kwargs):
                         
         #first step must always be cell division
-        state, logp = fstep[0](state, params, fspace)
+        state, logp = fstep[0](state, params, fspace, **kwargs)
         
         for i in range(1,n_ops):
             state = fstep[i](state, params, fspace)
