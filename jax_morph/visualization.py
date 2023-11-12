@@ -244,7 +244,7 @@ def draw_circles_divrate(state, probability=False, colorbar=True, ax=None, cm=pl
     
     alive_cells = np.squeeze(state.celltype > 0)
 
-    divrate = state.divrate[alive_cells]
+    divrate = state.division[alive_cells]
     divrate = (divrate-divrate.min()+1e-20)/(divrate.max()-divrate.min()+1e-20)
         
     color = cm(divrate)
@@ -271,12 +271,12 @@ def draw_circles_divrate(state, probability=False, colorbar=True, ax=None, cm=pl
     #show colorbar
     if colorbar:    
         if probability:
-            divrate = state.divrate[alive_cells]/(state.divrate[alive_cells].sum()+1e-20)
+            divrate = state.divrate[alive_cells]/(state.division[alive_cells].sum()+1e-20)
             sm = plt.cm.ScalarMappable(cmap=cm, norm=plt.Normalize(vmin=divrate.min(), vmax=divrate.max()))
             sm._A = []
             cbar_text = 'Division Probability'
         else:
-            sm = plt.cm.ScalarMappable(cmap=cm, norm=plt.Normalize(vmin=state.divrate[alive_cells].min(), vmax=state.divrate[alive_cells].max()))
+            sm = plt.cm.ScalarMappable(cmap=cm, norm=plt.Normalize(vmin=state.division[alive_cells].min(), vmax=state.division[alive_cells].max()))
             sm._A = []
             cbar_text = 'Division Propensity'
 
