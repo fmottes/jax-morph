@@ -58,30 +58,41 @@ def diffuse_allchem_ss(secretions, state, params, fspace):
     #calculate all pairwise distances
     dist = space.map_product(space.metric(fspace.displacement))(state.position, state.position)
 
-    #prevent division by zero
-    dist *= np.where(np.outer(state.celltype, state.celltype)>0, 1, -1)
-    dist -= np.eye(dist.shape[0])
+    alive = np.where(state.celltype[:,None].sum(1) > 0, 1, 0)
+    alive = np.outer(alive, alive)
 
-    #adjacency matrix
-    # zero out connections to inexistent cells
-    A = 1/dist
-    A = (np.where(A>0, A, 0))**2
+
+    #connect only cells that are nearest neighbors
+    nn_dist = state.radius[:,None] + state.radius[:,None].T * alive
+    A = np.where(dist < 1.1*nn_dist, 1, 0) * (1-np.eye(dist.shape[0])) * alive
+
+
+    # OPEN BOUNDARY CONDITIONS (3)
+    # YET ANOTHER APPROX: Heuristically bulk nodes have at least 5 neighbors.
+    # Hence any node with less than 5 neighbors is a boundary node
+    # VERY HEURISTIC but fixes the early growth problem
+    diag = np.sum(A, axis=0)
+    diag = np.where(diag < 5, diag+1, diag)
+    diag = np.where(np.sum(A, axis=0) > 0, diag, 0)
+    diag = np.diag(diag)
 
 
     #graph laplacian
-    L = np.diag(np.sum(A, axis=0)) - A
+    L = diag - A
 
 
     def _ss_chemfield(P, D, K, L):
 
-        #update laplacian
+        #update laplacian with degradation
         L = D*L + K*np.eye(L.shape[0])
 
         #solve for steady state
-        x = np.linalg.solve(L, P)
+        c = np.linalg.solve(L, P)
 
-        return x
-
+        return c
+    
+    
+    #calculate steady state chemical field
     new_chem = vmap(_ss_chemfield, in_axes=(1, 0, 0, None), out_axes=1)(secretions, 
                                                                         params['diffCoeff'], 
                                                                         params['degRate'], 
@@ -100,3 +111,45 @@ def S_chem_diffusion(state, params, fspace=None, diffusion_fn=diffuse_allchem_ss
     new_state = jdc.replace(state, chemical=new_chemical)
     
     return new_state
+
+
+
+
+
+
+# def diffuse_allchem_ss(secretions, state, params, fspace):
+    
+#     #calculate all pairwise distances
+#     dist = space.map_product(space.metric(fspace.displacement))(state.position, state.position)
+
+#     #prevent division by zero
+#     dist *= np.where(np.outer(state.celltype, state.celltype)>0, 1, -1)
+#     dist -= np.eye(dist.shape[0])
+
+#     #adjacency matrix
+#     # zero out connections to inexistent cells
+#     A = 1/dist
+#     A = (np.where(A>0, A, 0))**2
+
+
+#     #graph laplacian
+#     L = np.diag(np.sum(A, axis=0)) - A
+
+
+#     def _ss_chemfield(P, D, K, L):
+
+#         #update laplacian
+#         L = D*L + K*np.eye(L.shape[0])
+
+#         #solve for steady state
+#         x = np.linalg.solve(L, P)
+
+#         return x
+
+#     new_chem = vmap(_ss_chemfield, in_axes=(1, 0, 0, None), out_axes=1)(secretions, 
+#                                                                         params['diffCoeff'], 
+#                                                                         params['degRate'], 
+#                                                                         L
+#                                                                         )
+
+#     return new_chem
