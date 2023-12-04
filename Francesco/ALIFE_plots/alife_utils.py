@@ -549,19 +549,17 @@ def mask_metric(mask_fn=None, reward=3., penalty=-1., xasym_penalty=.5):
 
 
 
-def make_gif(key, sim, params=None, gif_name='jax_morph', initial_state=None, ncells_add=None, frame_duration=200):
+def make_gif(subkey, sim, params=None, gif_name='jax_morph', initial_state=None, ncells_add=None, frame_duration=200):
     
     ncells_add = ncells_add if ncells_add is not None else sim.params['ncells_add']
     all_params = eqx.combine(params, sim.params) if params is not None else sim.params
     initial_state = sim.istate if initial_state is None else initial_state
 
-    key, subkey = split(key)
-
     #forward pass - simulation
     sim_init, sim_step = simulation(sim.fstep, all_params, sim.fspace)
-    _, (state_t,_) = sim_trajectory(sim.istate, sim_init, sim_step, ncells_add=ncells_add, key=subkey, history=True)
+    _, (state_t,_) = sim_trajectory(initial_state, sim_init, sim_step, ncells_add=ncells_add, key=subkey, history=True)
 
-    st = [sim_init(sim.istate, ncells_add, subkey)]+[CellState(*[f[i] for f in jdc.unpack(state_t)]) for i in range(ncells_add)]
+    st = [sim_init(initial_state, ncells_add, subkey)]+[CellState(*[f[i] for f in jdc.unpack(state_t)]) for i in range(ncells_add)]
 
 
     xmin = np.min(st[-1].position[:,0]) - 1
