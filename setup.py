@@ -13,8 +13,8 @@ INSTALL_REQUIRES = [
 
 setup(
     name='jax-morph',
-    version='0.2',
+    version='0.3',
     license='Apache 2.0',
     install_requires=INSTALL_REQUIRES,
-    packages=find_packages(include=['jax*']),
+    packages=find_packages(where='jax_morph'), #include=['jax*']),
 )
