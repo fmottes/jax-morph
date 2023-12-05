@@ -1,14 +1,6 @@
 import jax
 import jax.numpy as np
-
-
-#equinox automatically treats as static all non-array values
-#cast floats/ints into arrays if the parameter needs a gradient
-def _maybe_array(name, value, train_params):
-    if train_params[name]:
-        return np.array(value)
-    else:
-        return value
+import jax.tree_util as jtu
 
 
 # Logistic function 
@@ -23,6 +15,65 @@ def polynomial(x, coeffs):
 def differentiable_clip(x, min=0., max=1.):
     zero = x - jax.lax.stop_gradient(x)
     return zero + jax.lax.stop_gradient(np.clip(x, min, max))
+
+
+
+
+###-----------PRINT GRADIENTS-----------------###
+
+@jax.custom_vjp
+def print_tangent(x):
+    # This function will be used in the forward pass
+    return x
+
+def print_fwd(x):
+    # Forward pass function for custom VJP
+    return print_tangent(x), x
+
+def print_bwd(x, g):
+    # Backward pass function for custom VJP
+    print(jtu.tree_flatten(g))
+    print()
+    
+    return (g,)
+
+print_tangent.defvjp(print_fwd, print_bwd)
+
+
+
+###-----------NORMALIZE GRADIENTS-----------------###
+
+@jax.custom_vjp
+def normalize_grads(x):
+    # This function will be used in the forward pass
+    return x
+
+def normalize_grads_fwd(x):
+    # Forward pass function for custom VJP
+    return normalize_grads(x), x
+
+def normalize_grads_bwd(x, g):
+    # Backward pass function for custom VJP
+    
+    #normalize gradients
+    g = jtu.tree_map(lambda x: x / (np.linalg.norm(x)+1e-20), g)
+    
+    return (g,)
+
+normalize_grads.defvjp(normalize_grads_fwd, normalize_grads_bwd)
+
+
+
+
+
+#equinox automatically treats as static all non-array values
+#cast floats/ints into arrays if the parameter needs a gradient
+def _maybe_array(name, value, train_params):
+    if train_params[name]:
+        return np.array(value)
+    else:
+        return value
+
 
 
 ################################################
