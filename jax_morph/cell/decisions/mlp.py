@@ -3,7 +3,7 @@ import jax.numpy as np
 
 import equinox as eqx
 
-from ...simulation import SimulationStep
+from ..._base import SimulationStep
 
 from typing import Union, Sequence, Callable
 
