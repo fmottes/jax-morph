@@ -13,7 +13,7 @@ def draw_circles_ctype(state, ax=None, cm=plt.cm.coolwarm, grid=False, **kwargs)
     if None == ax:
         ax = plt.axes()
 
-    alive_cells = np.squeeze(state.celltype > 0)
+    alive_cells = np.squeeze(state.celltype.sum(1) > 0)
     
     #only usable for two cell types
     color = cm(np.float32(state.celltype-1)[alive_cells])
@@ -70,7 +70,7 @@ def draw_circles_chem(state, chem=0, colorbar=True, ax=None, cm=None, grid=False
     if None == ax:
         ax = plt.axes()
 
-    alive_cells = np.squeeze(state.celltype) > 0
+    alive_cells = np.squeeze(state.celltype.sum(1) > 0)
     
     chemical = state.chemical[:,chem][alive_cells]
     chemical = (chemical-chemical.min()+1e-20)/(chemical.max()-chemical.min()+1e-20)
@@ -103,10 +103,12 @@ def draw_circles_chem(state, chem=0, colorbar=True, ax=None, cm=None, grid=False
 
     #show colorbar
     if colorbar:    
+        # sm = plt.cm.ScalarMappable(cmap=cm, norm=plt.Normalize(vmin=state.chemical[:,chem][alive_cells].min(), vmax=state.chemical[:,chem][alive_cells].max()))
         sm = plt.cm.ScalarMappable(cmap=cm, norm=plt.Normalize(vmin=state.chemical[:,chem][alive_cells].min(), vmax=state.chemical[:,chem][alive_cells].max()))
+
         sm._A = []
         cbar = plt.colorbar(sm, ax=ax, fraction=.05, alpha=.5) # rule of thumb
-        cbar.set_label('Concentration Chem. '+str(chem), labelpad=20)
+        cbar.set_label('Conc. Chem. '+str(chem), labelpad=20)
 
             
     
@@ -159,9 +161,9 @@ def draw_circles_stress(state, colorbar=True, ax=None, cm=None, grid=False, labe
     if None == ax:
         ax = plt.axes()
 
-    alive_cells = np.squeeze(state.celltype > 0)
+    alive_cells = np.squeeze(state.celltype.sum(1) > 0)
     
-    stress = state.stress[alive_cells]
+    stress = state.mechanical_stress[alive_cells]
     stress = (stress-stress.min()+1e-20)/(stress.max()-stress.min()+1e-20)
         
     #only usable for two cell types
@@ -187,10 +189,10 @@ def draw_circles_stress(state, colorbar=True, ax=None, cm=None, grid=False, labe
 
     #show colorbar
     if colorbar:    
-        sm = plt.cm.ScalarMappable(cmap=cm, norm=plt.Normalize(vmin=state.stress[alive_cells].min(), vmax=state.stress[alive_cells].max()))
+        sm = plt.cm.ScalarMappable(cmap=cm, norm=plt.Normalize(vmin=state.mechanical_stress[alive_cells].min(), vmax=state.mechanical_stress[alive_cells].max()))
         sm._A = []
         cbar = plt.colorbar(sm, ax=ax, fraction=.05, alpha=.5) # rule of thumb
-        cbar.set_label('Stress', labelpad=20)
+        cbar.set_label('Mech. Stress', labelpad=20)
 
             
     
@@ -242,7 +244,7 @@ def draw_circles_divrate(state, probability=False, colorbar=True, ax=None, cm=pl
     if None == ax:
         ax = plt.axes()
     
-    alive_cells = np.squeeze(state.celltype > 0)
+    alive_cells = np.squeeze(state.celltype.sum(1) > 0)
 
     divrate = state.division[alive_cells]
     divrate = (divrate-divrate.min()+1e-20)/(divrate.max()-divrate.min()+1e-20)
@@ -335,7 +337,7 @@ def draw_circles(state, state_values, min_val = None, max_val = None, min_coord=
         ax = plt.axes()
     
 
-    alive_cells = np.squeeze(state.celltype > 0)
+    alive_cells = np.squeeze(state.celltype.sum(1) > 0)
 
     state_values = np.float32(state_values)[alive_cells]    
             
