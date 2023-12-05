@@ -7,7 +7,7 @@ from . import env as env
 from . import utils as utils
 from . import visualization as visualization
 
-from .simulation import Sequential
+from .simulation import Sequential, simulate
 from ._base import BaseCellState, SimulationStep
 
 

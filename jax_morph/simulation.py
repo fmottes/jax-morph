@@ -76,3 +76,39 @@ class Sequential(SimulationStep):
 
     def __len__(self):
         return len(self.substeps)
+    
+
+
+###------------SIMULATION FUNCTION-----------------###
+
+@eqx.filter_jit
+def simulate(model, state, key, n_steps=1, *, history=False):
+
+    subkeys = jax.random.split(key, n_steps)
+
+    #STOCHASTIC MODEL
+    if model.return_logprob():
+
+        def _scan_fn(state, k):
+            state, logp = model(state, key=k)
+            return state, (state, logp)
+        
+        state, (trajectory, logp) = jax.lax.scan(_scan_fn, state, np.asarray(subkeys))
+
+        if history:
+            return trajectory, logp
+        else:
+            return state, logp
+        
+    #DETERMINISTIC (OR REPARAMETRIZED) MODEL
+    else:
+        def _scan_fn(state, k):
+            state = model(state, key=k)
+            return state, state
+        
+        state, trajectory = jax.lax.scan(_scan_fn, state, np.asarray(subkeys))
+
+        if history:
+            return trajectory
+        else:
+            return state
