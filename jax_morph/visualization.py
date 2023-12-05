@@ -73,7 +73,9 @@ def draw_circles_chem(state, chem=0, colorbar=True, ax=None, cm=None, grid=False
     alive_cells = np.squeeze(state.celltype.sum(1) > 0)
     
     chemical = state.chemical[:,chem][alive_cells]
-    chemical = (chemical-chemical.min()+1e-20)/(chemical.max()-chemical.min()+1e-20)
+    # chemical = (chemical-chemical.min()+1e-20)/(chemical.max()-chemical.min()+1e-20)
+    chemical = (chemical+1e-20)/(chemical.max()+1e-20)
+
         
     #only usable for two cell types
     if cm is None:
@@ -104,7 +106,7 @@ def draw_circles_chem(state, chem=0, colorbar=True, ax=None, cm=None, grid=False
     #show colorbar
     if colorbar:    
         # sm = plt.cm.ScalarMappable(cmap=cm, norm=plt.Normalize(vmin=state.chemical[:,chem][alive_cells].min(), vmax=state.chemical[:,chem][alive_cells].max()))
-        sm = plt.cm.ScalarMappable(cmap=cm, norm=plt.Normalize(vmin=state.chemical[:,chem][alive_cells].min(), vmax=state.chemical[:,chem][alive_cells].max()))
+        sm = plt.cm.ScalarMappable(cmap=cm, norm=plt.Normalize(vmin=0, vmax=state.chemical[:,chem][alive_cells].max()))
 
         sm._A = []
         cbar = plt.colorbar(sm, ax=ax, fraction=.05, alpha=.5) # rule of thumb
