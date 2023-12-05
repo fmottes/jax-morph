@@ -117,7 +117,7 @@ class LocalMechanicalStress(SimulationStep):
         # F_ij = force on i by j, r_ij = displacement from i to j
         drs = jax_md.space.map_product(state.displacement)(state.position, state.position)
         
-        stresses = np.sum(np.multiply(forces, np.sign(drs)), axis=(0, 2))[:,None]
+        stresses = np.sum(np.multiply(forces, np.sign(drs)), axis=(0, 2))[:,None] / 1e2 #heuristic rescaling for compatibility with other cell inputs
         stresses = np.where(state.celltype.sum(1)[:,None] > 0, stresses, 0.)
 
         state = eqx.tree_at(lambda s: s.mechanical_stress, state, stresses)
