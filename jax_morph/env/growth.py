@@ -3,7 +3,7 @@ import jax.numpy as np
 
 import equinox as eqx
 
-from jax_morph.simulation import SimulationStep
+from ..simulation import SimulationStep
 
 
 
