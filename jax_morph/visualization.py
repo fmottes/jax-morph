@@ -105,7 +105,7 @@ def draw_circles_chem(state, chem=0, colorbar=True, ax=None, cm=None, grid=False
     if colorbar:    
         sm = plt.cm.ScalarMappable(cmap=cm, norm=plt.Normalize(vmin=state.chemical[:,chem][alive_cells].min(), vmax=state.chemical[:,chem][alive_cells].max()))
         sm._A = []
-        cbar = plt.colorbar(sm, shrink=0.7, alpha=.5) # rule of thumb
+        cbar = plt.colorbar(sm, ax=ax, fraction=.05, alpha=.5) # rule of thumb
         cbar.set_label('Concentration Chem. '+str(chem), labelpad=20)
 
             
@@ -189,7 +189,7 @@ def draw_circles_stress(state, colorbar=True, ax=None, cm=None, grid=False, labe
     if colorbar:    
         sm = plt.cm.ScalarMappable(cmap=cm, norm=plt.Normalize(vmin=state.stress[alive_cells].min(), vmax=state.stress[alive_cells].max()))
         sm._A = []
-        cbar = plt.colorbar(sm, shrink=0.7, alpha=.5) # rule of thumb
+        cbar = plt.colorbar(sm, ax=ax, fraction=.05, alpha=.5) # rule of thumb
         cbar.set_label('Stress', labelpad=20)
 
             
@@ -281,7 +281,7 @@ def draw_circles_divrate(state, probability=False, colorbar=True, ax=None, cm=pl
             cbar_text = 'Division Propensity'
 
     
-        cbar = plt.colorbar(sm, shrink=0.7, alpha=.5) # rule of thumb
+        cbar = plt.colorbar(sm, ax=ax, fraction=.05, alpha=.5) # rule of thumb
         cbar.set_label(cbar_text, labelpad=20)
     
     ## calculate ax limits
@@ -387,7 +387,7 @@ def draw_circles(state, state_values, min_val = None, max_val = None, min_coord=
     sm = plt.cm.ScalarMappable(cmap=cm, norm=plt.Normalize(vmin=min_val, vmax=max_val))
     sm._A = []
     if plt_cbar:
-        cbar = plt.colorbar(sm, shrink=0.7, alpha=.5) # rule of thumb
+        cbar = plt.colorbar(sm, ax=ax, fraction=.05, alpha=.5) # rule of thumb
         if cbar_title != None:
             cbar.set_label(cbar_title, labelpad=20)
     
