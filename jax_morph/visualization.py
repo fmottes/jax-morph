@@ -33,8 +33,8 @@ def draw_circles_ctype(state, ax=None, cm=plt.cm.coolwarm, grid=False, **kwargs)
     max_coord = max([xmax,ymax])+3
     min_coord = min([xmin,ymin])-3
     
-    plt.xlim(min_coord,max_coord)
-    plt.ylim(min_coord,max_coord)
+    ax.set_xlim(min_coord,max_coord)
+    ax.set_ylim(min_coord,max_coord)
     
 
     #scale x and y in the same way
@@ -52,8 +52,8 @@ def draw_circles_ctype(state, ax=None, cm=plt.cm.coolwarm, grid=False, **kwargs)
         ax.spines['bottom'].set_visible(False)
         ax.spines['left'].set_visible(False)
 
-        plt.xticks([])
-        plt.yticks([])
+        ax.set_xticks([])
+        ax.set_yticks([])
 
 
     background_color = [56 / 256] * 3        
@@ -120,8 +120,8 @@ def draw_circles_chem(state, chem=0, colorbar=True, ax=None, cm=None, grid=False
     max_coord = max([xmax,ymax])+3
     min_coord = min([xmin,ymin])-3
     
-    plt.xlim(min_coord,max_coord)
-    plt.ylim(min_coord,max_coord)
+    ax.set_xlim(min_coord,max_coord)
+    ax.set_ylim(min_coord,max_coord)
     
     
     #scale x and y in the same way
@@ -139,8 +139,8 @@ def draw_circles_chem(state, chem=0, colorbar=True, ax=None, cm=None, grid=False
         ax.spines['bottom'].set_visible(False)
         ax.spines['left'].set_visible(False)
 
-        plt.xticks([])
-        plt.yticks([])
+        ax.set_xticks([])
+        ax.set_yticks([])
 
 
     background_color = [56 / 256] * 3        
@@ -204,8 +204,8 @@ def draw_circles_stress(state, colorbar=True, ax=None, cm=None, grid=False, labe
     max_coord = max([xmax,ymax])+3
     min_coord = min([xmin,ymin])-3
     
-    plt.xlim(min_coord,max_coord)
-    plt.ylim(min_coord,max_coord)
+    ax.set_xlim(min_coord,max_coord)
+    ax.set_ylim(min_coord,max_coord)
     
     
     #scale x and y in the same way
@@ -223,8 +223,8 @@ def draw_circles_stress(state, colorbar=True, ax=None, cm=None, grid=False, labe
         ax.spines['bottom'].set_visible(False)
         ax.spines['left'].set_visible(False)
 
-        plt.xticks([])
-        plt.yticks([])
+        ax.set_xticks([])
+        ax.set_yticks([])
 
 
     background_color = [56 / 256] * 3        
@@ -294,8 +294,8 @@ def draw_circles_divrate(state, probability=False, colorbar=True, ax=None, cm=pl
     max_coord = max([xmax,ymax])+3
     min_coord = min([xmin,ymin])-3
     
-    plt.xlim(min_coord,max_coord)
-    plt.ylim(min_coord,max_coord)
+    ax.set_xlim(min_coord,max_coord)
+    ax.set_ylim(min_coord,max_coord)
     
 
     
@@ -314,8 +314,8 @@ def draw_circles_divrate(state, probability=False, colorbar=True, ax=None, cm=pl
         ax.spines['bottom'].set_visible(False)
         ax.spines['left'].set_visible(False)
 
-        plt.xticks([])
-        plt.yticks([])
+        ax.set_xticks([])
+        ax.set_yticks([])
 
 
     background_color = [56 / 256] * 3        
