@@ -3,7 +3,7 @@ from jax import jit, lax
 
 import jax_md.dataclasses as jdc
 
-from jax_morph.chemicals.diffusion import diffuse_allchem_ss
+from jax_morph.old.chemicals.diffusion import diffuse_allchem_ss
 
 
 #new version of Findcss

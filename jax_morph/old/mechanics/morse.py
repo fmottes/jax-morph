@@ -4,7 +4,7 @@ from jax import jit, lax, vmap
 from jax_md import energy
 import jax_md.dataclasses as jdc
 
-from jax_morph.mechanics.minimizers import mechmin_sgd
+from jax_morph.old.mechanics.minimizers import mechmin_sgd
 
 from functools import partial
 

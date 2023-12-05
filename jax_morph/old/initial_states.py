@@ -4,9 +4,9 @@ import jax.numpy as np
 import jax_md
 import jax_md.dataclasses as jdc
 
-from jax_morph.division_and_growth.cell_division import S_cell_division
-from jax_morph.division_and_growth.cell_growth import S_grow_cells
-from jax_morph.mechanics.morse import S_mech_morse_relax
+from jax_morph.old.division_and_growth.cell_division import S_cell_division
+from jax_morph.old.division_and_growth.cell_growth import S_grow_cells
+from jax_morph.old.mechanics.morse import S_mech_morse_relax
 
 
 
