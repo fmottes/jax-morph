@@ -5,8 +5,8 @@ Simulation and optimization of clusters of cells growing in space.
 
 - in order for `jax-morph` to work properly it needs to be installed by running
 
-`pyhton setup.py install`
+`pip install -e .`
 
-then it can be imported as a normal package anywhere.
+This will install the package in developer mode (all of the changes are immediately available without rebuilding). Then it can be imported as a normal package anywhere in the environment.
 
 - Usage of 32-bit precision floats instead of 64-bit ones leads to a considerable speedup (> 3x)
