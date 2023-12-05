@@ -5,7 +5,6 @@ import jax_md
 
 import equinox as eqx
 
-from jax_morph.simulation import SimulationStep
 
 import abc
 from typing import Union
