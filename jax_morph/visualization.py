@@ -16,7 +16,9 @@ def draw_circles_ctype(state, ax=None, cm=plt.cm.coolwarm, grid=False, **kwargs)
     alive_cells = np.squeeze(state.celltype.sum(1) > 0)
     
     #only usable for two cell types
-    color = cm(np.float32(state.celltype-1)[alive_cells])
+    # color = cm(np.float32(state.celltype-1)[alive_cells])
+    color_levels = (state.celltype @ 2**np.arange(state.celltype.shape[1]) -1) / (2**(state.celltype.shape[1]-1) -1)
+    color = cm(color_levels)
 
     for cell,radius,c in zip(state.position[alive_cells],state.radius[alive_cells],color):
         circle = plt.Circle(cell, radius=radius, color=c, alpha=.5, **kwargs)
