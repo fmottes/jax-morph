@@ -17,10 +17,15 @@ def draw_circles_ctype(state, ax=None, cm=plt.cm.coolwarm, grid=False, **kwargs)
     
     #only usable for two cell types
     # color = cm(np.float32(state.celltype-1)[alive_cells])
-    color_levels = (state.celltype @ 2**np.arange(state.celltype.shape[1]) -1) / (2**(state.celltype.shape[1]-1) -1)
+
+    if state.celltype.shape[1] > 1:
+        color_levels = (state.celltype @ 2**np.arange(state.celltype.shape[1]) -1) / (2**(state.celltype.shape[1]-1) -1)
+    else:
+        color_levels = state.celltype - 1
+
     color = cm(color_levels)
 
-    for cell,radius,c in zip(state.position[alive_cells],state.radius[alive_cells],color):
+    for cell,radius,c in zip(state.position[alive_cells],state.radius[alive_cells],color[alive_cells]):
         circle = plt.Circle(cell, radius=radius, color=c, alpha=.5, **kwargs)
         ax.add_patch(circle)
     
