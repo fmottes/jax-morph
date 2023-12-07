@@ -121,8 +121,12 @@ class SecretionMLP(SimulationStep):
 
 
         if ctype_sec_chem is None:
-            self.ctype_sec_chem = np.repeat(np.atleast_2d([1.]*state.chemical.shape[1]), state.celltype.shape[-1], axis=0)
+            self.ctype_sec_chem = np.repeat(np.atleast_2d([1.]*state.chemical.shape[1]), state.celltype.shape[-1], axis=0).tolist()
+            
         else:
+            if np.asarray(ctype_sec_chem).shape != (state.celltype.shape[1], state.chemical.shape[1]):
+                raise ValueError("ctype_sec_chem must be shape (N_CELLTYPE, N_CHEM)")
+            
             self.ctype_sec_chem = ctype_sec_chem
 
 
