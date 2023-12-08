@@ -56,6 +56,24 @@ class BaseCellState(eqx.Module):
         return cls(**args)
     
 
+    
+    def elongate(self, n_add):
+        """Elongate state array fields to accomodate additional particles."""
+
+        def _elongate(x):
+
+            if isinstance(x, jax.Array):
+                if x.ndim == 1:
+                    x = np.concatenate([x, np.zeros(n_add)])
+                else:
+                    x = np.concatenate([x, np.zeros((n_add, *x.shape[1:]))], axis=0)
+
+            return x
+
+
+        return jax.tree_map(_elongate, self)
+    
+
 
 
 ###------------SIMULATION STEP ABC-----------------###
