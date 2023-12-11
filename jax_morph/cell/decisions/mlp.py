@@ -229,3 +229,108 @@ class HiddenStateMLP(SimulationStep):
         state = eqx.tree_at(lambda s: s.hidden_state, state, hidden_state)
 
         return state
+    
+
+
+
+
+class CellStateMLP(SimulationStep):
+    input_fields:        Sequence[str] = eqx.field(static=True)
+    output_fields:       Sequence[str] = eqx.field(static=True)
+    out_indices:         tuple = eqx.field(static=True)
+    transform_output:    Union[Callable,None] = eqx.field(static=True)
+    memory:              float = eqx.field(static=True)
+
+    mlp:                 eqx.nn.MLP
+
+
+    def return_logprob(self) -> bool:
+        return False
+
+
+    def __init__(self, 
+                state, 
+                input_fields,
+                output_fields,
+                *,
+                key,
+                layer_width=128,
+                num_hidden_layers=1,
+                w_init=None, # one of jax.nn.initializers
+                activation=jax.nn.leaky_relu,
+                use_bias=True,
+                transform_output=None,
+                memory=0.,
+                **kwargs
+                ):
+
+
+        self.input_fields = input_fields
+        self.output_fields = output_fields
+        self.memory = memory
+
+
+        in_shape = np.concatenate([getattr(state, field) for field in input_fields], axis=1).shape[-1]
+        out_shape = np.concatenate([getattr(state, field) for field in output_fields], axis=1).shape[-1]
+
+
+        out_sizes = [getattr(state, field).shape[-1] for field in self.output_fields]
+        self.out_indices = tuple((out_shape - np.cumsum(np.asarray(out_sizes)[::-1])).tolist()[::-1] + [out_shape])
+
+
+        self.mlp = eqx.nn.MLP(in_size=in_shape,
+                    out_size=out_shape,
+                    depth=int(num_hidden_layers+1),
+                    width_size=int(layer_width),
+                    activation=activation,
+                    use_bias=use_bias,
+                    use_final_bias=False,
+                    final_activation=lambda x: x,
+                    key=key,
+                    **kwargs
+                    )
+        
+
+        if w_init is not None:
+
+            substitute = lambda x,k: w_init(key, x.shape) if (isinstance(x, jax.Array) and x.ndim>1) else x
+          
+            leaves, treedef = jax.tree_flatten(self.mlp)
+
+            self.mlp = jtu.tree_unflatten(treedef, [substitute(leaf,k) for leaf in zip(leaves, jax.random.split(key, len(leaves)))])
+        
+
+
+        self.transform_output = dict(zip(self.output_fields, [None]*len(self.output_fields)))
+
+        if transform_output is not None:
+            self.transform_output.update(transform_output)
+
+
+
+
+    @jax.named_scope("jax_morph.CellStateMLP")
+    def __call__(self, state, *, key=None, **kwargs):
+
+        #concatenate input features
+        in_features = np.concatenate([getattr(state, field) for field in self.input_fields], axis=1)
+
+        out = jax.vmap(self.mlp)(in_features)
+
+
+        alive = np.where(state.celltype.sum(1)>0., 1., 0.)[:,None]
+
+
+        #update output
+        for i, field in enumerate(self.output_fields):
+
+            new_field = out[:, self.out_indices[i]:self.out_indices[i+1]]
+
+            if self.transform_output[field] is not None:
+                new_field = self.transform_output[field](state, new_field) * alive
+
+            new_field = self.memory * getattr(state, field) + (1-self.memory) * new_field
+
+            state = eqx.tree_at(lambda s: getattr(s, field), state, new_field)
+
+        return state
