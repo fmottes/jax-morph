@@ -263,6 +263,7 @@ class CellStateMLP(SimulationStep):
                 memory=0.,
                 **kwargs
                 ):
+        """General-purpose MLP for updating cell state."""
 
 
         self.input_fields = input_fields
