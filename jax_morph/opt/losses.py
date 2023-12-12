@@ -44,14 +44,13 @@ def reinforce_loss(model,
 
 
     #discounted costs
-    def _returns(rewards):
-        Gs=[]
-        G=0
-        for r in rewards[::-1]:
-            G = r+G*GAMMA
-            Gs.append(G)
-
-        return np.array(Gs)[::-1]
+    def _returns(costs):
+        def _scan_fn(G, c):
+            G = G*GAMMA + c
+            return G, G
+        _, Gs = jax.lax.scan(_scan_fn, np.asarray(0.), costs[::-1])
+        return Gs[::-1]
+    
     
     if GAMMA > 0.:
         cost = jax.vmap(_returns)(cost)
