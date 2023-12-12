@@ -1,4 +1,4 @@
-from . import sensing, decisions
+from . import sensing, gene_networks, mlp, others
 
 from .sensing import LocalChemicalGradients, LocalMechanicalStress
 from .gene_networks import GeneNetwork

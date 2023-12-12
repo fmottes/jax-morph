@@ -1,9 +1,10 @@
 import jax
 import jax.numpy as np
+import jax.tree_util as jtu
 
 import equinox as eqx
 
-from ..._base import SimulationStep
+from .._base import SimulationStep
 
 from typing import Union, Sequence, Callable
 
@@ -294,11 +295,11 @@ class CellStateMLP(SimulationStep):
 
         if w_init is not None:
 
-            substitute = lambda x,k: w_init(key, x.shape) if (isinstance(x, jax.Array) and x.ndim>1) else x
+            substitute = lambda x,k: w_init(k, x.shape) if (isinstance(x, jax.Array) and x.ndim>1) else x
           
             leaves, treedef = jax.tree_flatten(self.mlp)
 
-            self.mlp = jtu.tree_unflatten(treedef, [substitute(leaf,k) for leaf in zip(leaves, jax.random.split(key, len(leaves)))])
+            self.mlp = jtu.tree_unflatten(treedef, [substitute(leaf,k) for leaf,k in zip(leaves, jax.random.split(key, len(leaves)))])
         
 
 
