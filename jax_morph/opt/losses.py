@@ -19,8 +19,9 @@ def reinforce_loss(model,
                    n_steps=1, 
                    BATCH_SIZE=1, 
                    GAMMA=.9, 
-                   LAMBDA=0.,
+                   LAMBDA_L1=0.,
                    normalize_cost=True,
+                   **kwargs
                    ):
     
     
@@ -66,9 +67,9 @@ def reinforce_loss(model,
 
 
     #L1 penalty on weights
-    if LAMBDA > 0.:
+    if LAMBDA_L1 > 0.:
         reg = jax.tree_map(lambda x: np.abs(x).sum(), eqx.filter(model, eqx.is_array))
-        reg = LAMBDA * jax.tree_util.tree_reduce(lambda x,y: x+y, reg)
+        reg = LAMBDA_L1 * jax.tree_util.tree_reduce(lambda x,y: x+y, reg)
         return loss + reg
     
     else:
