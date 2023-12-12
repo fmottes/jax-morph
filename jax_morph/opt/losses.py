@@ -39,7 +39,6 @@ def reinforce_loss(model,
 
     trajectory = jtu.tree_map(lambda *v: np.concatenate(v,1), *[istate, trajectory])
 
-
     cost = jax.vmap(cost_fn)(trajectory)
 
 
@@ -68,10 +67,8 @@ def reinforce_loss(model,
 
     #L1 penalty on weights
     if LAMBDA > 0.:
-
         reg = jax.tree_map(lambda x: np.abs(x).sum(), eqx.filter(model, eqx.is_array))
         reg = LAMBDA * jax.tree_util.tree_reduce(lambda x,y: x+y, reg)
-
         return loss + reg
     
     else:
