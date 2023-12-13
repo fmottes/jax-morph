@@ -3,41 +3,74 @@ import jax.numpy as np
 
 
 
-### CELL TYPE IMBALANCE (ONLY 2 CELL TYPES)
-def celltype_imbalance(trajectory):
 
-    cost = trajectory.celltype.sum(-2) @ np.asarray([1.,-1.])
+def CellTypeImbalance(metric='number'):
+    """
+    Cost function for cell type imbalance.
 
-    cost = np.abs(cost)
+    Metric must be either 'number' or 'entropy'.
+    NOTE: 'number' option only works for 2 cell types.
+    """
 
-    cost = np.diff(cost)
+    # CELL TYPE IMBALANCE (ONLY 2 CELL TYPES)
+    if 'number' == metric:
 
-    return cost
+        def _cost(trajectory):
+
+            cost = trajectory.celltype.sum(-2) @ np.asarray([1.,-1.])
+
+            cost = np.abs(cost)
+
+            cost = np.diff(cost)
+
+            return cost
 
 
-### CELL TYPE DISTRIBUTION ENTROPY
-def celltype_entropy(trajectory):
+    # CELL TYPE DISTRIBUTION ENTROPY
+    elif 'entropy' == metric:
+        
+        def _cost(trajectory):
 
-    p = trajectory.celltype.sum(-2) / trajectory.celltype.sum(-2).sum(-1, keepdims=True)
+            p = trajectory.celltype.sum(-2) / trajectory.celltype.sum(-2).sum(-1, keepdims=True)
 
-    #no minus sign since higher entropy is better
-    cost = (p*np.log(p+1e-8)).sum(-1) 
+            #no minus sign since higher entropy is better
+            cost = (p*np.log(p+1e-8)).sum(-1) 
 
-    cost = np.diff(cost)
+            cost = np.diff(cost)
 
-    return cost
+            return cost
+        
+    else:
+        raise ValueError(f'Metric must be either "number" or "entropy", not {type}.')
+
+    return _cost
 
 
 ### ELONGATION
-def mean_square_pos_x(trajectory):
+def MeanSquareY(*, nonsymm_penalty=1., realign=False):
+    
+    def _cost(trajectory):
 
-    cost = (trajectory.position[:,:,1]**2).sum(-1)
+        if realign:
+            def _realign(pos):
+                _, P = np.linalg.eigh(np.cov(pos.T))
+                return pos @ P[:,::-1]
+            pos = jax.vmap(_realign)(trajectory.position)
 
-    cost += np.abs(trajectory.position[:,:,0].sum(-1))
+        else:
+            pos = trajectory.position
 
-    cost = np.diff(cost)
+        cost = (pos[:,:,1]**2).sum(-1)
+        cost += nonsymm_penalty * np.abs(pos[:,:,0].sum(-1))
 
-    return cost
+        cost = np.diff(cost)
+
+        return cost
+    
+    return _cost
+
+
+
 
 
 ### V SHAPE
@@ -59,3 +92,6 @@ def v_shape(trajectory):
     cost = np.diff(cost)
 
     return cost
+
+
+
