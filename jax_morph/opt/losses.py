@@ -11,24 +11,25 @@ from functools import partial
 
 
 
-def ReinforceLoss(cost_fn, *, batch_size=1, gamma=.9, lambda_l1=0., normalize_cost_returns=True):
+def ReinforceLoss(cost_fn, *, n_sim_steps, n_episodes=1, gamma=.9, lambda_l1=0., normalize_cost_returns=True):
 
-    batch_size = int(batch_size)
+    n_episodes = int(n_episodes)
     gamma = float(gamma)
     lambda_l1 = float(lambda_l1)
     normalize_cost_returns = bool(normalize_cost_returns)
+    n_sim_steps = int(n_sim_steps)
 
 
-    def _reinforce_loss(model, istate, *, key, n_sim_steps=1, **kwargs):
+    def _reinforce_loss(model, istate, *, key, n_sim_steps=n_sim_steps, **kwargs):
 
-        subkeys = jax.random.split(key, batch_size)
+        subkeys = jax.random.split(key, n_episodes)
         subkeys = np.asarray(subkeys)
 
         vsim = jax.vmap(partial(simulate, history=True), (None, None, 0, None))
         trajectory, logp = vsim(model, istate, subkeys, n_sim_steps)
 
 
-        istate = jtu.tree_map(lambda x: np.repeat(x[None,None,:,:],batch_size,0), istate)
+        istate = jtu.tree_map(lambda x: np.repeat(x[None,None,:,:],n_episodes,0), istate)
 
         trajectory = jtu.tree_map(lambda *v: np.concatenate(v,1), *[istate, trajectory])
 
