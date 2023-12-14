@@ -3,7 +3,6 @@ import jax.numpy as np
 
 
 
-
 def CellTypeImbalance(metric='number'):
     """
     Cost function for cell type imbalance.
@@ -33,10 +32,12 @@ def CellTypeImbalance(metric='number'):
 
             p = trajectory.celltype.sum(-2) / trajectory.celltype.sum(-2).sum(-1, keepdims=True)
 
-            #no minus sign since higher entropy is better
-            cost = (p*np.log(p+1e-8)).sum(-1) 
+            rel_entropy = -(p*np.log(p+1e-8)).sum(-1) / np.log(p.shape[-1])
 
-            cost = np.diff(cost)
+            # minimize gap to max relative entropy
+            cost = 1 - rel_entropy
+
+            cost = np.diff(cost) * 10 # scale costs
 
             return cost
         
@@ -44,6 +45,8 @@ def CellTypeImbalance(metric='number'):
         raise ValueError(f'Metric must be either "number" or "entropy", not {type}.')
 
     return _cost
+
+
 
 
 ### ELONGATION
@@ -72,26 +75,54 @@ def MeanSquareY(*, nonsymm_penalty=1., realign=False):
 
 
 
-
 ### V SHAPE
-def v_shape(trajectory):
+def VShape(*, cost_per_cell=3, nonsymm_penalty=.1, realign=False):
+        
+    def _cost(trajectory):
 
-    def _state_cost(state):
-        pos = state.position
-        mask = (pos[:,1]+1.5 > .5*np.abs(pos[:,0])) * (pos[:,1]+1.5 < 3.5+.5*np.abs(pos[:,0])) * (pos[:,1]>-.1)
+        if realign:
+            def _realign(pos):
+                _, P = np.linalg.eigh(np.cov(pos.T))
+                return pos @ P[:,::-1]
+            pos = jax.vmap(_realign)(trajectory.position)
 
-        c = np.sum(np.where(mask, 0., 3.) * state.celltype.sum(-1))
+        else:
+            pos = trajectory.position
 
-        return c
+        cost = (pos[:,:,1]+1.5 > .5*np.abs(pos[:,:,0])) * (pos[:,:,1]+1.5 < 3.5+.5*np.abs(pos[:,:,0])) * (pos[:,:,1]>-.1)
+
+        cost = np.sum(np.where(cost, 0., cost_per_cell) * trajectory.celltype.sum(-1), axis=-1)
+
+        cost += nonsymm_penalty * np.abs(pos[:,:,0].sum(-1))
+
+        cost = np.diff(cost)
+
+        return cost
+    
+    return _cost
 
 
-    cost = jax.vmap(_state_cost)(trajectory)
-
-    cost += .1 * np.abs(trajectory.position[:,:,0].sum(-1))
-
-    cost = np.diff(cost)
-
-    return cost
 
 
 
+
+
+
+# def v_shape(trajectory):
+
+#     def _state_cost(state):
+#         pos = state.position
+#         mask = (pos[:,1]+1.5 > .5*np.abs(pos[:,0])) * (pos[:,1]+1.5 < 3.5+.5*np.abs(pos[:,0])) * (pos[:,1]>-.1)
+
+#         c = np.sum(np.where(mask, 0., 3.) * state.celltype.sum(-1))
+
+#         return c
+
+
+#     cost = jax.vmap(_state_cost)(trajectory)
+
+#     cost += .1 * np.abs(trajectory.position[:,:,0].sum(-1))
+
+#     cost = np.diff(cost)
+
+#     return cost
