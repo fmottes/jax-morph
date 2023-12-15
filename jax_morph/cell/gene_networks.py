@@ -38,7 +38,7 @@ class GeneNetwork(SimulationStep):
     
 
     def x_dot(self, xt, I):
-        return jax.nn.sigmoid(xt @ self.interaction_matrix) - self.degradation_rate * xt + I
+        return jax.nn.sigmoid(xt @ self.interaction_matrix) - np.atleast_2d(self.degradation_rate) * xt + I
 
 
 
@@ -72,7 +72,7 @@ class GeneNetwork(SimulationStep):
         system_size = int(in_shape + state.hidden_state.shape[-1] + out_shape)
 
         self.interaction_matrix = interaction_init(key, shape=(system_size, system_size))
-        self.degradation_rate = degradation_init(key, shape=(1, system_size))
+        self.degradation_rate = degradation_init(key, shape=(1, system_size)).tolist()
 
         out_sizes = [getattr(state, field).shape[-1] for field in self.output_fields]
         self.out_indices = tuple((system_size - np.cumsum(np.asarray(out_sizes)[::-1])).tolist()[::-1] + [system_size])
