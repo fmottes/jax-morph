@@ -15,14 +15,16 @@ from collections import namedtuple
 Loss = namedtuple('Loss', ['loss_fn', 'has_aux'])
 
 
-def ReinforceLoss(cost_fn, *, n_sim_steps, n_episodes=1, n_val_episodes=0, gamma=.9, lambda_l1=0., normalize_cost_returns=True):
+def ReinforceLoss(cost_fn, *, n_sim_steps, n_episodes=1, n_val_episodes=0, gamma=.9, lambda_l1=0., normalize_cost_returns='episode'):
 
     n_episodes = int(n_episodes)
     n_val_episodes = int(n_val_episodes)
     gamma = float(gamma)
     lambda_l1 = float(lambda_l1)
-    normalize_cost_returns = bool(normalize_cost_returns)
     n_sim_steps = int(n_sim_steps)
+
+    if (normalize_cost_returns not in ['batch', 'episode']) and (normalize_cost_returns is not False):
+        raise ValueError("normalize_cost_returns must be 'batch', 'episode' or False, got {}".format(normalize_cost_returns))
 
 
     def _reinforce_loss(model, istate, *, key, n_sim_steps=n_sim_steps, n_val_episodes=n_val_episodes, **kwargs):
@@ -69,11 +71,19 @@ def ReinforceLoss(cost_fn, *, n_sim_steps, n_episodes=1, n_val_episodes=0, gamma
         if gamma > 0.:
             cost = jax.vmap(_returns)(cost)
 
-        #flatten before normalization (per batch) but after discounting (per episode)
-        cost = cost.flatten()
+        
 
-        if normalize_cost_returns:
+        if 'batch' == normalize_cost_returns:
+            #flatten before normalization (per batch) but after discounting (per episode)
+            cost = cost.flatten()
             cost = (cost-cost.mean(-1, keepdims=True))/(cost.std(-1, keepdims=True)+1e-8)
+
+        elif 'episode' == normalize_cost_returns:
+            #normalize cost per episode
+            cost = (cost-cost.mean(-1, keepdims=True))/(cost.std(-1, keepdims=True)+1e-8)
+            cost = cost.flatten()
+        else:
+            cost = cost.flatten()
 
 
         #no - sign because we assume a cost instead of a reward
