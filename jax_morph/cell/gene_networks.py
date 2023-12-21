@@ -77,11 +77,9 @@ class GeneNetwork(SimulationStep):
         out_sizes = [getattr(state, field).shape[-1] for field in self.output_fields]
         self.out_indices = tuple((system_size - np.cumsum(np.asarray(out_sizes)[::-1])).tolist()[::-1] + [system_size])
 
-        
-        if transform_output is None:
-            self.transform_output = None
-        else:
-            self.transform_output = dict(zip(self.output_fields, [None]*len(self.output_fields)))
+        self.transform_output = dict(zip(self.output_fields, [None]*len(self.output_fields)))
+
+        if transform_output is not None:
             self.transform_output.update(transform_output)
 
 
