@@ -93,7 +93,7 @@ class GeneNetwork(SimulationStep):
         in_features = np.concatenate([getattr(state, field) for field in self.input_fields], axis=1)
         out_features = np.concatenate([getattr(state, field) for field in self.output_fields], axis=1)
 
-        gene_state = np.concatenate([in_features, self.expr_level_decay*state.hidden_state, out_features], axis=1)
+        gene_state = np.concatenate([in_features, (1-self.expr_level_decay)*state.hidden_state, out_features], axis=1)
         I = np.concatenate([in_features, np.zeros_like(state.hidden_state), np.zeros_like(out_features)], axis=1)
 
         alive = np.where(state.celltype.sum(1)>0., 1., 0.)[:,None]
