@@ -30,31 +30,18 @@ jax.config.update('jax_debug_nans', True)
 ########## IMPORT OTHER UTILITIES ##########
 ############################################
 from collections import namedtuple
-from Francesco.ALIFE_plots.alife_utils import default_params, build_sim_from_params, run_optimization, mask_metric
-
-
-
-########## DEFINE METRIC ##########
-def v_mask(pos):
-    '''
-    Constrain cell growth in a V shape.
-    '''
-    return (pos[:,1]+1.5 > .5*np.abs(pos[:,0])) * (pos[:,1]+1.5 < 3.5+.5*np.abs(pos[:,0])) * (pos[:,1]>0.)
-
-
-v_metric = mask_metric(v_mask)
+from Ramya.utils import gene_utils
 
 
 
 def run_experiment():
 
     key = PRNGKey(0)
-
-    key, init_key = split(key)
-    Dparams, Dtrain_params = default_params(init_key, 3)
-
-    key, subkey = split(key)
-    sim = build_sim_from_params(Dparams, Dtrain_params, subkey)
+    init_key, subkey = split(PRNGKey(0), 2)
+    params_gn, train_params_gn = gene_utils.default_params(init_key, n_chem=20)
+    use_state_fields = gene_utils.CellState(position=False, celltype=False, radius=True, chemical=True,chemgrad=True,field=False,divrate=True,gene_vec=False,stress=True,key=False)
+    n_inputs = params_gn["n_chem"] + 2*params_gn["n_chem"] + 3
+    sim_gn = gene_utils.build_sim_from_params(params_gn, train_params_gn, use_state_fields, subkey, n_inputs=n_inputs)
 
 
     LogExperiment = namedtuple('LogExperiment', ['epochs', 'episodes_per_update', 'episodes_per_eval', 'learning_rate', 'save_every', 'sim', 'opt_runs'])
@@ -68,9 +55,9 @@ def run_experiment():
     EPISODES_PER_UPDATE = int(sys.argv[3]) #4
     EPISODES_PER_EVAL = int(sys.argv[4]) #100
 
-    LEARNING_RATE = piecewise_constant_schedule(2e-3, {100: .1})
+    LEARNING_RATE = 1e-3
 
-    METRIC_FN = v_metric
+    METRIC_FN = gene_utils.v_metric
 
 
     SAVE_EVERY = 10
@@ -79,7 +66,7 @@ def run_experiment():
                     episodes_per_eval=EPISODES_PER_EVAL, 
                     learning_rate=LEARNING_RATE, 
                     save_every=SAVE_EVERY,
-                    sim=sim, 
+                    sim=sim_gn, 
                     opt_runs=[]
                     )
 
@@ -88,8 +75,8 @@ def run_experiment():
 
     for i in range(N_OPT):
         key, train_key = split(key)
-        loss_t, params_t, _ = run_optimization(train_key,
-                                                sim,
+        loss_t, params_t, _ = gene_utils.run_optimization(train_key,
+                                                sim_gn,
                                                 METRIC_FN,
                                                 metric_type='reward',
                                                 epochs=EPOCHS,
@@ -103,9 +90,9 @@ def run_experiment():
         params_tt.append(params_t)
 
 
-    with open(ROOT_DIR + 'vshape_' + str(N_OPT) + '_loss.pkl', 'wb') as f:
+    with open(ROOT_DIR + 'vshape_' + str(N_OPT) + '_gene_loss.pkl', 'wb') as f:
         pickle.dump(loss_tt, f)
-    with open(ROOT_DIR + 'vshape_' + str(N_OPT) + '_params.pkl', 'wb') as f:
+    with open(ROOT_DIR + 'vshape_' + str(N_OPT) + '_gene_params.pkl', 'wb') as f:
         pickle.dump(params_tt, f)
     return
 

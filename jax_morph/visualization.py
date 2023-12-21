@@ -326,7 +326,7 @@ def draw_circles_divrate(state, probability=False, colorbar=True, ax=None, cm=pl
 
 
     
-def draw_circles(state, state_values, min_val = None, max_val = None, min_coord=None, max_coord=None, ax=None, cm=plt.cm.coolwarm, grid=False, plt_cbar=True, cbar_title=None, **kwargs):
+def draw_circles(state, state_values, normalize=True, min_coord=None, max_coord=None, ax=None, cm=plt.cm.coolwarm, grid=False, plt_cbar=True, cbar_title=None, orientation='vertical', **kwargs):
     
     if None == ax:
         ax = plt.axes()
@@ -334,12 +334,13 @@ def draw_circles(state, state_values, min_val = None, max_val = None, min_coord=
 
     alive_cells = state.celltype > 0
 
-    state_values = np.float32(state_values)[alive_cells]    
+    unnorm_state_values = np.float32(state_values)[alive_cells]    
             
-    if min_val == None:
-        state_values = (state_values-state_values.min()+1e-20)/(state_values.max()-state_values.min()+1e-20)
-    else:
-        state_values = (state_values-min_val+1e-20)/(max_val-min_val+1e-20)
+    state_values = (unnorm_state_values-unnorm_state_values.min()+1e-20)/(unnorm_state_values.max()-unnorm_state_values.min()+1e-20)
+    #else:
+        #state_values = (state_values-min_val+1e-20)/(max_val-min_val+1e-20)
+    min_val = state_values.min()
+    max_val = state_values.max()
 
     #only usable for two cell types
     color = cm(state_values)
@@ -381,10 +382,13 @@ def draw_circles(state, state_values, min_val = None, max_val = None, min_coord=
         ax.set_xticks([])
         ax.set_yticks([])
 
-    sm = plt.cm.ScalarMappable(cmap=cm, norm=plt.Normalize(vmin=min_val, vmax=max_val))
+    if normalize:
+        sm = plt.cm.ScalarMappable(cmap=cm, norm=plt.Normalize(vmin=min_val, vmax=max_val))
+    else:
+        sm = plt.cm.ScalarMappable(cmap=cm, norm=plt.Normalize(vmin=unnorm_state_values.min(), vmax=unnorm_state_values.max()))
     sm._A = []
     if plt_cbar:
-        cbar = plt.colorbar(sm, shrink=0.7, alpha=.5) # rule of thumb
+        cbar = plt.colorbar(sm, shrink=0.7, alpha=.5, orientation=orientation) # rule of thumb
         if cbar_title != None:
             cbar.set_label(cbar_title, labelpad=20)
     

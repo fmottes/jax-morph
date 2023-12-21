@@ -211,7 +211,8 @@ def default_params(key, n_chem=2):
 
     key, subkey = split(key)
 
-    diffCoeff = 2.*jax.random.uniform(subkey, (n_chem,))#np.ones(n_chem)
+    diffCoeff = 2.*jax.random.uniform(subkey, (n_chem,))
+    #diffCoeff = np.ones(n_chem)
     degRate = np.ones(n_chem)
 
     r_cutoffDiff = float(np.log(10)/diffCoeff.max())
@@ -386,7 +387,7 @@ def S_ss_gene_vec(state, params, fspace, syn_fun=None):
     return state
 
 
-def build_sim_from_params(params, train_params, key, n_inputs=9, div_fwd=None):
+def build_sim_from_params(params, train_params, use_state_fields, key, n_inputs=9, div_fwd=None):
 
     N_CELLS_INIT = params['ncells_init']
 
@@ -399,17 +400,6 @@ def build_sim_from_params(params, train_params, key, n_inputs=9, div_fwd=None):
                                     )
     key, init_key = split(key)
     istate = init_state_grow(init_key, istate, params, fspace, N_CELLS_INIT)
-    use_state_fields = CellState(position=      False, 
-                                celltype=      False, 
-                                radius=            True, 
-                                chemical=          True,
-                                chemgrad=          True,
-                                field=             False,
-                                divrate=           True,
-                                gene_vec=  False,
-                                stress=    True,
-                                key=           False
-                                )
     synnet_init, synnet_apply = synnet(params, train_params, use_state_fields)
     params, train_params = synnet_init(istate, key)
 

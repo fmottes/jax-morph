@@ -32,7 +32,7 @@ def diffuse_allchem_ss_exp(secretions, state, params, fspace):
     new_chem = []
     for i in np.arange(secretions.shape[1]):
 
-       c = diffuse_onechem_ss_exp(dist,
+        c = diffuse_onechem_ss_exp(dist,
                             secretions[:,i],
                             params['degRate'][i],
                             params['diffCoeff'][i])

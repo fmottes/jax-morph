@@ -36,6 +36,7 @@ from jax_morph.division_and_growth.cell_growth import S_grow_cells
 
 from jax_morph.mechanics import morse
 from jax_morph.chemicals.secdiff import S_ss_chemfield
+from jax_morph.chemicals.diffusion import diffuse_allchem_ss, diffuse_allchem_ss_exp
 
 from jax_morph.cell_internals.divrates import S_set_divrate, div_nn
 from jax_morph.cell_internals.secretion import sec_nn
@@ -58,11 +59,12 @@ def default_params(key, n_chem=2):
     ncells_add = 149
 
 
-    hidden_state_size = 32
+    hidden_state_size = 8#32
     hidden_state_decay = .8
 
 
-    HID_HIDDEN = [128,64]
+    #HID_HIDDEN = [128,64]
+    HID_HIDDEN = [64,]
     DIV_HIDDEN = []
     SEC_HIDDEN = []
 
@@ -349,7 +351,7 @@ def build_sim_from_params(params, train_params, key):
         S_cell_division,
         S_grow_cells,
         morse.S_mech_morse_relax,
-        partial(S_ss_chemfield, sec_fn=sec_nn_apply, n_iter=3),
+        partial(S_ss_chemfield, sec_fn=sec_nn_apply, diffusion_fn=diffuse_allchem_ss_exp, n_iter=3),
 
         # SENSING
         S_chemical_gradients,
