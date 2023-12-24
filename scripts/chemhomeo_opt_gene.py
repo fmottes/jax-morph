@@ -27,6 +27,7 @@ class CellState(jxm.BaseCellState):
     secretion_rate:     jax.Array
     hidden_state:       jax.Array
     chemical_grad:      jax.Array
+    division:           jax.Array
 
 
 @eqx.filter_jit
@@ -147,8 +148,8 @@ def run_experiment():
     init_state, _ = jxm.simulate(init_model, istate, subkey, N_ADD_INIT)
     # Assign an initial imbalance in celltypes
     ctype = init_state.celltype
-    ctype = ctype.at[:int(.2*N_INIT), 0].set(1.0)
-    ctype = ctype.at[:int(.2*N_INIT), 1].set(0.0)
+    ctype = ctype.at[:int(.35*N_INIT), 0].set(1.0)
+    ctype = ctype.at[:int(.35*N_INIT), 1].set(0.0)
     init_state = eqx.tree_at(lambda s: s.celltype, init_state, ctype)
 
     ctype_sec_chem = np.zeros((N_CTYPES, N_CHEM))
@@ -163,8 +164,8 @@ def run_experiment():
             jxm.env.CellDivision(),
             jxm.env.CellGrowth(growth_rate=.03, max_radius=.5, growth_type='linear'),
             jxm.env.mechanics.SGDMechanicalRelaxation(mech_potential),
-            #jxm.env.SteadyStateDiffusion(degradation_rate=.8, diffusion_coeff=.5),
-            jxm.env.diffusion.ApproxSteadyStateDiffusion(degradation_rate=.8, diffusion_coeff=.5),
+            jxm.env.SteadyStateDiffusion(degradation_rate=.1, diffusion_coeff=.2),
+            #jxm.env.diffusion.ApproxSteadyStateDiffusion(degradation_rate=.8, diffusion_coeff=.5),
             jxm.cell.sensing.LocalChemicalGradients(),
             jxm.cell.GeneNetwork(init_state,
                                 input_fields=['chemical', 'chemical_grad', 'division', 'radius'],
@@ -183,7 +184,7 @@ def run_experiment():
         key, train_key = jax.random.split(key)
         opt_state = optimizer.init(eqx.filter(model, eqx.is_array))
         key, subkey = jax.random.split(key)
-        rl, g = eqx.filter_value_and_grad(reinforce_loss)(opt_model, istate, cost_fn=COST_FN, key=subkey, n_steps=N_ADD, BATCH_SIZE=BATCH_SIZE, LAMBDA=LAMBDA)
+        rl, g = eqx.filter_value_and_grad(reinforce_loss)(opt_model, istate, cost_fn=COST_FN, key=subkey, n_steps=N_ADD, BATCH_SIZE=BATCH_SIZE, LAMBDA=LAMBDA, GAMMA=.9)
         l = COST_FN(jxm.simulate(opt_model, istate, subkey, N_ADD, history=True)[0]).sum()
         losses = [float(l)]
         for i in range(EPOCHS):
@@ -192,7 +193,7 @@ def run_experiment():
                 opt_model = eqx.apply_updates(opt_model, updates)
                 key, subkey = jax.random.split(key)
 
-                rl, g = eqx.filter_value_and_grad(reinforce_loss)(opt_model, istate, cost_fn=COST_FN, key=subkey, n_steps=N_ADD, BATCH_SIZE=BATCH_SIZE, LAMBDA=LAMBDA)
+                rl, g = eqx.filter_value_and_grad(reinforce_loss)(opt_model, istate, cost_fn=COST_FN, key=subkey, n_steps=N_ADD, BATCH_SIZE=BATCH_SIZE, LAMBDA=LAMBDA, GAMMA=.9)
 
                 l = COST_FN(jxm.simulate(opt_model, istate, subkey, N_ADD, history=True)[0]).sum()
                 losses.append(float(l))

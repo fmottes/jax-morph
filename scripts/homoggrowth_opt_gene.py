@@ -29,6 +29,7 @@ class CellState(jxm.BaseCellState):
     hidden_state:       jax.Array
     mechanical_stress:  jax.Array
     field:              jax.Array
+    division:           jax.Array
 
 
 class ChemicalField(jxm.SimulationStep):
