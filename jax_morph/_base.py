@@ -23,7 +23,6 @@ class BaseCellState(eqx.Module):
     position:   jax.Array
     celltype:   jax.Array
     radius:     jax.Array
-    division:   jax.Array
 
 
     @classmethod
@@ -50,7 +49,6 @@ class BaseCellState(eqx.Module):
             'position'  :   np.empty(shape=(0, n_dim), dtype=np.float32),
             'celltype'  :   np.empty(shape=(0,n_cell_types), dtype=np.float32),
             'radius'    :   np.empty(shape=(0,1), dtype=np.float32),
-            'division'   :   np.empty(shape=(0,1), dtype=np.float32),
             }
         
         return cls(**args)
