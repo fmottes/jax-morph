@@ -103,7 +103,73 @@ def ReinforceLoss(cost_fn, *, n_sim_steps, n_episodes=1, n_val_episodes=0, gamma
             return loss
 
     return Loss(loss_fn=_reinforce_loss, has_aux=(n_val_episodes > 0))
-    
+
+def SimpleLoss(cost_fn, *, n_sim_steps, n_episodes=1, n_val_episodes=0, gamma=.9, lambda_l1=0., normalize_cost_returns='episode'):
+
+    n_episodes = int(n_episodes)
+    n_val_episodes = int(n_val_episodes)
+    gamma = float(gamma)
+    lambda_l1 = float(lambda_l1)
+    n_sim_steps = int(n_sim_steps)
+
+    if (normalize_cost_returns not in ['batch', 'episode']) and (normalize_cost_returns is not False):
+        raise ValueError("normalize_cost_returns must be 'batch', 'episode' or False, got {}".format(normalize_cost_returns))
+
+
+    def _simple_loss(model, istate, *, key, n_sim_steps=n_sim_steps, n_val_episodes=n_val_episodes, **kwargs):
+
+        vsim = jax.vmap(partial(simulate, history=True), (None, None, 0, None))
+        key, *subkeys = jax.random.split(key, n_episodes+1)
+        trajectory, logp = vsim(model, istate, np.asarray(subkeys), n_sim_steps)
+        #add istate to beginning of trajectory
+        _istate = jtu.tree_map(lambda x: np.repeat(x[None,None,:,:],n_episodes,0), istate)
+        trajectory = jtu.tree_map(lambda *v: np.concatenate(v,1), *[_istate, trajectory])
+        cost = jax.vmap(cost_fn)(trajectory)
+
+        #calculate actual cost for validation
+        if n_val_episodes > 0:
+
+            n_val_episodes = int(n_val_episodes)
+
+            key, *subkeys = jax.random.split(key, n_val_episodes+1)
+            val_trajectory, _ = vsim(model, istate, np.asarray(subkeys), n_sim_steps)
+
+            #add istate to beginning of val_trajectory
+            _istate = jtu.tree_map(lambda x: np.repeat(x[None,None,:,:],n_val_episodes,0), istate)
+            val_trajectory = jtu.tree_map(lambda *v: np.concatenate(v,1), *[_istate, val_trajectory])
+
+            val_cost = jax.vmap(cost_fn)(val_trajectory).sum(-1).mean()
+        
+
+        if 'batch' == normalize_cost_returns:
+            #flatten before normalization (per batch) but after discounting (per episode)
+            cost = cost.flatten()
+            cost = (cost-cost.mean(-1, keepdims=True))/(cost.std(-1, keepdims=True)+1e-8)
+
+        elif 'episode' == normalize_cost_returns:
+            #normalize cost per episode
+            cost = (cost-cost.mean(-1, keepdims=True))/(cost.std(-1, keepdims=True)+1e-8)
+            cost = cost.flatten()
+        else:
+            cost = cost.flatten()
+
+
+        loss = cost.sum(-1).mean()
+
+
+        #L1 penalty on weights
+        if lambda_l1 > 0.:
+            reg = jax.tree_map(lambda x: np.abs(x).sum(), eqx.filter(model, eqx.is_array))
+            reg = lambda_l1 * jax.tree_util.tree_reduce(lambda x,y: x+y, reg)
+            loss = loss + reg
+        
+
+        if n_val_episodes > 0:
+            return loss, val_cost
+        else:
+            return loss
+
+    return Loss(loss_fn=_simple_loss, has_aux=(n_val_episodes > 0))
 
 
 
