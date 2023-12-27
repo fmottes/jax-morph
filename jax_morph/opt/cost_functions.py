@@ -103,9 +103,10 @@ def VShape(*, cost_per_cell=3, rew_per_cell=1, nonsymm_penalty=.1, realign=False
 
 
 
-def CVDivrates(trajectory):
-    cost = np.std(trajectory.division[-1, :])/np.mean(trajectory.division[-1, :])
-    return cost
+def CVDivrates():
+    def _cost(trajectory):
+        return np.std(trajectory.division[-1, :])/np.mean(trajectory.division[-1, :])
+    return _cost
 
 
 
