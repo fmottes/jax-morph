@@ -76,7 +76,7 @@ def MeanSquareY(*, nonsymm_penalty=1., realign=False):
 
 
 ### V SHAPE
-def VShape(*, cost_per_cell=3, rew_per_cell=1, nonsymm_penalty=.1, realign=False):
+def VShape(*, cost_per_cell=1, rew_per_cell=3, nonsymm_penalty=.1, realign=False):
         
     def _cost(trajectory):
 
