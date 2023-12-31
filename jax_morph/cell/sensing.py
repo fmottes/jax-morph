@@ -110,7 +110,7 @@ class LocalMechanicalStress(SimulationStep):
     def __call__(self, state, *, key=None, **kwargs):
 
         #generate pair potential
-        pair_potential = self.mechanical_potential.energy_fn(state)
+        pair_potential = self.mechanical_potential.energy_fn(state, per_particle=True)
         
         forces = jax.jacrev(pair_potential)(state.position)
         
