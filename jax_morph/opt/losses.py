@@ -159,7 +159,7 @@ def SimpleLoss(cost_fn, *, n_sim_steps, n_episodes=1, n_val_episodes=0, lambda_l
             cost = cost.flatten()
 
 
-        # loss = cost.sum(1).mean()
+        #loss = cost.sum(0).mean()
         loss = cost.mean()
 
 
