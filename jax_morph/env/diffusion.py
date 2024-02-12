@@ -19,7 +19,8 @@ class SteadyStateDiffusion(SimulationStep):
 
     def return_logprob(self) -> bool:
         return False
-    
+    def return_nbrs(self) -> bool:
+        return False
 
     def __init__(self, *, diffusion_coeff=2., degradation_rate=1., **kwargs):
 
@@ -113,7 +114,7 @@ class SteadyStateDiffusion(SimulationStep):
         state = eqx.tree_at(lambda s: s.chemical, state, new_chem)
 
         return state
-    
+
 
 
 

@@ -10,8 +10,12 @@ from collections import namedtuple
 
 
 
+import optax
+from tqdm import trange
+
 def train(model, 
-          istate, 
+          istate,
+          nbrs, 
           loss, 
           *, 
           key, 
@@ -30,7 +34,7 @@ def train(model,
 
 
     key, subkey = jax.random.split(key)
-    rl, g = loss_and_grad(model, istate, key=subkey)
+    rl, g = loss_and_grad(model, istate, nbrs=nbrs, key=subkey)
 
     if loss.has_aux:
         rl, l = rl
@@ -66,7 +70,7 @@ def train(model,
             model = eqx.apply_updates(model, updates)
 
             key, subkey = jax.random.split(key)
-            rl, g = loss_and_grad(model, istate, key=subkey)
+            rl, g = loss_and_grad(model, istate, nbrs=nbrs, key=subkey)
 
 
             ### LOGGING

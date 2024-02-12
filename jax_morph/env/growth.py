@@ -7,8 +7,6 @@ from .._base import SimulationStep
 
 
 
-
-
 class CellGrowth(SimulationStep):
     max_radius:     float
     growth_rate:    float
@@ -18,7 +16,9 @@ class CellGrowth(SimulationStep):
     def return_logprob(self) -> bool:
         return False
     
-    
+    def return_nbrs(self) -> bool:
+        return False
+        
     def __init__(self, *, 
                  growth_rate=1., 
                  max_radius=.5, 

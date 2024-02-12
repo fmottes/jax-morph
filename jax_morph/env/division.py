@@ -16,7 +16,8 @@ class CellDivision(SimulationStep):
     def return_logprob(self) -> bool:
         return not self.straight_through
     
-
+    def return_nbrs(self) -> bool:
+        return False
 
     def __init__(self, *, birth_radius_multiplier=float(1/np.sqrt(2)), straight_through=False, **kwargs): 
 
@@ -34,8 +35,8 @@ class CellDivision(SimulationStep):
         #split key
         subkey_div, subkey_place = jax.random.split(key,2)
         
-        p = state.division.squeeze()
-        p = p / p.sum()
+        prop = state.division.squeeze()
+        p = prop / prop.sum()
 
 
         idx_dividing_cell = jax.random.choice(subkey_div, np.arange(p.shape[0]), p=p)
@@ -63,9 +64,7 @@ class CellDivision(SimulationStep):
 
         ### POSITION OF NEW CELLS
         angle = jax.random.uniform(subkey_place, minval=0., maxval=2*np.pi)
-
         cell_displacement = state.radius[idx_dividing_cell] * self.birth_radius_multiplier * np.array([np.cos(angle),np.sin(angle)])
-
         new_position = state.position.at[idx_new_cell].set(state.position[idx_dividing_cell]-cell_displacement)
         new_position = new_position.at[idx_dividing_cell].set(new_position[idx_dividing_cell]+cell_displacement)
 
@@ -75,7 +74,6 @@ class CellDivision(SimulationStep):
             return state
         else:
             return state, np.log(p[idx_dividing_cell])
-
 
 
 

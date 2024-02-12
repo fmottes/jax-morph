@@ -16,12 +16,13 @@ from typing import Callable, Union, Sequence
 class Sequential(SimulationStep):
     substeps: tuple
     _return_logp: bool = eqx.field(static=True)
-
+    _return_nbrs: bool = eqx.field(static=True)
 
     def return_logprob(self) -> bool:
         return self._return_logp
 
-
+    def return_nbrs(self) -> bool:
+        return self._return_nbrs
 
     def __init__(self, substeps: Sequence[Callable]):
 
@@ -31,12 +32,11 @@ class Sequential(SimulationStep):
             raise TypeError("All substeps must be of type `SimulationStep`")
         
         self._return_logp = any(x.return_logprob() for x in self.substeps)
-        
+        self._return_nbrs = any(x.return_nbrs() for x in self.substeps)        
 
 
     @jax.named_scope("jax_morph.Sequential")
-    def __call__(self, state, *, key=None, **kwargs):
-
+    def __call__(self, state, *, nbrs=None, key=None, **kwargs):
 
         if key is None:
             keys = [None] * len(self.substeps)
@@ -45,18 +45,21 @@ class Sequential(SimulationStep):
 
 
         logp = np.float_(0.)
-
         for substep, key in zip(self.substeps, keys):
 
+            #TODO: NEED TO FIX THIS CONTROL FLOW
+            
             if substep.return_logprob():
                 state, logp = substep(state, key=key)
                 logp += logp
+            elif substep.return_nbrs():
+                state, nbrs = substep(state, nbrs, key=key)
             else:
                 state = substep(state, key=key)
 
 
-        if self._return_logp:
-            return state, logp
+        if self._return_logp and self._return_nbrs:
+            return state, logp, nbrs
         else:
             return state
         
@@ -82,33 +85,41 @@ class Sequential(SimulationStep):
 ###------------SIMULATION FUNCTION-----------------###
 
 @eqx.filter_jit
-def simulate(model, state, key, n_steps=1, *, history=False):
-
+def simulate(model, state, key, n_steps=1, *, nbrs=None, history=False):
     subkeys = jax.random.split(key, n_steps)
-
-    #STOCHASTIC MODEL
-    if model.return_logprob():
-
-        def _scan_fn(state, k):
-            state, logp = model(state, key=k)
-            return state, (state, logp)
+    
+    # Currently assuming that everything is using neighbor list
+    if model.return_nbrs():
         
-        state, (trajectory, logp) = jax.lax.scan(_scan_fn, state, np.asarray(subkeys))
-
-        if history:
-            return trajectory, logp
+        #STOCHASTIC MODEL
+        if model.return_logprob():
+            def _scan_fn(sstate, k):
+                state, nbrs = sstate
+                state, logp, nbrs = model(state, nbrs=nbrs, key=k)
+                sstate = (state, nbrs)
+                return sstate, (state, logp, nbrs)
+            
+            (state, nbrs), (trajectory, logp, nbrs) = jax.lax.scan(_scan_fn, (state, nbrs), np.asarray(subkeys))
+    
+            if history:
+                return trajectory, logp
+            else:
+                return state, logp
+                
+        #DETERMINISTIC (OR REPARAMETRIZED) MODEL
         else:
-            return state, logp
-        
-    #DETERMINISTIC (OR REPARAMETRIZED) MODEL
+            def _scan_fn(sstate, k):
+                state, nbrs = sstate
+                state, nbrs = model(state, nbrs=nbrs, key=k)
+                sstate = (state, nbrs)
+                return sstate, (state, nbrs)
+            
+            state, trajectory = jax.lax.scan(_scan_fn, (state, nbrs), np.asarray(subkeys))
+    
+            if history:
+                return trajectory
+            else:
+                return state
+
     else:
-        def _scan_fn(state, k):
-            state = model(state, key=k)
-            return state, state
-        
-        state, trajectory = jax.lax.scan(_scan_fn, state, np.asarray(subkeys))
-
-        if history:
-            return trajectory
-        else:
-            return state
+        raise TypeError("Must use neighbor list!")

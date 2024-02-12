@@ -22,7 +22,8 @@ class LocalChemicalGradients(SimulationStep):
     def return_logprob(self) -> bool:
         return False
 
-
+    def return_nbrs(self) -> bool:
+        return False
     def __init__(self, *, neighbor_radius=None, **kwargs):
 
         self.neighbor_radius = neighbor_radius
@@ -88,8 +89,6 @@ class LocalChemicalGradients(SimulationStep):
         state = eqx.tree_at(lambda s: s.chemical_grad, state, chemgrads)
 
         return state
-    
-
 
 
 ###-----------MECHANICAL "STRESS"-----------------###

@@ -12,7 +12,8 @@ class SecretionMaskByCellType(SimulationStep):
 
     def return_logprob(self) -> bool:
         return False
-
+    def return_nbrs(self) -> bool:
+        return False
     def __init__(self, state, ctype_sec_chem=None):
 
         if ctype_sec_chem is None:
@@ -34,5 +35,20 @@ class SecretionMaskByCellType(SimulationStep):
         secretion_rate = sec_mask*state.secretion_rate
 
         state = eqx.tree_at(lambda s: s.secretion_rate, state, secretion_rate)
+
+        return state
+
+class AdhesionMaskByCellType(SimulationStep):
+    
+    def return_logprob(self) -> bool:
+        return False
+    def return_nbrs(self) -> bool:
+        return False
+                     
+    @jax.named_scope("jax_morph.AdhesionByCellType")
+    def __call__(self, state, *, key=None, **kwargs):
+
+        cadherin = state.cadherin*state.celltype
+        state = eqx.tree_at(lambda s: s.cadherin, state, cadherin)
 
         return state

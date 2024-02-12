@@ -27,9 +27,9 @@ def ReinforceLoss(cost_fn, *, n_sim_steps, n_episodes=1, n_val_episodes=0, gamma
         raise ValueError("normalize_cost_returns must be 'batch', 'episode' or False, got {}".format(normalize_cost_returns))
 
 
-    def _reinforce_loss(model, istate, *, key, n_sim_steps=n_sim_steps, n_val_episodes=n_val_episodes, **kwargs):
+    def _reinforce_loss(model, istate, nbrs, *, key, n_sim_steps=n_sim_steps, n_val_episodes=n_val_episodes, **kwargs):
 
-        vsim = jax.vmap(partial(simulate, history=True), (None, None, 0, None))
+        vsim = jax.vmap(partial(simulate, nbrs=nbrs, history=True), (None, None, 0, None))
 
 
         key, *subkeys = jax.random.split(key, n_episodes+1)
@@ -118,9 +118,9 @@ def SimpleLoss(cost_fn, *, n_sim_steps, n_episodes=1, n_val_episodes=0, lambda_l
         raise ValueError("normalize_cost_returns must be 'batch', 'episode' or False, got {}".format(normalize_cost_returns))
 
 
-    def _simple_loss(model, istate, *, key, n_sim_steps=n_sim_steps, n_val_episodes=n_val_episodes, **kwargs):
+    def _simple_loss(model, istate, nbrs, *, key, n_sim_steps=n_sim_steps, n_val_episodes=n_val_episodes, **kwargs):
 
-        vsim = jax.vmap(partial(simulate, history=True), (None, None, 0, None))
+        vsim = jax.vmap(partial(simulate, nbrs=nbrs, history=True), (None, None, 0, None))
 
         key, *subkeys = jax.random.split(key, n_episodes+1)
         trajectory, _ = vsim(model, istate, np.asarray(subkeys), n_sim_steps)
@@ -159,7 +159,7 @@ def SimpleLoss(cost_fn, *, n_sim_steps, n_episodes=1, n_val_episodes=0, lambda_l
             cost = cost.flatten()
 
 
-        # loss = cost.sum(1).mean()
+        #loss = cost.sum(0).mean()
         loss = cost.mean()
 
 
