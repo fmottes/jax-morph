@@ -87,18 +87,17 @@ class MorsePotentialCadherin(MechanicalInteractionPotential):
 
 
     def _calculate_epsilon_matrix(self, state):
-
         if np.atleast_1d(self.epsilon).size == 1:
             alive = np.where(state.celltype.sum(1) > 0, 1, 0)
             epsilon_matrix = (np.outer(alive, alive)-np.eye(alive.shape[0]))*self.epsilon
-
         # If we are using cadherins, determine homotypic epsilon by cadherin expression
         # don't know how to make this condition jittable
         #if np.sum(state.cadherin) > 0.0:
             epsilon_mask = state.celltype @ state.celltype.T
             cad_matrix = jax.vmap(jax.vmap(lambda a,b: .5*(a + b).sum(), in_axes=(0, None)), in_axes=(None, 0))(state.cadherin, state.cadherin)
             cad_matrix = epsilon_mask*(4.*jax.nn.sigmoid(cad_matrix) + .3)
-            epsilon_matrix = np.where(cad_matrix, cad_matrix, epsilon_matrix)
+            print(epsilon_matrix)
+            epsilon_matrix = np.where(cad_matrix > 0.0, cad_matrix, epsilon_matrix)
 
 
         elif isinstance(self.epsilon, jax.interpreters.xla.DeviceArray):

@@ -73,8 +73,8 @@ class GeneNetwork(SimulationStep):
 
         system_size = int(in_shape + state.hidden_state.shape[-1] + out_shape)
 
-        interaction_matrix = interaction_init(key, shape=(system_size, system_size))
-        self.interaction_matrix = interaction_matrix.at[-out_shape:, :].set(0.0)
+        self.interaction_matrix = interaction_init(key, shape=(system_size, system_size))
+        #self.interaction_matrix = interaction_matrix.at[-out_shape:, :].set(0.0)
         self.degradation_rate = degradation_init(key, shape=(1, system_size)).tolist()
 
         out_sizes = [getattr(state, field).shape[-1] for field in self.output_fields]
