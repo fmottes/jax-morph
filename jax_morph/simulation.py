@@ -60,6 +60,10 @@ class Sequential(SimulationStep):
 
         if self._return_logp and self._return_nbrs:
             return state, logp, nbrs
+        elif (not self._return_logp) and self._return_nbrs:
+            return state, nbrs
+        elif self._return_logp and (not self._return_nbrs):
+            return state, logp
         else:
             return state
         
@@ -114,7 +118,7 @@ def simulate(model, state, key, n_steps=1, *, nbrs=None, history=False):
                 sstate = (state, nbrs)
                 return sstate, (state, nbrs)
             
-            state, trajectory = jax.lax.scan(_scan_fn, (state, nbrs), np.asarray(subkeys))
+            (state, nbrs), trajectory = jax.lax.scan(_scan_fn, (state, nbrs), np.asarray(subkeys))
     
             if history:
                 return trajectory

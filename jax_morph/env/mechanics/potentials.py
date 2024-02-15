@@ -75,12 +75,11 @@ class MorsePotential(MechanicalInteractionPotential):
                                                 r_onset=self.r_onset, 
                                                 r_cutoff=self.r_cutoff,
                                                 per_particle=per_particle
-                                                )
-        
+                                                )       
         return morse_energy
 
 class MorsePotentialCadherin(MechanicalInteractionPotential):
-    epsilon:   Union[float, jax.Array] = 3.
+    epsilon:   Union[float, jax.Array] = 2.
     alpha:     float = 2.8
     r_cutoff:  float = eqx.field(default=2., static=True)
     r_onset:   float = eqx.field(default=1.7, static=True)
@@ -95,8 +94,7 @@ class MorsePotentialCadherin(MechanicalInteractionPotential):
         #if np.sum(state.cadherin) > 0.0:
             epsilon_mask = state.celltype @ state.celltype.T
             cad_matrix = jax.vmap(jax.vmap(lambda a,b: .5*(a + b).sum(), in_axes=(0, None)), in_axes=(None, 0))(state.cadherin, state.cadherin)
-            cad_matrix = epsilon_mask*(4.*jax.nn.sigmoid(cad_matrix) + .3)
-            print(epsilon_matrix)
+            cad_matrix = epsilon_mask*(5.*cad_matrix + .3)
             epsilon_matrix = np.where(cad_matrix > 0.0, cad_matrix, epsilon_matrix)
 
 
@@ -137,6 +135,5 @@ class MorsePotentialCadherin(MechanicalInteractionPotential):
                                                 r_onset=self.r_onset, 
                                                 r_cutoff=self.r_cutoff,
                                                 per_particle=per_particle
-                                                )
-        
+                                                )   
         return morse_energy
