@@ -106,7 +106,6 @@ def ReinforceLoss(cost_fn, *, n_sim_steps, n_episodes=1, n_val_episodes=0, gamma
 
 
 
-
 def SimpleLoss(cost_fn, *, n_sim_steps, n_episodes=1, n_val_episodes=0, lambda_l1=0., normalize_cost_returns=False):
 
     n_episodes = int(n_episodes)
@@ -123,7 +122,7 @@ def SimpleLoss(cost_fn, *, n_sim_steps, n_episodes=1, n_val_episodes=0, lambda_l
         vsim = jax.vmap(partial(simulate, nbrs=nbrs, history=True), (None, None, 0, None))
 
         key, *subkeys = jax.random.split(key, n_episodes+1)
-        trajectory, _ = vsim(model, istate, np.asarray(subkeys), n_sim_steps)
+        trajectory, _ = vsim(model, jax.lax.stop_gradient(istate), np.asarray(subkeys), n_sim_steps)
 
         #add istate to beginning of trajectory
         _istate = jtu.tree_map(lambda x: np.repeat(x[None,None,:,:],n_episodes,0), istate)
