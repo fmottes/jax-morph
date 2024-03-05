@@ -91,13 +91,14 @@ class MorsePotentialSpecies(MechanicalInteractionPotential):
             alive = np.where(state.celltype.sum(1) > 0, 1, 0)
             epsilon_matrix = (np.outer(alive, alive)-np.eye(alive.shape[0]))*self.epsilon
         else:
-            if (state.celltype.shape[-1] + 1) != self.epsilon.shape[0]:
-                raise AssertionError('Epsilon matrix does not include species for non-alive cells')
-            # Otherwise, an epsilon matrix between cell types was passed
-            # make epsilon zero for dead cells
-            epsilon_matrix = 6.*jax.nn.sigmoid(self.epsilon) + 2.
+            # Parametrize epsilon matrix so it's symmetric - leave the diagonals alone and take average of symmetric off diagonal elements
+            epsilon_matrix = .5*(np.triu(self.epsilon) + np.tril(self.epsilon).T + np.triu(self.epsilon).T + np.tril(self.epsilon))
+            epsilon_matrix = epsilon_matrix - np.eye(state.celltype.shape[1])*.5*np.diagonal(epsilon_matrix)
+            epsilon_matrix = jax.nn.sigmoid(epsilon_matrix)*10. + .8
+            #if (state.celltype.shape[-1] + 1) != self.epsilon.shape[0]:
+            #    raise AssertionError('Epsilon matrix does not include species for non-alive cells')
             #epsilon_matrix = self.epsilon
-            epsilon_matrix = epsilon_matrix.at[0, :].set(0.0).at[:,0].set(0.0)
+            #epsilon_matrix = epsilon_matrix.at[0, :].set(0.0).at[:,0].set(0.0)
             # Constrain value of epsilon within reasonable range
 
         return epsilon_matrix
@@ -123,7 +124,7 @@ class MorsePotentialSpecies(MechanicalInteractionPotential):
         sigma_matrix = self._calculate_sigma_matrix(state)
 
         species = np.argmax(state.celltype, axis=1).astype(int)
-        species = np.where(state.celltype.sum(-1) > 0.0, species + 1, 0)
+        species = np.where(state.celltype.sum(-1) > 0.0, species, 0)
         
         #generate morse pair potential
         _, morse_energy = jax_md.energy.morse_neighbor_list(state.displacement,
@@ -140,31 +141,15 @@ class MorsePotentialSpecies(MechanicalInteractionPotential):
 
 
 class MorsePotentialCadherin(MechanicalInteractionPotential):
-    epsilon:   Union[float, jax.Array] = 2.
+    #epsilon:   Union[float, jax.Array] = 2.
     alpha:     float = 2.8
     r_cutoff:  float = eqx.field(default=2., static=True)
     r_onset:   float = eqx.field(default=1.7, static=True)
 
 
     def _calculate_epsilon_matrix(self, state):
-        if np.atleast_1d(self.epsilon).size == 1:
-            alive = np.where(state.celltype.sum(1) > 0, 1, 0)
-            epsilon_matrix = (np.outer(alive, alive)-np.eye(alive.shape[0]))*self.epsilon
-        # If we are using cadherins, determine homotypic epsilon by cadherin expression
-        # don't know how to make this condition jittable
-        #if np.sum(state.cadherin) > 0.0:
-            epsilon_mask = state.celltype @ state.celltype.T
-            cad_matrix = jax.vmap(jax.vmap(lambda a,b: .5*(a + b).sum(), in_axes=(0, None)), in_axes=(None, 0))(state.cadherin, state.cadherin)
-            cad_matrix = epsilon_mask*(5.*cad_matrix + .3)
-            epsilon_matrix = np.where(cad_matrix > 0.0, cad_matrix, epsilon_matrix)
-
-
-        elif isinstance(self.epsilon, jax.interpreters.xla.DeviceArray):
-            
-            ### implement logic for multiple cell types
-            raise NotImplementedError('Multiple cell types not implemented yet')
-
-
+        num_ctypes = state.celltype.shape[1]
+        epsilon_matrix = np.reshape(state.cadherin, (num_ctypes, num_ctypes))
         return epsilon_matrix
     
 
@@ -187,8 +172,12 @@ class MorsePotentialCadherin(MechanicalInteractionPotential):
         epsilon_matrix = self._calculate_epsilon_matrix(state)
         sigma_matrix = self._calculate_sigma_matrix(state)
 
+        species = np.argmax(state.celltype, axis=1).astype(int)
+        species = np.where(state.celltype.sum(-1) > 0.0, species, 0)
+        
         #generate morse pair potential
         _, morse_energy = jax_md.energy.morse_neighbor_list(state.displacement,
+                                                species=species,
                                                 box_size=10.0,
                                                 alpha=self.alpha,
                                                 epsilon=epsilon_matrix,

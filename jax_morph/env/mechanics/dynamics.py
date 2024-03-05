@@ -73,8 +73,8 @@ class BrownianMechanicalRelaxation(SimulationStep):
     
         def scan_fn(opt_state, i):
             state, nbrs = opt_state
-            state = apply_fn(state, neighbor=nbrs)
             nbrs = nbrs.update(state.position)
+            state = apply_fn(jax.lax.stop_gradient(state), neighbor=nbrs)
             return (state, nbrs), 0.
 
         #relax system
