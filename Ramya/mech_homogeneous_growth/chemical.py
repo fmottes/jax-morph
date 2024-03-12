@@ -8,10 +8,9 @@ from traitlets.config.loader import FileConfigLoader
 f32 = util.f32
 
 
-def S_fixed_chemfield(istate,
+def S_fixed_chemfield(state,
                   params,
                   fspace,
-                  noise=0.0,
                   **kwargs 
                   ) -> CellState:
   """
@@ -24,10 +23,9 @@ def S_fixed_chemfield(istate,
   """
   # Find displacements from center of cluster.
   center = np.array([0.0, 0.0])
-  chemfield_disp = vmap(fspace.displacement, (0, None))(istate.position, center)
+  chemfield_disp = vmap(fspace.displacement, (0, None))(state.position, center)
   chemfield_disp = np.linalg.norm(chemfield_disp, axis=1)
-  # TODO: Write these out as params
-  chemfield = params["chem_max"]/(params["chem_k"] + params["chem_gamma"]*np.power(chemfield_disp, 2.0))
-  chemfield = np.where(istate.celltype > 0, chemfield, 0.0) + noise*random.normal(istate.key, chemfield.shape)
-  istate = jax_dataclasses.replace(istate, field=chemfield)
-  return istate
+  chemfield = 50.0/(2 + 0.4*np.power(chemfield_disp, 2))
+  chemfield = np.where(state.celltype > 0, chemfield, 0.0) 
+  state = jax_dataclasses.replace(state, field=chemfield)
+  return state

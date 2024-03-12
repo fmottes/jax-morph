@@ -8,7 +8,13 @@ Francesco/chem_twotypes/__pycache__/
 Francesco/gifs/
 Francesco/tmp_gif/
 Francesco/tmp/
+Ramya/data/
 Ramya/mech_homogeneous_growth/__pycache__/
 __pycache__/
 files.txt
 ..gitignore.swp
+*.pkl
+*.gif
+*.err
+*.out
+*.png
