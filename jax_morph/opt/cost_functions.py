@@ -32,9 +32,11 @@ def CellTypeImbalance(metric='number'):
 
             p = trajectory.celltype.sum(-2) / trajectory.celltype.sum(-2).sum(-1, keepdims=True)
 
-            rel_entropy = -(p*np.log(p+1e-8)).sum(-1) / np.log(p.shape[-1])
+            safe_p = np.where(p>0, p, 1)
 
-            # minimize gap to max relative entropy
+            rel_entropy = -(p*np.log(safe_p)).sum(-1) / np.log(p.shape[-1])
+
+            # maximize relative entropy
             cost = 1 - rel_entropy
 
             cost = np.diff(cost) * 10 # scale costs
@@ -76,7 +78,7 @@ def MeanSquareY(*, nonsymm_penalty=1., realign=False):
 
 
 ### V SHAPE
-def VShape(*, cost_per_cell=3, rew_per_cell=1, nonsymm_penalty=.1, realign=False):
+def VShape(*, cost_per_cell=1, rew_per_cell=3, nonsymm_penalty=.1, realign=False):
         
     def _cost(trajectory):
 
@@ -103,7 +105,10 @@ def VShape(*, cost_per_cell=3, rew_per_cell=1, nonsymm_penalty=.1, realign=False
 
 
 
-
+def CVDivrates():
+    def _cost(trajectory):
+        return np.std(trajectory.division[:, :], axis=1)/np.mean(trajectory.division[:, :], axis=1)
+    return _cost
 
 
 

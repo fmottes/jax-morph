@@ -6,6 +6,7 @@ import equinox as eqx
 
 import abc
 
+from functools import partial
 
 ###------------BASE CELL STATE-----------------###
 
@@ -70,6 +71,18 @@ class BaseCellState(eqx.Module):
 
 
         return jax.tree_map(_elongate, self)
+
+
+    def delete(self, del_idx):
+        """Delete state array fields to do regeneration experiments."""
+        
+        def _delete(x, del_idx):
+            
+            if isinstance(x, jax.Array):
+                x = np.delete(x, del_idx, axis=0)
+            return x
+            
+        return jax.tree_map(partial(_delete, del_idx=del_idx), self)
     
 
 
@@ -86,4 +99,3 @@ class SimulationStep(eqx.Module):
     @abc.abstractmethod
     def return_logprob(self) -> bool:
         pass
-

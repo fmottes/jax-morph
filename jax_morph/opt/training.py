@@ -97,7 +97,5 @@ def train(model,
             print('Interrupted')
             break
 
-    if models is None:
-        models = model
 
-    return namedtuple('OptimizationResults', ['model', 'loss', 'loss_aux', 'grad'])(models, rlosses, losses, grads)
+    return model, namedtuple('OptimizationResults', ['model', 'loss', 'loss_aux', 'grad'])(models, rlosses, losses, grads)
