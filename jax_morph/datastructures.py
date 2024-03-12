@@ -1,13 +1,12 @@
-import jax_md.dataclasses as jax_dataclasses
-from jax_md import util, space
-Array = util.Array
+import jax_md
+import jax_md.dataclasses as jdc
 
 
 
-@jax_dataclasses.dataclass
+@jdc.dataclass
 class CellState:
     '''
-    Dataclass containing the system state.
+    Example dataclass containing the system state.
 
     Attributes:
     
@@ -18,21 +17,26 @@ class CellState:
     radius:    Radius of each particle. Cells are born at cellRadBirth and grow up to cellRad
     chemical: Chemical concentration at location of each particle. An ndarray of 
               np.float32 with shape [n, numSigs] integers in [0,1] with shape [n, 1]
+    field:    Imposed external field (like a chemical field)
     key:      The current state of the random number generator.
     '''
     
-    position: Array
-    celltype: Array
-    radius: Array 
-    chemical: Array
-    divrate: Array
-    key: Array
+    position:   jax_md.util.Array
+    celltype:   jax_md.util.Array
+    radius:     jax_md.util.Array 
+    chemical:   jax_md.util.Array
+    field:      jax_md.util.Array
+    divrate:    jax_md.util.Array
+    stress:     jax_md.util.Array
+    key:        jax_md.util.Array
     
-@jax_dataclasses.dataclass
+    
+    
+@jdc.dataclass
 class SpaceFunc:
     '''
     Dataclass containing functions that handle space.
     '''
     
-    displacement: space.DisplacementFn
-    shift: space.ShiftFn
+    displacement:   jax_md.space.DisplacementFn
+    shift:          jax_md.space.ShiftFn

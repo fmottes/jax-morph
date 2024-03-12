@@ -5,7 +5,7 @@ import jax_md.dataclasses as jax_dataclasses
 
 from jax_morph.datastructures import CellState
 from jax_morph.utils import logistic
-from jax_morph.diffusion import diffuse_allchem
+from jax_morph.chemicals.diffusion import diffuse_allchem
 
 
 
