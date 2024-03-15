@@ -1,6 +1,6 @@
 import jax
 import jax.numpy as np
-import jax_md
+import jax_md.space
 
 import equinox as eqx
 
