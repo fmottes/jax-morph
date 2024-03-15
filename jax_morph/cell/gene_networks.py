@@ -1,5 +1,6 @@
 import jax
 import jax.numpy as np
+from jax.experimental.ode import odeint
 
 import equinox as eqx
 
@@ -16,6 +17,8 @@ class GeneNetwork(SimulationStep):
     transform_output:    Union[Callable,None] = eqx.field(static=True)
     n_solver_steps:      int = eqx.field(static=True)
     dt:                  float = eqx.field(static=True)
+    T:                   float = eqx.field(static=True)
+
 
     interaction_matrix:  jax.Array
     degradation_rate:    Union[float, jax.Array]
@@ -24,22 +27,19 @@ class GeneNetwork(SimulationStep):
 
     def return_logprob(self) -> bool:
         return False
-    
+
+
+    def x_dot(self, xt, t, I):
+        return jax.nn.sigmoid(xt @ self.interaction_matrix) - np.atleast_2d(self.degradation_rate) * xt + I
 
     def circuit_solve(self, x0, I):
     
-        def _step(xt,t):
-            xtt = xt + self.x_dot(xt,I)*self.dt
-            return xtt, 0.
+        t = np.linspace(0.,self.T,self.n_solver_steps)
 
-        x, _ = jax.lax.scan(_step, x0, np.arange(self.n_solver_steps))
+        x = odeint(self.x_dot, x0, t, I)
         
-        return x
+        return x[-1]
     
-
-    def x_dot(self, xt, I):
-        return jax.nn.sigmoid(xt @ self.interaction_matrix) - np.atleast_2d(self.degradation_rate) * xt + I
-
 
 
     def __init__(self, 
@@ -65,6 +65,7 @@ class GeneNetwork(SimulationStep):
 
         self.n_solver_steps = int(n_solver_steps)
         self.dt = dt
+        self.T = float(n_solver_steps*dt)
 
         in_shape = np.concatenate([getattr(state, field) for field in input_fields], axis=1).shape[-1]
         out_shape = np.concatenate([getattr(state, field) for field in output_fields], axis=1).shape[-1]
