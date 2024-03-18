@@ -44,3 +44,40 @@ class SGDMechanicalRelaxation(SimulationStep):
         state = eqx.tree_at(lambda s: s.position, state, new_positions)
 
         return state
+
+class BrownianMechanicalRelaxation(SimulationStep):
+    mechanical_potential:   eqx.Module
+    relaxation_steps:       int = eqx.field(default=100, static=True)
+    dt:                     float = eqx.field(default=8e-4, static=True)
+    kT:                     float = eqx.field(default=1., static=True)
+
+
+    def return_logprob(self) -> bool:
+        return False
+        
+    def _brownian(self, state, energy_fn, key):
+        
+        init, apply = jax_md.simulate.brownian(energy_fn, state.shift, dt=self.dt, kT=self.kT, gamma=.8)
+    
+        def scan_fn(opt_state, i):
+            return apply(opt_state), 0.
+
+        #relax system
+        opt_state = init(key, state.position)
+        opt_state, _ = jax.lax.scan(scan_fn, opt_state, np.arange(self.relaxation_steps))
+        
+        return opt_state.position
+    
+    
+    @jax.named_scope("jax_morph.BrownianMechanicalRelaxation")
+    def __call__(self, state, *, key=None, **kwargs):
+
+        #generate morse pair potential
+        energy_fn = self.mechanical_potential.energy_fn(state)
+        
+        #minimize
+        new_positions = self._brownian(state, energy_fn, key)
+
+        state = eqx.tree_at(lambda s: s.position, state, new_positions)
+
+        return state

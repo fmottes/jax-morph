@@ -77,3 +77,104 @@ class MorsePotential(MechanicalInteractionPotential):
                                                 )
         
         return morse_energy
+
+
+class MorsePotentialSpecies(MechanicalInteractionPotential):
+    """Morse potential function using celltype as species"""
+    epsilon:   Union[float, jax.Array] = 3.
+    alpha:     float = 2.8
+    r_cutoff:  float = eqx.field(default=2., static=True)
+    r_onset:   float = eqx.field(default=1.7, static=True)
+
+
+    def _calculate_epsilon_matrix(self, state):
+
+        if np.atleast_1d(self.epsilon).size == 1:
+            alive = np.where(state.celltype.sum(1) > 0, 1, 0)
+            epsilon_matrix = (np.outer(alive, alive)-np.eye(alive.shape[0]))*self.epsilon
+        else:
+            if self.epsilon.shape[0] != state.celltype.shape[1] or self.epsilon.shape[1] != state.celltype.shape[1]:
+                raise ValueError("Epsilon matrix is not n_ctype x n_ctype to use species morse potential function.")
+            
+            # First parametrize epsilon matrix so it's symmetric - leave the diagonals alone and take average of symmetric off diagonal elements
+            epsilon_matrix = self.epsilon
+            epsilon_matrix = .5*(np.triu(self.epsilon) + np.tril(self.epsilon).T + np.triu(self.epsilon).T + np.tril(self.epsilon))
+            epsilon_matrix = epsilon_matrix - np.eye(state.celltype.shape[1])*.5*np.diagonal(epsilon_matrix)
+            epsilon_matrix = jax.nn.sigmoid(epsilon_matrix)*10. + .8
+
+            # Now turn this into N x N array of pairwise epsilons
+            epsilon_matrix = state.celltype @ epsilon_matrix
+            epsilon_matrix = epsilon_matrix @ state.celltype.T
+            epsilon_matrix = np.where(state.celltype.sum(-1) > 0., epsilon_matrix, 0.0)
+
+        return epsilon_matrix
+    
+
+    def _calculate_sigma_matrix(self, state):
+        
+        sigma_matrix = state.radius + state.radius.T
+
+        return sigma_matrix
+
+    def energy_fn(self, state, *, per_particle=False):
+
+        epsilon_matrix = self._calculate_epsilon_matrix(state)
+        sigma_matrix = self._calculate_sigma_matrix(state)
+                        
+        #generate morse pair potential
+        morse_energy = jax_md.energy.morse_pair(state.displacement,
+                                                alpha=self.alpha,
+                                                epsilon=epsilon_matrix,
+                                                sigma=sigma_matrix, 
+                                                r_onset=self.r_onset, 
+                                                r_cutoff=self.r_cutoff,
+                                                per_particle=per_particle,
+                                                )       
+        return morse_energy
+
+
+class MorsePotentialCadherin(MechanicalInteractionPotential):
+    """Use cadherin values to calculate morse potential"""
+    alpha:     float = 2.8
+    r_cutoff:  float = eqx.field(default=2., static=True)
+    r_onset:   float = eqx.field(default=1.7, static=True)
+
+
+    def _calculate_epsilon_matrix(self, state):
+        
+        if state.cadherin.shape[1] != state.celltype.shape[1]:
+            raise TypeError("There should be num celltypes cadherins")
+        
+        #epsilon_matrix = jax.vmap(jax.vmap(lambda i,j: min(i,j), (0,0)), (0, 1))(state.cadherin, state.cadherin.T)
+        def _get_epsilon(i, j):
+            eps_one = state.celltype[i][:,None] @ state.cadherin[i][None,:] @ state.celltype[j][:,None]
+            eps_two = state.celltype[j][:,None] @ state.cadherin[j][None,:] @ state.celltype[i][:,None]
+            return np.minimum(np.sum(eps_one), np.sum(eps_two))
+
+        cell_ids =  np.arange(state.celltype.shape[0])
+        epsilon_matrix = jax.vmap(jax.vmap(_get_epsilon, (0,None)), (None,0))(cell_ids, cell_ids)
+        epsilon_matrix = np.where(state.celltype.sum(-1) > 0., epsilon_matrix, 0.0)
+        return epsilon_matrix
+    
+
+    def _calculate_sigma_matrix(self, state):
+        sigma_matrix = state.radius + state.radius.T
+
+        return sigma_matrix
+
+    def energy_fn(self, state, *, per_particle=False):
+        
+        # Morse potential with neighbor list
+        epsilon_matrix = self._calculate_epsilon_matrix(state)
+        sigma_matrix = self._calculate_sigma_matrix(state)
+    
+        #generate morse pair potential
+        morse_energy = jax_md.energy.morse_pair(state.displacement,
+                                                alpha=self.alpha,
+                                                epsilon=epsilon_matrix,
+                                                sigma=sigma_matrix, 
+                                                r_onset=self.r_onset, 
+                                                r_cutoff=self.r_cutoff,
+                                                per_particle=per_particle
+                                                )   
+        return morse_energy
