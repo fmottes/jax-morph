@@ -47,7 +47,7 @@ class SGDMechanicalRelaxation(SimulationStep):
 
 class BrownianMechanicalRelaxation(SimulationStep):
     mechanical_potential:   eqx.Module
-    relaxation_steps:       int = eqx.field(default=100, static=True)
+    relaxation_steps:       int = eqx.field(default=1, static=True)
     dt:                     float = eqx.field(default=8e-4, static=True)
     kT:                     float = eqx.field(default=1., static=True)
 
@@ -58,7 +58,7 @@ class BrownianMechanicalRelaxation(SimulationStep):
     def _brownian(self, state, energy_fn, key):
         
         init, apply = jax_md.simulate.brownian(energy_fn, state.shift, dt=self.dt, kT=self.kT, gamma=.8)
-    
+        apply = jax.jit(apply)
         def scan_fn(opt_state, i):
             return apply(opt_state), 0.
 
