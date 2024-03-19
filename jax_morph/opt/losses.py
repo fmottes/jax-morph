@@ -123,7 +123,10 @@ def SimpleLoss(cost_fn, *, n_sim_steps, n_episodes=1, n_val_episodes=0, lambda_l
         vsim = jax.vmap(partial(simulate, history=True), (None, None, 0, None))
 
         key, *subkeys = jax.random.split(key, n_episodes+1)
-        trajectory, _ = vsim(model, istate, np.asarray(subkeys), n_sim_steps)
+        trajectory = vsim(model, istate, np.asarray(subkeys), n_sim_steps)
+        # My simulations don't have cell divisions so no logprob returned.
+        if isinstance(trajectory, tuple):
+            trajectory = trajectory[0]
 
         #add istate to beginning of trajectory
         _istate = jtu.tree_map(lambda x: np.repeat(x[None,None,:,:],n_episodes,0), istate)
@@ -137,8 +140,10 @@ def SimpleLoss(cost_fn, *, n_sim_steps, n_episodes=1, n_val_episodes=0, lambda_l
             n_val_episodes = int(n_val_episodes)
 
             key, *subkeys = jax.random.split(key, n_val_episodes+1)
-            val_trajectory, _ = vsim(model, istate, np.asarray(subkeys), n_sim_steps)
-
+            val_trajectory = vsim(model, istate, np.asarray(subkeys), n_sim_steps)
+            if isinstance(trajectory, tuple):
+                val_trajectory = val_trajectory[0]
+                
             #add istate to beginning of val_trajectory
             _istate = jtu.tree_map(lambda x: np.repeat(x[None,None,:,:],n_val_episodes,0), istate)
             val_trajectory = jtu.tree_map(lambda *v: np.concatenate(v,1), *[_istate, val_trajectory])
