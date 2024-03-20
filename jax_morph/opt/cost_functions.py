@@ -1,4 +1,5 @@
 import jax
+from functools import partial
 import jax.numpy as np
 
 
@@ -111,7 +112,21 @@ def CVDivrates():
     return _cost
 
 
+def PairwiseLoss():  
+    def _cost(trajectory):
 
+        displacements = jax.vmap(jax.vmap(jax.vmap(trajectory.displacement, (0, None)), (None, 0)), (0,0))(trajectory.position, trajectory.position) + 1e-12
+        distances = np.linalg.norm(displacements, axis=-1)
+
+        type_twos = (jax.vmap(lambda s: s.celltype[:,1, None]*s.celltype[:,1, None].T)(trajectory)).astype(int)
+        distance_twos = np.where(type_twos, distances, 0.0)
+        
+        # penalize overlap of particles
+        distance_twos = np.where(type_twos & (distance_twos  < 1.), 1., distance_twos)
+        costs = np.sum(distance_twos, axis=(1, 2))
+        
+        return costs[-1]
+    return _cost
 
 # def v_shape(trajectory):
 
