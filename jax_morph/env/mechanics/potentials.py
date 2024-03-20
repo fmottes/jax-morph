@@ -133,27 +133,34 @@ class MorsePotentialSpecies(MechanicalInteractionPotential):
         return morse_energy
 
 
-class MorsePotentialCadherin(MechanicalInteractionPotential):
+class MorsePotentialChemical(MechanicalInteractionPotential):
     """Use cadherin values to calculate morse potential"""
     alpha:     float = 2.8
     r_cutoff:  float = eqx.field(default=2., static=True)
     r_onset:   float = eqx.field(default=1.7, static=True)
 
-
+    def symmetrize_matrix(matrix):
+        matrix = .5*(np.triu(matrix) + np.tril(matrix).T + np.triu(matrix).T + np.tril(matrix))
+        matrix = matrix - np.eye(matrix.shape[0])*.5*np.diagonal(matrix)
+        return matrix
+    
     def _calculate_epsilon_matrix(self, state):
-        
-        if state.cadherin.shape[1] != state.celltype.shape[1]:
-            raise TypeError("There should be num celltypes cadherins")
-        
-        #epsilon_matrix = jax.vmap(jax.vmap(lambda i,j: min(i,j), (0,0)), (0, 1))(state.cadherin, state.cadherin.T)
-        def _get_epsilon(i, j):
-            eps_one = state.celltype[i][:,None] @ state.cadherin[i][None,:] @ state.celltype[j][:,None]
-            eps_two = state.celltype[j][:,None] @ state.cadherin[j][None,:] @ state.celltype[i][:,None]
-            return np.minimum(np.sum(eps_one), np.sum(eps_two))
 
-        cell_ids =  np.arange(state.celltype.shape[0])
-        epsilon_matrix = jax.vmap(jax.vmap(_get_epsilon, (0,None)), (None,0))(cell_ids, cell_ids)
-        epsilon_matrix = np.where(state.celltype.sum(-1) > 0., epsilon_matrix, 0.0)
+        epsilon_matrix = np.reshape(state.epsilon, (state.celltype.shape[0], 
+                                                    state.celltype.shape[1], 
+                                                    state.celltype.shape[1]))
+        
+        epsilon_matrix =  symmetrize_matrix_vmap = jax.vmap(symmetrize_matrix)(epsilon_matrix)
+        
+        def _get_epsilon(ctype_i, ctype_j, eps_i, eps_j):
+            eps_one = ctype_i[None, :] @ eps_i.squeeze() @ ctype_j[:,None]
+            eps_two = ctype_j[None, :] @ eps_j.squeeze() @ ctype_i[:,None]
+            return .5*(eps_one.squeeze() + eps_two.squeeze())
+
+        epsilon_matrix = jax.vmap(jax.vmap(_get_epsilon, (0,None, 0, None)), (None,0, None, 0))(state.celltype, state.celltype, epsilon_matrix, epsilon_matrix)
+        epsilon_matrix = 5.*jax.nn.sigmoid(epsilon_matrix) + .3
+        epsilon_matrix = np.where(state.celltype.sum(-1) > 0., epsilon_matrix, 0.0) 
+        
         return epsilon_matrix
     
 
