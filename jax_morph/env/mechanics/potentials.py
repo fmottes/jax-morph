@@ -139,10 +139,12 @@ class MorsePotentialChemical(MechanicalInteractionPotential):
     r_cutoff:  float = eqx.field(default=2., static=True)
     r_onset:   float = eqx.field(default=1.7, static=True)
 
-    def symmetrize_matrix(matrix):
-        matrix = .5*(np.triu(matrix) + np.tril(matrix).T + np.triu(matrix).T + np.tril(matrix))
-        matrix = matrix - np.eye(matrix.shape[0])*.5*np.diagonal(matrix)
-        return matrix
+    def symmetrize_matrix(self, matrix):
+        def _symmetrize_matrix(matrix):
+            matrix = .5*(np.triu(matrix) + np.tril(matrix).T + np.triu(matrix).T + np.tril(matrix))
+            matrix = matrix - np.eye(matrix.shape[0])*.5*np.diagonal(matrix)
+            return matrix
+        return jax.vmap(_symmetrize_matrix)(matrix)
     
     def _calculate_epsilon_matrix(self, state):
 
@@ -150,7 +152,7 @@ class MorsePotentialChemical(MechanicalInteractionPotential):
                                                     state.celltype.shape[1], 
                                                     state.celltype.shape[1]))
         
-        epsilon_matrix =  symmetrize_matrix_vmap = jax.vmap(symmetrize_matrix)(epsilon_matrix)
+        epsilon_matrix =  self.symmetrize_matrix(epsilon_matrix)
         
         def _get_epsilon(ctype_i, ctype_j, eps_i, eps_j):
             eps_one = ctype_i[None, :] @ eps_i.squeeze() @ ctype_j[:,None]
