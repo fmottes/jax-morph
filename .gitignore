@@ -17,3 +17,4 @@ files.txt
 *.err
 *.out
 *.png
+*.DS_Store
