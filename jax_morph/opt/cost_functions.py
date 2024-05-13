@@ -112,21 +112,32 @@ def CVDivrates():
     return _cost
 
 
-def PairwiseLoss():  
+def PairwiseLoss(coeffs=None, kT_reward=.01, overlap_penalty=1.):                    
     def _cost(trajectory):
-
-        displacements = jax.vmap(jax.vmap(jax.vmap(trajectory.displacement, (0, None)), (None, 0)), (0,0))(trajectory.position, trajectory.position) + 1e-12
+        
+        displacement_fn = jax.vmap(jax.vmap(trajectory.displacement, (0, None)), (None, 0))
+        displacements = jax.vmap(displacement_fn, (0,0))(trajectory.position, trajectory.position) + 1e-12
         distances = np.linalg.norm(displacements, axis=-1)
 
-        type_twos = (jax.vmap(lambda s: s.celltype[:,1, None]*s.celltype[:,1, None].T)(trajectory)).astype(int)
-        distance_twos = np.where(type_twos, distances, 0.0)
+        # Pairwise types
+        type_pair_f = jax.vmap(lambda x,y: x[:,None] @ y[None,:], (0,0))
+        type_pair = jax.vmap(jax.vmap(type_pair_f, (-1, None)), (None, -1))(trajectory.celltype, trajectory.celltype)
+
+        distance_pair = jax.vmap(lambda x: np.where(x, distances, 0.0), 0)(type_pair)
         
-        # penalize overlap of particles
-        distance_twos = np.where(type_twos & (distance_twos  < 1.), 1., distance_twos)
-        costs = np.sum(distance_twos, axis=(1, 2))
+        costs = np.sum(distance_pair, (-2, -1))
+        overlap = np.sum(np.where(distances < .85, 1., 0.0), (-2,-1))
         
-        return costs[-1]
+        final_costs = np.sum(coeffs[:,:,None]*costs, (0, 1)) - kT_reward*trajectory.kT.sum() + overlap_penalty*overlap
+
+        # Debugging printing.
+        # print("Pairwise term: %s" % np.sum(coeffs[:,:,None]*costs, (0, 1)).mean())
+        # print("kT term: %s" % (kT_reward*trajectory.kT.sum()).mean())
+        # print("overlap term: %s" % (overlap_penalty*overlap).mean())
+        
+        return np.array([np.average(final_costs),])
     return _cost
+
 
 # def v_shape(trajectory):
 
