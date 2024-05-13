@@ -45,11 +45,17 @@ class SGDMechanicalRelaxation(SimulationStep):
 
         return state
 
-class BrownianMechanicalRelaxation(SimulationStep):
+
+# Brownian Relaxation with discounted gradient and dynamic kT
+# default behavior should be no discounting, but state will have
+# to have kT
+
+class BrownianMechanicalRelaxation(jxm.SimulationStep):
     mechanical_potential:   eqx.Module
     relaxation_steps:       int = eqx.field(default=1, static=True)
     dt:                     float = eqx.field(default=8e-4, static=True)
-    kT:                     float = eqx.field(default=1., static=True)
+    kT:                     float = eqx.field(default=1., static=True) 
+    discount:               float = eqx.field(default=1., static=True)
 
 
     def return_logprob(self) -> bool:
@@ -58,9 +64,11 @@ class BrownianMechanicalRelaxation(SimulationStep):
     def _brownian(self, state, energy_fn, key):
         
         init, apply = jax_md.simulate.brownian(energy_fn, state.shift, dt=self.dt, kT=self.kT, gamma=.8)
-        apply = jax.jit(apply)
         def scan_fn(opt_state, i):
-            return apply(opt_state), 0.
+            # WARNING - IMPLIES STATE HAS KT!
+            opt_state = apply(opt_state, kT=state.kT)
+            opt_state = jxm.utils.discount_tangent(opt_state, self.discount)
+            return opt_state, 0.
 
         #relax system
         opt_state = init(key, state.position)
