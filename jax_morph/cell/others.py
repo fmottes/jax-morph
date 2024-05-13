@@ -36,3 +36,17 @@ class SecretionMaskByCellType(SimulationStep):
         state = eqx.tree_at(lambda s: s.secretion_rate, state, secretion_rate)
 
         return state
+
+class AdhesionMaskByCellType(SimulationStep):
+
+    def return_logprob(self) -> bool:
+        return False
+                
+    @jax.named_scope("jax_morph.AdhesionByCellType")
+    def __call__(self, state, *, key=None, **kwargs):
+
+        cadherin = state.celltype*state.cadherin[:,:-1]
+        cadherin = state.cadherin.at[:,:-1].set(cadherin)
+        state = eqx.tree_at(lambda s: s.cadherin, state, cadherin)
+
+        return state
