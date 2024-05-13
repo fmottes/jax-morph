@@ -50,7 +50,7 @@ class SGDMechanicalRelaxation(SimulationStep):
 # default behavior should be no discounting, but state will have
 # to have kT
 
-class BrownianMechanicalRelaxation(jxm.SimulationStep):
+class BrownianMechanicalRelaxation(SimulationStep):
     mechanical_potential:   eqx.Module
     relaxation_steps:       int = eqx.field(default=1, static=True)
     dt:                     float = eqx.field(default=8e-4, static=True)
