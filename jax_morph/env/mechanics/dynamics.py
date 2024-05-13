@@ -6,7 +6,7 @@ import jax_md
 import equinox as eqx
 
 from ..._base import SimulationStep
-
+from ...utils import discount_tangent
 
 class SGDMechanicalRelaxation(SimulationStep):
     mechanical_potential:   eqx.Module
@@ -67,7 +67,7 @@ class BrownianMechanicalRelaxation(SimulationStep):
         def scan_fn(opt_state, i):
             # WARNING - IMPLIES STATE HAS KT!
             opt_state = apply(opt_state, kT=state.kT)
-            opt_state = jxm.utils.discount_tangent(opt_state, self.discount)
+            opt_state = discount_tangent(opt_state, self.discount)
             return opt_state, 0.
 
         #relax system
