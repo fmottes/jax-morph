@@ -82,32 +82,32 @@ class MorsePotential(MechanicalInteractionPotential):
 class MorsePotentialSpecies(MechanicalInteractionPotential):
     """Morse potential function using celltype as species"""
     epsilon:   Union[float, jax.Array] = 3.
-    alpha:     float = 2.8
+    alpha:     Union[float, jax.Array] = 2.8
+    epsilon_max:   float = 5.0
+    epsilon_min:   float = 1.0
+    alpha_max:     float = 3.0
+    alpha_min:     float = 1.0
     r_cutoff:  float = eqx.field(default=2., static=True)
     r_onset:   float = eqx.field(default=1.7, static=True)
 
 
-    def _calculate_epsilon_matrix(self, state):
 
-        if np.atleast_1d(self.epsilon).size == 1:
-            alive = np.where(state.celltype.sum(1) > 0, 1, 0)
-            epsilon_matrix = (np.outer(alive, alive)-np.eye(alive.shape[0]))*self.epsilon
-        else:
-            if self.epsilon.shape[0] != state.celltype.shape[1] or self.epsilon.shape[1] != state.celltype.shape[1]:
-                raise ValueError("Epsilon matrix is not n_ctype x n_ctype to use species morse potential function.")
+    def _calculate_pairwise_matrix(self, state, matrix, max, min):
+        
+        if self.epsilon.shape[0] != state.celltype.shape[1] or self.epsilon.shape[1] != state.celltype.shape[1]:
+            raise ValueError("Matrix is not n_ctype x n_ctype to use species morse potential function.")
             
-            # First parametrize epsilon matrix so it's symmetric - leave the diagonals alone and take average of symmetric off diagonal elements
-            epsilon_matrix = self.epsilon
-            epsilon_matrix = .5*(np.triu(self.epsilon) + np.tril(self.epsilon).T + np.triu(self.epsilon).T + np.tril(self.epsilon))
-            epsilon_matrix = epsilon_matrix - np.eye(state.celltype.shape[1])*.5*np.diagonal(epsilon_matrix)
-            epsilon_matrix = jax.nn.sigmoid(epsilon_matrix)*10. + .8
+        # First parametrize matrix so it's symmetric - take average of symmetric off diagonal elements
+        matrix = .5*(np.triu(matrix) + np.tril(matrix).T + np.triu(matrix).T + np.tril(matrix))
+        matrix = matrix - np.eye(state.celltype.shape[1])*.5*np.diagonal(matrix)
+        matrix = jax.nn.sigmoid(matrix)*max + min
 
-            # Now turn this into N x N array of pairwise epsilons
-            epsilon_matrix = state.celltype @ epsilon_matrix
-            epsilon_matrix = epsilon_matrix @ state.celltype.T
-            epsilon_matrix = np.where(state.celltype.sum(-1) > 0., epsilon_matrix, 0.0)
+        # Now turn this into N x N array of pairwise
+        matrix = state.celltype @ matrix
+        matrix = matrix @ state.celltype.T
+        matrix = np.where(state.celltype.sum(-1) > 0., matrix, 0.0)
 
-        return epsilon_matrix
+        return matrix
     
 
     def _calculate_sigma_matrix(self, state):
@@ -118,12 +118,13 @@ class MorsePotentialSpecies(MechanicalInteractionPotential):
 
     def energy_fn(self, state, *, per_particle=False):
 
-        epsilon_matrix = self._calculate_epsilon_matrix(state)
+        epsilon_matrix = self._calculate_pairwise_matrix(state, self.epsilon, self.epsilon_max, self.epsilon_min)
+        alpha_matrix = self._calculate_pairwise_matrix(state, self.alpha, self.alpha_max, self.alpha_min)
         sigma_matrix = self._calculate_sigma_matrix(state)
                         
         #generate morse pair potential
         morse_energy = jax_md.energy.morse_pair(state.displacement,
-                                                alpha=self.alpha,
+                                                alpha=alpha_matrix,
                                                 epsilon=epsilon_matrix,
                                                 sigma=sigma_matrix, 
                                                 r_onset=self.r_onset, 
@@ -133,38 +134,32 @@ class MorsePotentialSpecies(MechanicalInteractionPotential):
         return morse_energy
 
 
-class MorsePotentialChemical(MechanicalInteractionPotential):
+class MorsePotentialCadherin(MechanicalInteractionPotential):
     """Use cadherin values to calculate morse potential"""
-    alpha:     float = 2.8
+    eps_min:   float = eqx.field(default=1., static=True)
+    eps_max:   float = eqx.field(default=5., static=True)
+    alpha:   float = eqx.field(default=2.8, static=True)
     r_cutoff:  float = eqx.field(default=2., static=True)
     r_onset:   float = eqx.field(default=1.7, static=True)
 
-    def symmetrize_matrix(self, matrix):
-        def _symmetrize_matrix(matrix):
-            matrix = .5*(np.triu(matrix) + np.tril(matrix).T + np.triu(matrix).T + np.tril(matrix))
-            matrix = matrix - np.eye(matrix.shape[0])*.5*np.diagonal(matrix)
-            return matrix
-        return jax.vmap(_symmetrize_matrix)(matrix)
-    
+
     def _calculate_epsilon_matrix(self, state):
 
-        epsilon_matrix = np.reshape(state.epsilon, (state.celltype.shape[0], 
-                                                    state.celltype.shape[1], 
-                                                    state.celltype.shape[1]))
+        ctype_mat = state.celltype@state.celltype.T
+        cad_mat = state.celltype*state.cadherin[:,:-1]
         
-        epsilon_matrix =  self.symmetrize_matrix(epsilon_matrix)
+        # Homotypic interactions
+        epsilon_matrix = np.sum(jax.vmap(jax.vmap(lambda x,y: x + y, (0, None)), (None, 0))(cad_mat, cad_mat), axis=-1)
+        epsilon_matrix = epsilon_matrix * ctype_mat
         
-        def _get_epsilon(ctype_i, ctype_j, eps_i, eps_j):
-            eps_one = ctype_i[None, :] @ eps_i.squeeze() @ ctype_j[:,None]
-            eps_two = ctype_j[None, :] @ eps_j.squeeze() @ ctype_i[:,None]
-            return .5*(eps_one.squeeze() + eps_two.squeeze())
-
-        epsilon_matrix = jax.vmap(jax.vmap(_get_epsilon, (0,None, 0, None)), (None,0, None, 0))(state.celltype, state.celltype, epsilon_matrix, epsilon_matrix)
-        epsilon_matrix = 5.*jax.nn.sigmoid(epsilon_matrix) + .3
+        # Heterotypic interactions
+        epsilon_matrix += (1. - ctype_mat)*(state.cadherin[:,-1] + state.cadherin[:,-1].T)
+        
+        # Normalize
+        epsilon_matrix = self.eps_max*epsilon_matrix + self.eps_min
         epsilon_matrix = np.where(state.celltype.sum(-1) > 0., epsilon_matrix, 0.0) 
         
         return epsilon_matrix
-    
 
     def _calculate_sigma_matrix(self, state):
         sigma_matrix = state.radius + state.radius.T
