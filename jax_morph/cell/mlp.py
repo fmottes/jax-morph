@@ -262,6 +262,7 @@ class CellStateMLP(SimulationStep):
                 use_bias=True,
                 transform_output=None,
                 memory=0.,
+                final_activation=lambda x:x,
                 **kwargs
                 ):
         """General-purpose MLP for updating cell state."""
@@ -287,7 +288,7 @@ class CellStateMLP(SimulationStep):
                     activation=activation,
                     use_bias=use_bias,
                     use_final_bias=False,
-                    final_activation=lambda x: x,
+                    final_activation=final_activation,
                     key=key,
                     **kwargs
                     )
