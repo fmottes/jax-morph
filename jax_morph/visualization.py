@@ -29,6 +29,7 @@ plt.rcParams.update({'font.size': 18})
  #   nx.draw_networkx_labels(G, pos, labels={n: labels[n] for n in G}, font_size=8, font_color="white")
  #   plt.title("Gene network");
 
+
 def draw_circles_ctype(state, ax=None, cm=plt.cm.coolwarm, grid=False, **kwargs):
     
     if None == ax:
@@ -92,7 +93,63 @@ def draw_circles_ctype(state, ax=None, cm=plt.cm.coolwarm, grid=False, **kwargs)
     
     return plt.gcf(), ax
 
+# Visualization of multiple cell types
+def draw_circles_ctypes(state, ax=None, cm=plt.cm.coolwarm, grid=False, **kwargs):
+    
+    if None == ax:
+        ax = plt.axes()
 
+    alive_cells = np.squeeze(state.celltype.sum(1) > 0)
+    color_levels = (np.argmax(state.celltype, axis=-1) + 1)/state.celltype.shape[1]
+    color = cm(color_levels)
+
+    for cell,radius,c in zip(state.position[alive_cells],state.radius[alive_cells],color[alive_cells]):
+        circle = plt.Circle(cell, radius=radius, color=c, alpha=.5, **kwargs)
+        ax.add_patch(circle)
+    
+    
+    ## calculate ax limits
+    xmin = np.min(state.position[:,0][alive_cells])
+    xmax = np.max(state.position[:,0][alive_cells])
+    
+    ymin = np.min(state.position[:,1][alive_cells])
+    ymax = np.max(state.position[:,1][alive_cells])
+    
+    max_coord = max([xmax,ymax])+3
+    min_coord = min([xmin,ymin])-3
+
+    
+    ax.set_xlim(min_coord,max_coord)
+    ax.set_ylim(min_coord,max_coord)
+    
+
+    #scale x and y in the same way
+    ax.set_aspect('equal', adjustable='box')
+
+    #white bg color for ax
+    ax.set_facecolor([1,1,1])
+
+    if grid:
+        ax.grid(alpha=.2)
+    else:
+        #remove axis spines
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+        ax.spines['bottom'].set_visible(False)
+        ax.spines['left'].set_visible(False)
+
+        ax.set_xticks([])
+        ax.set_yticks([])
+
+
+    background_color = [56 / 256] * 3        
+    plt.gcf().patch.set_facecolor(background_color)
+    plt.gcf().patch.set_alpha(0)
+
+    plt.gcf().set_size_inches(8, 8)
+    
+    return plt.gcf(), ax
+    
 def draw_circles_chem(state, chem=0, colorbar=True, ax=None, cm=None, grid=False, labels=False, edges=False, cm_edges=plt.cm.coolwarm, **kwargs):
     
     if None == ax:
