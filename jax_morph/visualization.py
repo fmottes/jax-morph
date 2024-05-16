@@ -46,7 +46,7 @@ def draw_circles_ctype(state, ax=None, cm=plt.cm.coolwarm, grid=False, **kwargs)
 
     color = cm(color_levels)
 
-    for cell,radius,c in zip(state.position[alive_cells],state.radius[alive_cells],color[alive_cells]):
+    for cell,radius,c in zip(state.position[alive_cells],state.radius[alive_cells].squeeze(),color[alive_cells]):
         circle = plt.Circle(cell, radius=radius, color=c, alpha=.5, **kwargs)
         ax.add_patch(circle)
     
