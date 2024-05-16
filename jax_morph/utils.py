@@ -91,3 +91,24 @@ def to_int_jvp(primals, tangents):
     ans = x
     ans_dot = x_dot
     return ans, ans_dot
+
+
+################################################
+# Gradient discounting
+################################################
+
+@jax.custom_vjp
+def discount_tangent(x, t):
+    # Operate normally in the forward pass
+    return x
+
+def discount_tangent_fwd(x, t):
+    # Forward pass
+    return discount_tangent(x, t), t
+
+def discount_tangent_bwd(t, g):
+    # Backward pass - multiply gradient by discounting factor
+    g = jax.tree_map(lambda x: t*x if eqx.is_array(x) else x,g)
+    return (g, 0.)
+
+discount_tangent.defvjp(discount_tangent_fwd, discount_tangent_bwd)

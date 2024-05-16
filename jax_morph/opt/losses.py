@@ -141,7 +141,7 @@ def SimpleLoss(cost_fn, *, n_sim_steps, n_episodes=1, n_val_episodes=0, lambda_l
 
             key, *subkeys = jax.random.split(key, n_val_episodes+1)
             val_trajectory = vsim(model, istate, np.asarray(subkeys), n_sim_steps)
-            if isinstance(trajectory, tuple):
+            if isinstance(val_trajectory, tuple):
                 val_trajectory = val_trajectory[0]
                 
             #add istate to beginning of val_trajectory
