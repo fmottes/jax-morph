@@ -15,25 +15,15 @@ class SteadyStateDiffusion(SimulationStep):
     diffusion_coeff:    Union[float, jax.Array]
     degradation_rate:   Union[float, jax.Array]
     _vmap_diff_inaxes:  tuple = eqx.field(static=True)
+    _diffusion_type:    str = eqx.field(static=True)
 
 
     def return_logprob(self) -> bool:
         return False
-    
-
-    def __init__(self, *, diffusion_coeff=2., degradation_rate=1., **kwargs):
-
-        self.diffusion_coeff = diffusion_coeff
-        self.degradation_rate = degradation_rate
-
-        _inaxes_diffcoef = 0 if np.atleast_1d(self.diffusion_coeff).size > 1 else None
-        _inaxes_degrate = 0 if np.atleast_1d(self.degradation_rate).size > 1 else None
-        self._vmap_diff_inaxes = (1, _inaxes_diffcoef, _inaxes_degrate, None)
 
 
-    @jax.named_scope("jax_morph.SteadyStateDiffusion")
-    def __call__(self, state, *, key=None, **kwargs):
 
+    def _L_closed_system(self, state):
 
         #calculate all pairwise distances
         dist = jax_md.space.map_product(jax_md.space.metric(state.displacement))(state.position, state.position)
@@ -41,25 +31,30 @@ class SteadyStateDiffusion(SimulationStep):
         alive = np.where(state.celltype.sum(1) > 0, 1, 0)
         alive = np.outer(alive, alive)
 
-        # -----------------------------------------
-        ### OLD APPROACH:
-        ### Dense adjacency matrix like 1/distance
+        #zero out connections to inexistent cells
+        dist = dist*alive
 
-        # #zero out connections to inexistent cells
-        # dist = dist*alive
+        #prevent division by zero
+        safe_dist = np.where(dist>0, dist, 1)
 
-        # #prevent division by zero
-        # safe_dist = np.where(dist>0, dist, 1)
+        #adjacency matrix
+        A = np.where(dist>0., 1/safe_dist, 0)#**2
 
-        # #adjacency matrix
-        # A = np.where(dist>0., 1/safe_dist, 0)#**2
+        #graph laplacian
+        L = np.diag(np.sum(A, axis=0)) - A
 
-        # #graph laplacian
-        # L = np.diag(np.sum(A, axis=0)) - A
+        return L
+    
 
-        # -----------------------------------------
+    def _L_open_system_heur(self, state):
 
+        #calculate all pairwise distances
+        dist = jax_md.space.map_product(jax_md.space.metric(state.displacement))(state.position, state.position)
 
+        alive = np.where(state.celltype.sum(1) > 0, 1, 0)
+        alive = np.outer(alive, alive)
+
+        
         #connect only cells that are nearest neighbors
         nn_dist = state.radius + state.radius.T * alive
         A = np.where(dist < 1.1*nn_dist, 1, 0) * (1-np.eye(dist.shape[0])) * alive
@@ -87,11 +82,50 @@ class SteadyStateDiffusion(SimulationStep):
         diag = np.where(np.sum(A, axis=0) > 0, diag, 0)
         diag = np.diag(diag)
 
-
         #graph laplacian
         L = diag - A
+
+        return L
     
 
+
+    def __init__(self, *, diffusion_coeff=2., degradation_rate=1., diffusion_type='approx_open', **kwargs):
+
+        self.diffusion_coeff = diffusion_coeff
+        self.degradation_rate = degradation_rate
+
+        _inaxes_diffcoef = 0 if np.atleast_1d(self.diffusion_coeff).size > 1 else None
+        _inaxes_degrate = 0 if np.atleast_1d(self.degradation_rate).size > 1 else None
+        self._vmap_diff_inaxes = (1, _inaxes_diffcoef, _inaxes_degrate, None)
+
+        if diffusion_type in ['closed', 'approx_open']:
+            self._diffusion_type = diffusion_type
+        else:
+            raise ValueError("diffusion_type must be 'closed' or 'approx_open'")
+        
+
+
+
+    @jax.named_scope("jax_morph.SteadyStateDiffusion")
+    def __call__(self, state, *, key=None, **kwargs):
+
+        #check if degradation rate is cell-specific
+        if hasattr(state, 'degradation_rate'):
+            deg_rate_ = state.degradation_rate
+            _, vdiff, _, _ = self._vmap_diff_inaxes
+            self._vmap_diff_inaxes = (1, vdiff, 1, None)
+        else:
+            deg_rate_ = self.degradation_rate
+
+
+        #calculate graph laplacian
+        if self._diffusion_type == 'closed':
+            L = self._L_closed_system(state)
+        elif self._diffusion_type == 'approx_open':
+            L = self._L_open_system_heur(state)
+
+    
+        #solve for steady state of one chemical
         def _ss_chemfield(P, D, K, L):
 
             #update laplacian with degradation
@@ -106,7 +140,7 @@ class SteadyStateDiffusion(SimulationStep):
         #calculate steady state chemical field
         _ss_chemfield = jax.vmap(_ss_chemfield, in_axes=self._vmap_diff_inaxes, out_axes=1)
 
-        new_chem = _ss_chemfield(state.secretion_rate, self.diffusion_coeff, self.degradation_rate, L)
+        new_chem = _ss_chemfield(state.secretion_rate, self.diffusion_coeff, deg_rate_, L)
 
 
         #update chemical field
