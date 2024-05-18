@@ -150,7 +150,7 @@ def draw_circles_ctypes(state, ax=None, cm=plt.cm.coolwarm, grid=False, **kwargs
     
     return plt.gcf(), ax
     
-def draw_circles_chem(state, chem=0, colorbar=True, ax=None, cm=None, grid=False, labels=False, edges=False, cm_edges=plt.cm.coolwarm, **kwargs):
+def draw_circles_chem(state, chem=0, colorbar=True, ax=None, cm=None, grid=False, labels=False, edges=False, cm_edges=plt.cm.coolwarm, max_val=None, **kwargs):
     
     if None == ax:
         ax = plt.axes()
@@ -158,8 +158,11 @@ def draw_circles_chem(state, chem=0, colorbar=True, ax=None, cm=None, grid=False
     alive_cells = np.squeeze(state.celltype.sum(1) > 0)
     
     chemical = state.chemical[:,chem][alive_cells]
-    # chemical = (chemical-chemical.min()+1e-20)/(chemical.max()-chemical.min()+1e-20)
-    chemical = (chemical+1e-20)/(chemical.max()+1e-20)
+
+    if max_val is None:
+        max_val = chemical.max()
+
+    chemical = (chemical+1e-20)/(max_val+1e-20)
 
         
     #only usable for two cell types
