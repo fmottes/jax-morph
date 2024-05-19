@@ -17,6 +17,19 @@ def differentiable_clip(x, min=0., max=1.):
     return zero + jax.lax.stop_gradient(np.clip(x, min, max))
 
 
+###-----------TRAJECTORY-----------------###
+
+#converts a trajectory to a list of states
+def traj_to_states(trajectory):
+
+    def _to_state(i, traj):
+        return jax.tree.map(lambda x: x[i], traj)
+    
+    _to_states = jax.jit(lambda traj: [_to_state(i, traj) for i in np.arange(traj.position.shape[0])])
+
+    return _to_states(trajectory)
+
+
 
 
 ###-----------PRINT GRADIENTS-----------------###
