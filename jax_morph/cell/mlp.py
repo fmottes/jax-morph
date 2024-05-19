@@ -330,9 +330,11 @@ class CellStateMLP(SimulationStep):
             new_field = out[:, self.out_indices[i]:self.out_indices[i+1]]
 
             if self.transform_output[field] is not None:
-                new_field = self.transform_output[field](state, new_field) * alive
+                new_field = self.transform_output[field](state, new_field)
 
             new_field = self.memory * getattr(state, field) + (1-self.memory) * new_field
+
+            new_field = new_field * alive
 
             state = eqx.tree_at(lambda s: getattr(s, field), state, new_field)
 
