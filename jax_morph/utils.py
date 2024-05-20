@@ -112,15 +112,16 @@ def to_int_jvp(primals, tangents):
 # Gradient discounting
 ################################################
 
+
 @jax.custom_vjp
 def discount_tangent(x, t):
     return x
 
 def discount_tangent_fwd(x, t):
-    return discount_tangent(x, t), t
+    return x, t  # Note that we return x, and t as residuals
 
 def discount_tangent_bwd(res, g):
-    t = res
+    t = res  # res contains the forward pass residuals (t)
     g_x = jax.tree_map(lambda x: t * x if eqx.is_array(x) else x, g)
     g_t = jax.tree_map(lambda _: 0., t)  # Gradient w.r.t. t is zero
     return g_x, g_t
