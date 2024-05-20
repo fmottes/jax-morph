@@ -1,7 +1,7 @@
 import jax
 import jax.numpy as np
 import jax.tree_util as jtu
-
+import equinox as eqx
 
 # Logistic function 
 def logistic(x,gamma,k):
