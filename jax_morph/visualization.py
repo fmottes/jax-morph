@@ -47,7 +47,7 @@ def draw_circles_ctype(state, ax=None, cm=plt.cm.coolwarm, grid=False, **kwargs)
 
     color = cm(color_levels)
 
-    for cell,radius,c in zip(state.position[alive_cells],state.radius[alive_cells],color[alive_cells]):
+    for cell,radius,c in zip(state.position[alive_cells],state.radius[alive_cells].squeeze(),color[alive_cells]):
         circle = plt.Circle(cell, radius=radius, color=c, alpha=.5, **kwargs)
         ax.add_patch(circle)
     
@@ -103,7 +103,7 @@ def draw_circles_ctypes(state, ax=None, cm=plt.cm.coolwarm, grid=False, **kwargs
     color_levels = (np.argmax(state.celltype, axis=-1) + 1)/state.celltype.shape[1]
     color = cm(color_levels)
 
-    for cell,radius,c in zip(state.position[alive_cells],state.radius[alive_cells],color[alive_cells]):
+    for cell,radius,c in zip(state.position[alive_cells],state.radius[alive_cells].squeeze(),color[alive_cells]):
         circle = plt.Circle(cell, radius=radius, color=c, alpha=.5, **kwargs)
         ax.add_patch(circle)
     
@@ -150,7 +150,7 @@ def draw_circles_ctypes(state, ax=None, cm=plt.cm.coolwarm, grid=False, **kwargs
     
     return plt.gcf(), ax
     
-def draw_circles_chem(state, chem=0, colorbar=True, ax=None, cm=None, grid=False, labels=False, edges=False, cm_edges=plt.cm.coolwarm, **kwargs):
+def draw_circles_chem(state, chem=0, colorbar=True, ax=None, cm=None, grid=False, labels=False, edges=False, cm_edges=plt.cm.coolwarm, max_val=None, **kwargs):
     
     if None == ax:
         ax = plt.axes()
@@ -158,8 +158,11 @@ def draw_circles_chem(state, chem=0, colorbar=True, ax=None, cm=None, grid=False
     alive_cells = np.squeeze(state.celltype.sum(1) > 0)
     
     chemical = state.chemical[:,chem][alive_cells]
-    # chemical = (chemical-chemical.min()+1e-20)/(chemical.max()-chemical.min()+1e-20)
-    chemical = (chemical+1e-20)/(chemical.max()+1e-20)
+
+    if max_val is None:
+        max_val = chemical.max()
+
+    chemical = (chemical+1e-20)/(max_val+1e-20)
 
         
     #only usable for two cell types
@@ -177,12 +180,12 @@ def draw_circles_chem(state, chem=0, colorbar=True, ax=None, cm=None, grid=False
         #only usable for two cell types
         ct_color = cm_edges(np.float32(state.celltype-1)[alive_cells])
 
-        for cell,radius,c,ctc in zip(state.position[alive_cells],state.radius[alive_cells],color,ct_color):
+        for cell,radius,c,ctc in zip(state.position[alive_cells],state.radius[alive_cells].squeeze(),color,ct_color):
             circle = plt.Circle(cell, radius=radius, fc=c, ec=ctc, lw=2, alpha=.5, **kwargs)
             ax.add_patch(circle)
             
     else:
-        for i, (cell,radius,c) in enumerate(zip(state.position[alive_cells],state.radius[alive_cells],color)):
+        for i, (cell,radius,c) in enumerate(zip(state.position[alive_cells],state.radius[alive_cells].squeeze(),color)):
             circle = plt.Circle(cell, radius=radius, fc=c, alpha=.5, **kwargs)
             ax.add_patch(circle)
             if labels:
@@ -263,12 +266,12 @@ def draw_circles_stress(state, colorbar=True, ax=None, cm=None, grid=False, labe
         #only usable for two cell types
         ct_color = cm_edges(np.float32(state.celltype-1)[alive_cells])
 
-        for cell,radius,c,ctc in zip(state.position[alive_cells],state.radius[alive_cells],color,ct_color):
+        for cell,radius,c,ctc in zip(state.position[alive_cells],state.radius[alive_cells].squeeze(),color,ct_color):
             circle = plt.Circle(cell, radius=radius, fc=c, ec=ctc, lw=2, alpha=.5, **kwargs)
             ax.add_patch(circle)
             
     else:
-        for i, (cell,radius,c) in enumerate(zip(state.position[alive_cells],state.radius[alive_cells],color)):
+        for i, (cell,radius,c) in enumerate(zip(state.position[alive_cells],state.radius[alive_cells].squeeze(),color)):
             circle = plt.Circle(cell, radius=radius, fc=c, alpha=.5, **kwargs)
             ax.add_patch(circle)
             if labels:
@@ -342,13 +345,13 @@ def draw_circles_divrate(state, probability=False, colorbar=True, ax=None, cm=pl
         #only usable for two cell types
         ct_color = cm_edges(np.float32(state.celltype-1)[alive_cells])
 
-        for cell,radius,c,ctc in zip(state.position[alive_cells],state.radius[alive_cells],color,ct_color):
+        for cell,radius,c,ctc in zip(state.position[alive_cells],state.radius[alive_cells].squeeze(),color,ct_color):
             circle = plt.Circle(cell, radius=radius, fc=c, ec=ctc, lw=2, alpha=.5, **kwargs)
             ax.add_patch(circle)
             
     else:
         # 
-        for i,(cell,radius,c) in enumerate(zip(state.position[alive_cells],state.radius[alive_cells],color)):
+        for i,(cell,radius,c) in enumerate(zip(state.position[alive_cells],state.radius[alive_cells].squeeze(),color)):
             circle = plt.Circle(cell, radius=radius, fc=c, alpha=.5, **kwargs)
             ax.add_patch(circle)
             if labels:
@@ -436,7 +439,7 @@ def draw_circles(state, state_values, min_val = None, max_val = None, min_coord=
 
     #only usable for two cell types
     color = cm(state_values)
-    for cell,radius,c in zip(state.position[alive_cells],state.radius[alive_cells],color):
+    for cell,radius,c in zip(state.position[alive_cells],state.radius[alive_cells].squeeze(),color):
         circle = plt.Circle(cell, radius=radius, fc=c, alpha=.5, **kwargs)
         ax.add_patch(circle)
     

@@ -110,7 +110,9 @@ class GeneNetwork(SimulationStep):
             new_field = gene_state[:, self.out_indices[i]:self.out_indices[i+1]]
 
             if self.transform_output[field] is not None:
-                new_field = self.transform_output[field](state, new_field) * alive
+                new_field = self.transform_output[field](state, new_field)
+
+            new_field = new_field * alive
 
             state = eqx.tree_at(lambda s: getattr(s, field), state, new_field)
 

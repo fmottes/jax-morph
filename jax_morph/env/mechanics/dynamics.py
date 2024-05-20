@@ -54,19 +54,20 @@ class BrownianMechanicalRelaxation(SimulationStep):
     mechanical_potential:   eqx.Module
     relaxation_steps:       int = eqx.field(default=1, static=True)
     dt:                     float = eqx.field(default=8e-4, static=True)
-    kT:                     float = eqx.field(default=1., static=True) 
+    kT:                     float = eqx.field(default=1., static=True)
+    gamma:                  float = eqx.field(default=.8, static=True)
     discount:               float = eqx.field(default=1., static=True)
 
 
     def return_logprob(self) -> bool:
         return False
         
-    def _brownian(self, state, energy_fn, key):
+    def _brownian(self, state, energy_fn, kT, gamma, key):
         
-        init, apply = jax_md.simulate.brownian(energy_fn, state.shift, dt=self.dt, kT=self.kT, gamma=.8)
+        init, apply = jax_md.simulate.brownian(energy_fn, state.shift, dt=self.dt, kT=kT, gamma=gamma)
+
         def scan_fn(opt_state, i):
-            # WARNING - IMPLIES STATE HAS KT!
-            opt_state = apply(opt_state, kT=state.kT)
+            opt_state = apply(opt_state)
             opt_state = discount_tangent(opt_state, self.discount)
             return opt_state, 0.
 
@@ -80,11 +81,14 @@ class BrownianMechanicalRelaxation(SimulationStep):
     @jax.named_scope("jax_morph.BrownianMechanicalRelaxation")
     def __call__(self, state, *, key=None, **kwargs):
 
+        _kT = state.kT if hasattr(state, 'kT') else self.kT
+        _gamma = state.gamma if hasattr(state, 'gamma') else self.gamma
+
         #generate morse pair potential
         energy_fn = self.mechanical_potential.energy_fn(state)
         
         #minimize
-        new_positions = self._brownian(state, energy_fn, key)
+        new_positions = self._brownian(state, energy_fn, _kT, _gamma, key)
 
         state = eqx.tree_at(lambda s: s.position, state, new_positions)
 
