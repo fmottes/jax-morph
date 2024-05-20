@@ -2,6 +2,8 @@ import jax
 import jax.numpy as np
 import jax.tree_util as jtu
 
+import equinox as eqx
+
 
 # Logistic function 
 def logistic(x,gamma,k):
@@ -112,16 +114,15 @@ def to_int_jvp(primals, tangents):
 
 @jax.custom_vjp
 def discount_tangent(x, t):
-    # Operate normally in the forward pass
     return x
 
 def discount_tangent_fwd(x, t):
-    # Forward pass
     return discount_tangent(x, t), t
 
-def discount_tangent_bwd(t, g):
-    # Backward pass - multiply gradient by discounting factor
-    g = jax.tree_map(lambda x: t*x if eqx.is_array(x) else x,g)
-    return (g, 0.)
+def discount_tangent_bwd(res, g):
+    t = res
+    g_x = jax.tree_map(lambda x: t * x if eqx.is_array(x) else x, g)
+    g_t = jax.tree_map(lambda _: 0., t)  # Gradient w.r.t. t is zero
+    return g_x, g_t
 
 discount_tangent.defvjp(discount_tangent_fwd, discount_tangent_bwd)
