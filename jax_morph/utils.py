@@ -81,16 +81,6 @@ normalize_grads.defvjp(normalize_grads_fwd, normalize_grads_bwd)
 
 
 
-#equinox automatically treats as static all non-array values
-#cast floats/ints into arrays if the parameter needs a gradient
-def _maybe_array(name, value, train_params):
-    if train_params[name]:
-        return np.array(value)
-    else:
-        return value
-
-
-
 ################################################
 # Straight-Through Estimator for integer casting
 ################################################
@@ -114,16 +104,15 @@ def to_int_jvp(primals, tangents):
 
 
 @jax.custom_vjp
-def discount_tangent(x, t):
+def discount_tangent(x, discount):
     return x
 
-def discount_tangent_fwd(x, t):
-    return x, t  # Note that we return x, and t as residuals
+def discount_tangent_fwd(x, discount):
+    return discount_tangent(x,discount), discount  # Note that we return x, and t as residuals
 
 def discount_tangent_bwd(res, g):
-    t = res  # res contains the forward pass residuals (t)
-    g_x = jax.tree_map(lambda x: t * x if eqx.is_array(x) else x, g)
-    g_t = jax.tree_map(lambda _: 0., t)  # Gradient w.r.t. t is zero
-    return g_x, g_t
+    discount = res  # res contains the forward pass residuals
+    g_x = jax.tree.map(lambda x: discount * x, g)
+    return g_x, 0.
 
 discount_tangent.defvjp(discount_tangent_fwd, discount_tangent_bwd)
