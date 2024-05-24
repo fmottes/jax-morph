@@ -61,6 +61,8 @@ class Sequential(SimulationStep):
             return state
         
 
+    def copy(self):
+        return Sequential(self.substeps)
 
 
     def __getitem__(self, i: Union[int, slice]) -> Callable:
