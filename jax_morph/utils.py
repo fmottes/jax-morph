@@ -110,7 +110,7 @@ def discount_tangent_fwd(x, discount):
 
 def discount_tangent_bwd(res, g):
     discount = res  # res contains the forward pass residuals
-    g_x = jax.tree.map(lambda x: discount * x, g)
+    g_x = jax.tree_map(lambda x: discount * x, g)
     return g_x, 0.
 
 discount_tangent.defvjp(discount_tangent_fwd, discount_tangent_bwd)
