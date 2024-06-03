@@ -68,7 +68,7 @@ class BrownianMechanicalRelaxation(SimulationStep):
 
         def scan_fn(opt_state, i):
             opt_state = apply(opt_state)
-            opt_state = discount_tangent(opt_state, self.discount)
+            opt_state = eqx.tree_at(lambda s: s.position, opt_state, replace_fn=lambda p: discount_tangent(p, self.discount))
             return opt_state, 0.
 
         #relax system

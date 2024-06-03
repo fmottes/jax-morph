@@ -21,6 +21,7 @@ def train(model,
           model_save_every=None,
           grad_save_every=None,
           normalize_grads=False,
+          constrain_model=None,
           **kwargs
           ):
 
@@ -64,6 +65,8 @@ def train(model,
             
             updates, opt_state = optimizer.update(g, opt_state, model)
             model = eqx.apply_updates(model, updates)
+            if constrain_model is not None:
+                model = constrain_model(model)
 
             key, subkey = jax.random.split(key)
             rl, g = loss_and_grad(model, istate, key=subkey)

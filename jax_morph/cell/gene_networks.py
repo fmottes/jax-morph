@@ -18,8 +18,6 @@ class GeneNetwork(SimulationStep):
     n_solver_steps:      int = eqx.field(static=True)
     dt:                  float = eqx.field(static=True)
     T:                   float = eqx.field(static=True)
-
-
     interaction_matrix:  jax.Array
     degradation_rate:    Union[float, jax.Array]
     expr_level_decay:    Union[float, jax.Array]
@@ -72,7 +70,7 @@ class GeneNetwork(SimulationStep):
 
         system_size = int(in_shape + state.hidden_state.shape[-1] + out_shape)
 
-        self.interaction_matrix = interaction_init(key, shape=(system_size, system_size))
+        self.interaction_matrix = interaction_init(key, shape=(system_size, system_size)) 
         self.degradation_rate = degradation_init(key, shape=(1, system_size)).tolist()
 
         out_sizes = [getattr(state, field).shape[-1] for field in self.output_fields]
@@ -86,7 +84,8 @@ class GeneNetwork(SimulationStep):
 
 
     @jax.named_scope("jax_morph.GeneNetwork")
-    def __call__(self, state, *, key=None, **kwargs):
+    def __call__(self, state, *, key=None,
+**kwargs):
 
         #concatenate input features
         in_features = np.concatenate([getattr(state, field) for field in self.input_fields], axis=1)
@@ -96,7 +95,6 @@ class GeneNetwork(SimulationStep):
         I = np.concatenate([in_features, np.zeros_like(state.hidden_state), np.zeros_like(out_features)], axis=1)
 
         alive = np.where(state.celltype.sum(1)>0., 1., 0.)[:,None]
-
         gene_state = self.circuit_solve(gene_state, I) * alive
 
         hidden_state = gene_state[:, in_features.shape[-1]:in_features.shape[-1]+state.hidden_state.shape[-1]]
