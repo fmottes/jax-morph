@@ -139,21 +139,84 @@ def PairwiseLoss(coeffs=None, kT_reward=.01, overlap_penalty=1.):
     return _cost
 
 
-# def v_shape(trajectory):
-
-#     def _state_cost(state):
-#         pos = state.position
-#         mask = (pos[:,1]+1.5 > .5*np.abs(pos[:,0])) * (pos[:,1]+1.5 < 3.5+.5*np.abs(pos[:,0])) * (pos[:,1]>-.1)
-
-#         c = np.sum(np.where(mask, 0., 3.) * state.celltype.sum(-1))
-
-#         return c
 
 
-#     cost = jax.vmap(_state_cost)(trajectory)
+def VShape3D(*, angle=1.3*(np.pi/2),  nonsymm_penalty=.1, beta=5., cost_scale=10., center_tol=2., realign=False):
 
-#     cost += .1 * np.abs(trajectory.position[:,:,0].sum(-1))
+    a1 = (np.pi - angle)/2
+    a2 = np.pi - a1
 
-#     cost = np.diff(cost)
+    d1 = np.array([np.cos(a1), np.sin(a1)])
+    d2 = np.array([np.cos(a2), np.sin(a2)])
 
-#     return cost
+    D = np.array([d1, d2]).T
+
+    def _cost_2d_conf(p_2d):
+
+        p_norm = np.linalg.norm(p_2d, axis=-1, keepdims=True)
+
+        cos_theta = np.dot(p_2d, D) / (p_norm + 1e-5)
+
+        cost = jax.nn.sigmoid(beta*(1-cos_theta))
+        cost = np.min(cost, axis=-1) - .5
+        cost = cost * jax.nn.sigmoid(2*(p_norm[:,0] - center_tol))
+        # cost = cost.sum()
+
+        return 2 * cost * cost_scale
+
+        
+    def _cost(trajectory):
+
+        if realign:
+            def _realign(pos):
+                _, P = np.linalg.eigh(np.cov(pos.T))
+                return pos @ P[:,::-1]
+            pos = jax.vmap(_realign)(trajectory.position)
+
+        else:
+            pos = trajectory.position
+
+        p_xy = pos[:,:,:2]
+
+        cost_xy = jax.vmap(_cost_2d_conf)(p_xy)
+        cost_xy = cost_xy * trajectory.celltype.sum(-1)
+        cost_xy = cost_xy.sum(-1)
+
+        cost_z = ((pos[:,:,2]**2)/4 * trajectory.celltype.sum(-1)).sum(-1)
+
+        cost = cost_xy + cost_z
+
+        cost += nonsymm_penalty * np.abs(pos[:,:,0].sum(-1))
+
+        cost = np.diff(cost)
+
+        return cost
+    
+    return _cost
+
+
+
+
+def MeanSquareZ(*, nonsymm_penalty=1., realign=False, negative=True):
+    
+    mse_sign = -1 if negative else 1
+
+    def _cost(trajectory):
+
+        if realign:
+            def _realign(pos):
+                _, P = np.linalg.eigh(np.cov(pos.T))
+                return pos @ P[:,::-1]
+            pos = jax.vmap(_realign)(trajectory.position)
+
+        else:
+            pos = trajectory.position
+
+        cost = mse_sign * (pos[:,:,2]**2).sum(-1)
+        cost += nonsymm_penalty * np.abs(pos[:,:,2].sum(-1))
+
+        cost = np.diff(cost)
+
+        return cost
+    
+    return _cost
