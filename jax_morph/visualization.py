@@ -14,7 +14,7 @@ def draw_network(W, eps, labels):
    W_act = np.array([w['weight'] for u,v,w in G.edges(data=True) if w['weight']>eps])
    W_in = np.array([w['weight'] for u,v,w in G.edges(data=True) if w['weight']<-eps])
     
-   pos = nx.circular_layout(G)
+   pos = nx.spring_layout(G)
    nodelist = [n for n in G.nodes if (n in np.array(edge_act).flatten() or n in np.array(edge_in).flatten())]
    nx.draw_networkx_nodes(G, pos, nodelist=nodelist, 
                           node_size=480, node_color="gray", edgecolors="black")
@@ -23,7 +23,7 @@ def draw_network(W, eps, labels):
                               node_size=480, arrows=True, nodelist=nodelist,
                              connectionstyle="arc3,rad=0.08")
    if len(W_in) > 0:
-       nx.draw_networkx_edges(G, pos, style='--', edgelist=edge_in, alpha=-W_in/np.max(-W_in), 
+       nx.draw_networkx_edges(G, pos, style='--', edgelist=edge_in, #alpha=-W_in/np.max(-W_in), 
                               node_size=480, arrows=True, nodelist=nodelist,
                              connectionstyle="arc3,rad=0.03")
    nx.draw_networkx_labels(G, pos, labels={n: labels[n] for n in G}, font_size=8, font_color="white")
@@ -491,3 +491,183 @@ def draw_circles(state, state_values, min_val = None, max_val = None, min_coord=
     plt.gcf().set_size_inches(8, 8)
 
     return plt.gcf(), ax
+
+
+
+
+###################################################################################################
+#                                                                                                 #
+#                                   3D VISUALIZATION FUNCTIONALITIES                              #
+#                                                                                                 #
+###################################################################################################
+
+
+# %matplotlib widget # add to notebook for interactive 3D plots
+
+
+
+def draw_spheres(state, color_field='chemical', color_index=0, colorbar=True, ax=None, cm=None, grid=False, labels=False, max_val=None, elev=70, azim=-80, **kwargs):
+    '''
+    Draw spheres in 3D space.
+    
+    color_field=None draws all spheres in a predefined color.
+    '''
+    
+    if ax is None:
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+    else:
+        fig = plt.gcf()
+
+
+    alive_cells = np.squeeze(state.celltype.sum(1) > 0)
+
+    if color_field == 'division':
+        raise Warning('Use draw_spheres_division for specialized visualization of division rates')
+    elif color_field is None:
+        color_data = np.ones_like(state.celltype[:, 0])[alive_cells] * .5
+    else:
+        color_data = getattr(state, color_field)[:, color_index][alive_cells]
+
+    if max_val is None:
+        max_val = color_data.max()
+
+    color_data = color_data / (max_val + 1e-20)
+
+    # Default colormap
+    if cm is None:
+        cm = plt.cm.BuPu
+
+    color = cm(color_data)
+
+    for i, (cell, radius, c) in enumerate(zip(state.position[alive_cells], state.radius[alive_cells].squeeze(), color)):
+        u = np.linspace(0, 2 * np.pi, 100)
+        v = np.linspace(0, np.pi, 100)
+        x = radius * np.outer(np.cos(u), np.sin(v)) + cell[0]
+        y = radius * np.outer(np.sin(u), np.sin(v)) + cell[1]
+        z = radius * np.outer(np.ones(np.size(u)), np.cos(v)) + cell[2]
+        ax.plot_surface(x, y, z, color=c, alpha=0.5, **kwargs)
+        if labels:
+            ax.text(cell[0], cell[1], cell[2], str(i), horizontalalignment='center', verticalalignment='center')
+
+    # Show colorbar
+    if colorbar:
+        sm = plt.cm.ScalarMappable(cmap=cm, norm=plt.Normalize(vmin=0, vmax=max_val))
+        sm._A = []
+        cbar = plt.colorbar(sm, ax=ax, fraction=0.05, alpha=0.5)
+        cbar.set_label(f'{color_field.capitalize()} {color_index}', labelpad=20)
+    
+    # Calculate ax limits
+    xmin, ymin, zmin = np.min(state.position[alive_cells], axis=0)
+    xmax, ymax, zmax = np.max(state.position[alive_cells], axis=0)
+
+    max_coord = max([xmax, ymax, zmax]) + 3
+    min_coord = min([xmin, ymin, zmin]) - 3
+
+    ax.set_xlim(min_coord, max_coord)
+    ax.set_ylim(min_coord, max_coord)
+    ax.set_zlim(min_coord, max_coord)
+
+    # Set aspect ratio
+    ax.set_box_aspect([1, 1, 1])  # Aspect ratio is 1:1:1
+
+    # Set background color for ax
+    ax.set_facecolor([1, 1, 1])
+
+    if grid:
+        ax.grid(alpha=0.2)
+    else:
+        ax.grid(False)
+        ax.set_xticks([])
+        ax.set_yticks([])
+        ax.set_zticks([])
+
+    background_color = [56 / 256] * 3
+    fig.patch.set_facecolor(background_color)
+    fig.patch.set_alpha(0)
+
+    fig.set_size_inches(8, 8)
+
+    ax.view_init(elev=elev, azim=azim)
+    
+    return fig, ax
+
+
+
+
+def draw_spheres_division(state, probability=False, colorbar=True, ax=None, cm=plt.cm.coolwarm, grid=False, labels=False, edges=False, cm_edges=plt.cm.coolwarm, elev=70, azim=-80, **kwargs):
+    
+    if ax is None:
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+    else:
+        fig = plt.gcf()
+
+    alive_cells = np.squeeze(state.celltype.sum(1) > 0)
+    divrate = state.division[alive_cells]
+    divrate = (divrate - divrate.min() + 1e-20) / (divrate.max() - divrate.min() + 1e-20)
+    color = cm(divrate)
+
+    if edges:
+        ct_color = cm_edges(np.float32(state.celltype - 1)[alive_cells])
+        for cell, radius, c, ctc in zip(state.position[alive_cells], state.radius[alive_cells].squeeze(), color, ct_color):
+            u = np.linspace(0, 2 * np.pi, 100)
+            v = np.linspace(0, np.pi, 100)
+            x = radius * np.outer(np.cos(u), np.sin(v)) + cell[0]
+            y = radius * np.outer(np.sin(u), np.sin(v)) + cell[1]
+            z = radius * np.outer(np.ones(np.size(u)), np.cos(v)) + cell[2]
+            ax.plot_surface(x, y, z, color=c, edgecolors=ctc, linewidth=0.5, alpha=0.5, **kwargs)
+            if labels:
+                ax.text(cell[0], cell[1], cell[2], str(i), horizontalalignment='center', verticalalignment='center')
+    else:
+        for i, (cell, radius, c) in enumerate(zip(state.position[alive_cells], state.radius[alive_cells].squeeze(), color)):
+            u = np.linspace(0, 2 * np.pi, 100)
+            v = np.linspace(0, np.pi, 100)
+            x = radius * np.outer(np.cos(u), np.sin(v)) + cell[0]
+            y = radius * np.outer(np.sin(u), np.sin(v)) + cell[1]
+            z = radius * np.outer(np.ones(np.size(u)), np.cos(v)) + cell[2]
+            ax.plot_surface(x, y, z, color=c, alpha=0.5, **kwargs)
+            if labels:
+                ax.text(cell[0], cell[1], cell[2], str(i), horizontalalignment='center', verticalalignment='center')
+
+    if colorbar:
+        if probability:
+            divrate = state.division[alive_cells] / (state.division[alive_cells].sum() + 1e-20)
+            sm = plt.cm.ScalarMappable(cmap=cm, norm=plt.Normalize(vmin=divrate.min(), vmax=divrate.max()))
+            sm._A = []
+            cbar_text = 'Division Probability'
+        else:
+            sm = plt.cm.ScalarMappable(cmap=cm, norm=plt.Normalize(vmin=state.division[alive_cells].min(), vmax=state.division[alive_cells].max()))
+            sm._A = []
+            cbar_text = 'Division Propensity'
+        cbar = plt.colorbar(sm, ax=ax, fraction=0.05, alpha=0.5)
+        cbar.set_label(cbar_text, labelpad=20)
+
+    xmin, ymin, zmin = np.min(state.position[alive_cells], axis=0)
+    xmax, ymax, zmax = np.max(state.position[alive_cells], axis=0)
+    max_coord = max([xmax, ymax, zmax]) + 3
+    min_coord = min([xmin, ymin, zmin]) - 3
+
+    ax.set_xlim(min_coord, max_coord)
+    ax.set_ylim(min_coord, max_coord)
+    ax.set_zlim(min_coord, max_coord)
+
+    ax.set_box_aspect([1, 1, 1])
+    ax.set_facecolor([1, 1, 1])
+
+    if grid:
+        ax.grid(alpha=0.2)
+    else:
+        ax.grid(False)
+        ax.set_xticks([])
+        ax.set_yticks([])
+        ax.set_zticks([])
+
+    background_color = [56 / 256] * 3
+    fig.patch.set_facecolor(background_color)
+    fig.patch.set_alpha(0)
+
+    fig.set_size_inches(8, 8)
+    ax.view_init(elev=elev, azim=azim)
+
+    return fig, ax
