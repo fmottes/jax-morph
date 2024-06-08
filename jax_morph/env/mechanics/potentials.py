@@ -32,23 +32,25 @@ class MorsePotential(MechanicalInteractionPotential):
 
     def _calculate_epsilon_matrix(self, state):
 
-        if np.atleast_1d(self.epsilon).size == 1:
-            alive = np.where(state.celltype.sum(1) > 0, 1, 0)
-            epsilon_matrix = (np.outer(alive, alive)-np.eye(alive.shape[0]))*self.epsilon
+        if hasattr(state, 'epsilon'):
+            if state.epsilon.shape == (state.position.shape[0], state.position.shape[0]):
+                epsilon_matrix = state.epsilon
+            else:
+                raise ValueError('Epsilon matrix shape does not match number of particles')
+
+        else:
+            if np.atleast_1d(self.epsilon).size == 1:
+                alive = np.where(state.celltype.sum(1) > 0, 1, 0)
+                epsilon_matrix = (np.outer(alive, alive)-np.eye(alive.shape[0]))*self.epsilon
 
 
-        elif isinstance(self.epsilon, jax.interpreters.xla.DeviceArray):
-            
-            ### implement logic for multiple cell types
-            raise NotImplementedError('Multiple cell types not implemented yet')
-
+            elif isinstance(self.epsilon, jax.interpreters.xla.DeviceArray):
+                raise NotImplementedError('Multiple cell types not implemented yet')
 
         return epsilon_matrix
     
 
     def _calculate_sigma_matrix(self, state):
-
-        # sigma_matrix = state.radius[:,None] + state.radius[None,:]
 
         # In principle this should be the right expression:
         # alive = np.where(state.celltype.sum(1) > 0, 1, 0)
