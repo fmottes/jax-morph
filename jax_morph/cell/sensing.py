@@ -39,7 +39,7 @@ class LocalChemicalGradients(SimulationStep):
         disp = jax.vmap(jax.vmap(state.displacement, in_axes=[0,None]), in_axes=[None,0])(state.position, state.position)
 
         # distances btw cell pairs
-        dist = (disp**2).sum(2)
+        dist = np.sqrt((disp**2).sum(2))
 
         # avoid division by zero in gradient calculation
         safe_dist = np.where(dist>0., dist, 1)
