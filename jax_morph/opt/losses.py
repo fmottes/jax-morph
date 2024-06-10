@@ -125,22 +125,19 @@ def SimpleLoss(cost_fn, *, n_sim_steps, n_episodes=1, n_val_episodes=0, lambda_l
         def _sim(key, istate, model, n_sim_steps):
             istate = istate_func(key, istate)
             trajectory = simulate(model, istate, key, n_sim_steps, history=True)
-            trajectory = jtu.tree_map(lambda *v: np.concatenate(v,1), *[istate, trajectory])
+            
+            _istate = jtu.tree_map(lambda x: x[None,:, :], istate)
+            trajectory = jtu.tree_map(lambda *v: np.concatenate(v), *[_istate, trajectory])
             return trajectory
             
         #vsim = jax.vmap(partial(simulate, history=True), (None, 0, 0, None))
         vsim = jax.vmap(_sim, (0, None, None, None))
         key, *subkeys = jax.random.split(key, n_episodes+1)
-        #istates = jax.vmap(istate_func, (0, None))(np.asarray(subkeys), istate)
         trajectory = vsim(np.asarray(subkeys), istate, model, n_sim_steps)
-        #trajectory = vsim(model, istates, np.asarray(subkeys), n_sim_steps)
+
         # My simulations don't have cell divisions so no logprob returned.
         if isinstance(trajectory, tuple):
             trajectory = trajectory[0]
-
-        #add istate to beginning of trajectory
-        #_istate = jtu.tree_map(lambda x: np.repeat(x[None,None,:,:],n_episodes,0), istate)
-        #trajectory = jtu.tree_map(lambda *v: np.concatenate(v,1), *[_istate, trajectory])
         
         cost = jax.vmap(cost_fn)(trajectory)
 
@@ -150,15 +147,11 @@ def SimpleLoss(cost_fn, *, n_sim_steps, n_episodes=1, n_val_episodes=0, lambda_l
             n_val_episodes = int(n_val_episodes)
 
             key, *subkeys = jax.random.split(key, n_val_episodes+1)
-            #val_trajectory = vsim(model, istate, np.asarray(subkeys), n_sim_steps)
             val_trajectory = vsim(np.asarray(subkeys), istate, model, n_sim_steps)
 
             if isinstance(val_trajectory, tuple):
                 val_trajectory = val_trajectory[0]
-                
-            #add istate to beginning of val_trajectory
-            #_istate = jtu.tree_map(lambda x: np.repeat(x[None,None,:,:],n_val_episodes,0), istate)
-            #val_trajectory = jtu.tree_map(lambda *v: np.concatenate(v,1), *[_istate, val_trajectory])
+
 
             val_cost = jax.vmap(cost_fn)(val_trajectory).sum(-1).mean()
         
