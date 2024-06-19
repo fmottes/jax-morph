@@ -506,7 +506,7 @@ def draw_circles(state, state_values, min_val = None, max_val = None, min_coord=
 
 
 
-def draw_spheres(state, color_field='chemical', color_index=0, colorbar=True, ax=None, cm=None, grid=False, labels=False, max_val=None, elev=70, azim=-80, **kwargs):
+def draw_spheres(state, color_field='chemical', color_index=0, colorbar=True, ax=None, cm=None, grid=False, labels=False, max_val=None, elev=70, azim=-80, alpha=.6, **kwargs):
     '''
     Draw spheres in 3D space.
     
@@ -525,7 +525,9 @@ def draw_spheres(state, color_field='chemical', color_index=0, colorbar=True, ax
     if color_field == 'division':
         raise Warning('Use draw_spheres_division for specialized visualization of division rates')
     elif color_field is None:
-        color_data = np.ones_like(state.celltype[:, 0])[alive_cells] * .5
+        color_data = np.ones_like(state.celltype[:, 0])[alive_cells] * .4
+        colorbar = False
+        max_val = 1.
     else:
         color_data = getattr(state, color_field)[:, color_index][alive_cells]
 
@@ -546,7 +548,7 @@ def draw_spheres(state, color_field='chemical', color_index=0, colorbar=True, ax
         x = radius * np.outer(np.cos(u), np.sin(v)) + cell[0]
         y = radius * np.outer(np.sin(u), np.sin(v)) + cell[1]
         z = radius * np.outer(np.ones(np.size(u)), np.cos(v)) + cell[2]
-        ax.plot_surface(x, y, z, color=c, alpha=0.5, **kwargs)
+        ax.plot_surface(x, y, z, color=c, alpha=alpha, **kwargs)
         if labels:
             ax.text(cell[0], cell[1], cell[2], str(i), horizontalalignment='center', verticalalignment='center')
 
@@ -554,7 +556,7 @@ def draw_spheres(state, color_field='chemical', color_index=0, colorbar=True, ax
     if colorbar:
         sm = plt.cm.ScalarMappable(cmap=cm, norm=plt.Normalize(vmin=0, vmax=max_val))
         sm._A = []
-        cbar = plt.colorbar(sm, ax=ax, fraction=0.05, alpha=0.5)
+        cbar = plt.colorbar(sm, ax=ax, fraction=0.05, alpha=alpha)
         cbar.set_label(f'{color_field.capitalize()} {color_index}', labelpad=20)
     
     # Calculate ax limits
