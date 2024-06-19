@@ -3,6 +3,7 @@ import jax.numpy as np
 import jax.tree_util as jtu
 import equinox as eqx
 
+
 # Logistic function 
 def logistic(x,gamma,k):
     return 1./(1.+np.exp(-gamma*(x-k)))
@@ -15,6 +16,11 @@ def polynomial(x, coeffs):
 def differentiable_clip(x, min=0., max=1.):
     zero = x - jax.lax.stop_gradient(x)
     return zero + jax.lax.stop_gradient(np.clip(x, min, max))
+
+
+# Rescaled algebraic sigmoid (better gradients - between 0 and 1)
+def rescaled_algebraic_sigmoid(x):
+    return 0.5 + (x / (2 * np.sqrt(1 + x**2)))
 
 
 ###-----------TRAJECTORY-----------------###
