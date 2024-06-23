@@ -5,6 +5,7 @@ from jax.experimental.ode import odeint
 import equinox as eqx
 
 from .._base import SimulationStep
+from ..utils import rescaled_algebraic_sigmoid
 
 from typing import Union, Sequence, Callable
 
@@ -28,7 +29,9 @@ class GeneNetwork(SimulationStep):
 
 
     def x_dot(self, xt, t, I):
-        return jax.nn.sigmoid(xt @ self.interaction_matrix) - np.atleast_2d(self.degradation_rate) * xt + I
+        # return jax.nn.sigmoid(xt @ self.interaction_matrix) - np.atleast_2d(self.degradation_rate) * xt + I
+        return rescaled_algebraic_sigmoid(xt @ self.interaction_matrix) - np.atleast_2d(self.degradation_rate) * xt + I
+
 
     def circuit_solve(self, x0, I):
     
