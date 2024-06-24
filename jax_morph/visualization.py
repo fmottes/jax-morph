@@ -584,6 +584,17 @@ def draw_spheres(state, color_field='chemical', color_index=0, colorbar=True, ax
         ax.set_yticks([])
         ax.set_zticks([])
 
+        # Make the box invisible
+        ax.xaxis.pane.set_visible(False)
+        ax.yaxis.pane.set_visible(False)
+        ax.zaxis.pane.set_visible(False)
+
+        # Hide the axes lines
+        ax.xaxis.line.set_color((1.0, 1.0, 1.0, 0.0))
+        ax.yaxis.line.set_color((1.0, 1.0, 1.0, 0.0))
+        ax.zaxis.line.set_color((1.0, 1.0, 1.0, 0.0))
+
+
     background_color = [56 / 256] * 3
     fig.patch.set_facecolor(background_color)
     fig.patch.set_alpha(0)
@@ -664,6 +675,17 @@ def draw_spheres_division(state, probability=False, colorbar=True, ax=None, cm=p
         ax.set_xticks([])
         ax.set_yticks([])
         ax.set_zticks([])
+
+        # Make the box invisible
+        ax.xaxis.pane.set_visible(False)
+        ax.yaxis.pane.set_visible(False)
+        ax.zaxis.pane.set_visible(False)
+
+        # Hide the axes lines
+        ax.xaxis.line.set_color((1.0, 1.0, 1.0, 0.0))
+        ax.yaxis.line.set_color((1.0, 1.0, 1.0, 0.0))
+        ax.zaxis.line.set_color((1.0, 1.0, 1.0, 0.0))
+        
 
     background_color = [56 / 256] * 3
     fig.patch.set_facecolor(background_color)
