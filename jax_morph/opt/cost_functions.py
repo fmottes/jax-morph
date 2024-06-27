@@ -186,7 +186,7 @@ def VShape3D(*, angle=1.3*(np.pi/2),  nonsymm_penalty=.1, beta=5., cost_scale=10
 
         cost = cost_xy + cost_z
 
-        cost += nonsymm_penalty * np.abs(pos[:,:,0].sum(-1))
+        cost += nonsymm_penalty * (pos[:,:,0].sum(-1))**2
 
         cost = np.diff(cost)
 
@@ -213,7 +213,7 @@ def MeanSquareZ(*, nonsymm_penalty=1., realign=False, negative=True):
             pos = trajectory.position
 
         cost = mse_sign * (pos[:,:,2]**2).sum(-1)
-        cost += nonsymm_penalty * np.abs(pos[:,:,2].sum(-1))
+        cost += nonsymm_penalty * (pos[:,:,2].sum(-1))**2
 
         cost = np.diff(cost)
 
