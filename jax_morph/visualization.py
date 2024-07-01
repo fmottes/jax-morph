@@ -2,32 +2,83 @@ import jax.numpy as np
 import matplotlib.pyplot as plt
 import networkx as nx
 
-
 #set global properties of plots
 plt.rcParams.update({'font.size': 18})
 
+
+
+
+def draw_network_shells(W, eps, labels, shells):
+    
+    G = nx.from_numpy_array(W.T, create_using=nx.DiGraph)
+    edge_act = [(v, u) for u,v,w in G.edges(data=True) if w['weight']>eps]
+    edge_in = [(v, u) for u,v,w in G.edges(data=True) if w['weight']<-eps]
+    
+    W_act = np.array([w['weight'] for u,v,w in G.edges(data=True) if w['weight']>eps])
+    W_in = np.array([w['weight'] for u,v,w in G.edges(data=True) if w['weight']<-eps])
+
+    nodelist = [n for n in G.nodes if (n in np.array(edge_act).flatten() or n in np.array(edge_in).flatten())]
+    
+    # keep only nodes in nodelist in shells
+    shells = [[n for n in shell if n in nodelist] for shell in shells]
+
+    # pos = nx.spring_layout(G)
+    pos = nx.shell_layout(G, shells)
+
+    node_colors = ['seagreen']*len(shells[2]) + ['steelblue']*len(shells[1]) + ['indianred']*len(shells[0])
+
+    nx.draw_networkx_nodes(G, pos, nodelist=nodelist, 
+                           node_size=480, node_color=node_colors, edgecolors="black", alpha=.95)
+    if len(W_act) > 0:
+        nx.draw_networkx_edges(G, pos, edgelist=edge_act, alpha=W_act/np.max(W_act), 
+                               node_size=480, arrows=True, nodelist=nodelist,
+                              connectionstyle="arc3,rad=0.1")
+    if len(W_in) > 0:
+        nx.draw_networkx_edges(G, pos, style='--', edgelist=edge_in, alpha=-W_in/np.max(-W_in), 
+                               node_size=480, arrows=True, nodelist=nodelist,
+                              connectionstyle="arc3,rad=0.1")
+    nx.draw_networkx_labels(G, pos, labels={n: labels[n] for n in nodelist}, font_size=8, font_color="black")
+
+    #remove axis
+    plt.gca().set_axis_off()
+
+    return plt.gcf(), plt.gca()
+    
+
+
+
 def draw_network(W, eps, labels):
-   G = nx.from_numpy_array(W.T, create_using=nx.DiGraph)
-   edge_act = [(v, u) for u,v,w in G.edges(data=True) if w['weight']>eps]
-   edge_in = [(v, u) for u,v,w in G.edges(data=True) if w['weight']<-eps]
-    
-   W_act = np.array([w['weight'] for u,v,w in G.edges(data=True) if w['weight']>eps])
-   W_in = np.array([w['weight'] for u,v,w in G.edges(data=True) if w['weight']<-eps])
-    
-   pos = nx.spring_layout(G)
-   nodelist = [n for n in G.nodes if (n in np.array(edge_act).flatten() or n in np.array(edge_in).flatten())]
-   nx.draw_networkx_nodes(G, pos, nodelist=nodelist, 
-                          node_size=480, node_color="gray", edgecolors="black")
-   if len(W_act) > 0:
-       nx.draw_networkx_edges(G, pos, edgelist=edge_act, alpha=W_act/np.max(W_act), 
-                              node_size=480, arrows=True, nodelist=nodelist,
-                             connectionstyle="arc3,rad=0.08")
-   if len(W_in) > 0:
-       nx.draw_networkx_edges(G, pos, style='--', edgelist=edge_in, #alpha=-W_in/np.max(-W_in), 
-                              node_size=480, arrows=True, nodelist=nodelist,
-                             connectionstyle="arc3,rad=0.03")
-   nx.draw_networkx_labels(G, pos, labels={n: labels[n] for n in G}, font_size=8, font_color="white")
-   plt.title("Gene network");
+   
+    G = nx.from_numpy_array(W.T, create_using=nx.DiGraph)
+    edge_act = [(v, u) for u,v,w in G.edges(data=True) if w['weight']>eps]
+    edge_in = [(v, u) for u,v,w in G.edges(data=True) if w['weight']<-eps]
+
+    W_act = np.array([w['weight'] for u,v,w in G.edges(data=True) if w['weight']>eps])
+    W_in = np.array([w['weight'] for u,v,w in G.edges(data=True) if w['weight']<-eps])
+
+    pos = nx.spring_layout(G)
+    nodelist = [n for n in G.nodes if (n in np.array(edge_act).flatten() or n in np.array(edge_in).flatten())]
+    nx.draw_networkx_nodes(G, pos, nodelist=nodelist, 
+                            node_size=480, node_color="gray", edgecolors="black")
+    if len(W_act) > 0:
+        nx.draw_networkx_edges(G, pos, edgelist=edge_act, alpha=W_act/np.max(W_act), 
+                                node_size=480, arrows=True, nodelist=nodelist,
+                                connectionstyle="arc3,rad=0.08")
+    if len(W_in) > 0:
+        nx.draw_networkx_edges(G, pos, style='--', edgelist=edge_in, #alpha=-W_in/np.max(-W_in), 
+                                node_size=480, arrows=True, nodelist=nodelist,
+                                connectionstyle="arc3,rad=0.03")
+    nx.draw_networkx_labels(G, pos, labels={n: labels[n] for n in G}, font_size=8, font_color="white")
+
+    plt.title("Gene network");
+
+    #remove axis
+    plt.gca().set_axis_off()
+
+    return plt.gcf(), plt.gca()
+
+
+
 
 
 def draw_circles_ctype(state, ax=None, cm=plt.cm.coolwarm, grid=False, **kwargs):
@@ -93,6 +144,8 @@ def draw_circles_ctype(state, ax=None, cm=plt.cm.coolwarm, grid=False, **kwargs)
     
     return plt.gcf(), ax
 
+
+
 # Visualization of multiple cell types
 def draw_circles_ctypes(state, ax=None, cm=plt.cm.coolwarm, grid=False, **kwargs):
     
@@ -149,6 +202,8 @@ def draw_circles_ctypes(state, ax=None, cm=plt.cm.coolwarm, grid=False, **kwargs
     plt.gcf().set_size_inches(8, 8)
     
     return plt.gcf(), ax
+    
+
     
 def draw_circles_chem(state, chem=0, colorbar=True, ax=None, cm=None, grid=False, labels=False, edges=False, cm_edges=plt.cm.coolwarm, max_val=None, **kwargs):
     
@@ -329,7 +384,7 @@ def draw_circles_stress(state, colorbar=True, ax=None, cm=None, grid=False, labe
 
 
     
-def draw_circles_divrate(state, probability=False, colorbar=True, ax=None, cm=plt.cm.coolwarm, grid=False, labels=False, edges=False, cm_edges=plt.cm.coolwarm, **kwargs):
+def draw_circles_division(state, probability=False, colorbar=True, ax=None, cm=plt.cm.coolwarm, grid=False, labels=False, edges=False, cm_edges=plt.cm.coolwarm, **kwargs):
     
     if None == ax:
         ax = plt.axes()
@@ -356,8 +411,6 @@ def draw_circles_divrate(state, probability=False, colorbar=True, ax=None, cm=pl
             ax.add_patch(circle)
             if labels:
                 ax.text(*cell, str(i), horizontalalignment='center', verticalalignment='center')
-
-
 
     
     #show colorbar
@@ -434,6 +487,7 @@ def draw_circles(state, state_values, min_val = None, max_val = None, min_coord=
     if min_val == None:
         #state_values = (state_values-state_values.min()+1e-20)/(state_values.max()-state_values.min()+1e-20)
         state_values = state_values
+        min_val, max_val = state_values.min(), state_values.max()
     else:
         state_values = (state_values-min_val+1e-20)/(max_val-min_val+1e-20)
 
@@ -477,7 +531,7 @@ def draw_circles(state, state_values, min_val = None, max_val = None, min_coord=
         ax.set_xticks([])
         ax.set_yticks([])
 
-    sm = plt.cm.ScalarMappable(cmap=cm, norm=plt.Normalize(vmin=state_values.min(), vmax=state_values.max()))
+    sm = plt.cm.ScalarMappable(cmap=cm, norm=plt.Normalize(vmin=min_val, vmax=max_val))
     sm._A = []
     if plt_cbar:
         cbar = plt.colorbar(sm, ax=ax, fraction=.05, alpha=.5) # rule of thumb
