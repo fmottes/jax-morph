@@ -126,21 +126,21 @@ def SimpleLoss(cost_fn, *, n_sim_steps, n_episodes=1, n_val_episodes=0, lambda_l
             istate = istate_func(key, istate)
             trajectory = simulate(model, istate, key, n_sim_steps, history=True)
             
+            # My simulations don't have cell divisions so no logprob returned.
+            if isinstance(trajectory, tuple):
+                trajectory = trajectory[0]    
+                
             _istate = jtu.tree_map(lambda x: x[None,:, :], istate)
             trajectory = jtu.tree_map(lambda *v: np.concatenate(v), *[_istate, trajectory])
             return trajectory
             
-        #vsim = jax.vmap(partial(simulate, history=True), (None, 0, 0, None))
         vsim = jax.vmap(_sim, (0, None, None, None))
         key, *subkeys = jax.random.split(key, n_episodes+1)
         trajectory = vsim(np.asarray(subkeys), istate, model, n_sim_steps)
 
-        # My simulations don't have cell divisions so no logprob returned.
-        if isinstance(trajectory, tuple):
-            trajectory = trajectory[0]
         
         cost = jax.vmap(cost_fn)(trajectory)
-
+ 
         #calculate actual cost for validation
         if n_val_episodes > 0:
 
@@ -186,9 +186,6 @@ def SimpleLoss(cost_fn, *, n_sim_steps, n_episodes=1, n_val_episodes=0, lambda_l
             return loss
 
     return Loss(loss_fn=_simple_loss, has_aux=(n_val_episodes > 0))
-
-
-
 
 
 ############################################################################################################
