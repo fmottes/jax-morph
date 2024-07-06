@@ -1,3 +1,5 @@
+** ! WORK IN PROGRESS !**
+
 # Jax-Morph
 
 Simulation and optimization of clusters of cells growing in space.
@@ -34,3 +36,9 @@ After installation, you can import and start using Jax-Morph in your projects.
 ```python
 import jax_morph as jxm
 ```
+
+## Quickstart
+
+To get started quickly, check out the tutorial notebooks provided in the [tutorials](https://github.com/fmottes/jax-morph/tree/eqx/tutorials) directory. These notebooks cover basic usage and advanced features of Jax-Morph.
+
+_More coming soon_
