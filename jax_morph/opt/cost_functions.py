@@ -141,7 +141,7 @@ def PairwiseLoss(coeffs=None, kT_reward=.01, overlap_penalty=1.):
 
 
 
-def VShape3D(*, angle=1.3*(np.pi/2),  nonsymm_penalty=.1, beta=5., cost_scale=10., center_tol=2., realign=False):
+def VShape3D(*, angle=1.5*(np.pi/2),  nonsymm_penalty=.1, beta=5., cost_scale=10., cost_offset=3., center_tol=2., realign=False):
 
     a1 = (np.pi - angle)/2
     a2 = np.pi - a1
@@ -160,9 +160,8 @@ def VShape3D(*, angle=1.3*(np.pi/2),  nonsymm_penalty=.1, beta=5., cost_scale=10
         cost = jax.nn.sigmoid(beta*(1-cos_theta))
         cost = np.min(cost, axis=-1) - .5
         cost = cost * jax.nn.sigmoid(2*(p_norm[:,0] - center_tol))
-        # cost = cost.sum()
 
-        return 2 * cost * cost_scale
+        return 2 * cost * cost_scale - cost_offset
 
         
     def _cost(trajectory):
@@ -176,17 +175,19 @@ def VShape3D(*, angle=1.3*(np.pi/2),  nonsymm_penalty=.1, beta=5., cost_scale=10
         else:
             pos = trajectory.position
 
-        p_xy = pos[:,:,:2]
 
+        symm_cost = nonsymm_penalty * (pos[:,:,0].sum(-1))**2
+
+        p_xy = pos[:,:,:2]
         cost_xy = jax.vmap(_cost_2d_conf)(p_xy)
         cost_xy = cost_xy * trajectory.celltype.sum(-1)
         cost_xy = cost_xy.sum(-1)
 
-        cost_z = ((pos[:,:,2]**2)/4 * trajectory.celltype.sum(-1)).sum(-1)
+        cost = cost_xy + symm_cost
 
-        cost = cost_xy + cost_z
-
-        cost += nonsymm_penalty * (pos[:,:,0].sum(-1))**2
+        if pos.shape[-1] > 2:
+            cost_z = ((pos[:,:,2]**2)/4 * trajectory.celltype.sum(-1)).sum(-1)
+            cost += cost_z
 
         cost = np.diff(cost)
 
