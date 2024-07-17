@@ -13,8 +13,7 @@ Main features:
 - Built on top of JAX for performance and scalability
 - Thought to be **easy to exend and integrate** with other JAX-based libraries
 
-
-
+---
 # Installation
 
 ## Requirements (IMPORTANT):
@@ -71,9 +70,9 @@ To install Jax-Morph, follow these steps:
     pip install .
     ```
 
+---
 
-
-## Usage
+# Usage
 
 After installation, you can import and start using Jax-Morph in your projects.
 
@@ -81,8 +80,26 @@ After installation, you can import and start using Jax-Morph in your projects.
 import jax_morph as jxm
 ```
 
-## Quickstart
+---
+# Quickstart
 
-To get started quickly, check out the tutorial notebooks provided in the [tutorials](https://github.com/fmottes/jax-morph/tree/eqx/tutorials) directory. These notebooks cover basic usage and some advanced features of Jax-Morph.
+For a detailed introduction please check out the tutorial notebooks provided in the [tutorials](https://colab.research.google.com/github/fmottes/jax-morph/blob/eqx/tutorials) directory. These notebooks cover basic usage and some advanced features of Jax-Morph.
+
+
+---
+# Reference
+
+This library was conceived as part of the following work:
+
+```
+@article{deshpandemottes2024,
+  title={Engineering morphogenesis of cell clusters with differentiable programming},
+  author={Deshpande, Ramya and Mottes, Francesco and Vlad, Ariana-Dalia and Brenner, Michael P and dal Co, Alma},
+  journal={arXiv preprint arXiv:2407.06295},
+  year={2024}
+}
+```
+
+
 
 _More coming soon_
