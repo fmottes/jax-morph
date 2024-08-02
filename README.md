@@ -83,7 +83,7 @@ import jax_morph as jxm
 ---
 # Quickstart
 
-For a detailed introduction please check out the tutorial notebooks provided in the [tutorials](https://github.com/fmottes/jax-morph/tree/eqx/tutorials directory). These notebooks cover basic usage and some advanced features of Jax-Morph.
+For a detailed introduction please check out the tutorial notebooks provided in the [tutorials](https://github.com/fmottes/jax-morph/tree/eqx/tutorials) directory. These notebooks cover basic usage and some advanced features of Jax-Morph.
 
 
 ---
