@@ -1,4 +1,9 @@
 from . import dynamics, potentials
 
 from .dynamics import SGDMechanicalRelaxation, BrownianMechanicalRelaxation
-from .potentials import MechanicalInteractionPotential, MorsePotential, MorsePotentialSpecies, MorsePotentialCadherin
+from .potentials import (
+    MechanicalInteractionPotential,
+    MorsePotential,
+    MorsePotentialSpecies,
+    MorsePotentialCadherin,
+)

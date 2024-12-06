@@ -12,4 +12,4 @@ from .simulation import Sequential, simulate
 from ._base import BaseCellState, SimulationStep
 
 
-__version__ = importlib.metadata.version('jax_morph')
+__version__ = importlib.metadata.version("jax_morph")

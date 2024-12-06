@@ -8,8 +8,6 @@ from ._base import SimulationStep
 from typing import Callable, Union, Sequence
 
 
-
-
 ###------------SEQUENTIAL SIMULATION STEP-----------------###
 
 
@@ -17,11 +15,8 @@ class Sequential(SimulationStep):
     substeps: tuple
     _return_logp: bool = eqx.field(static=True)
 
-
     def return_logprob(self) -> bool:
         return self._return_logp
-
-
 
     def __init__(self, substeps: Sequence[Callable]):
 
@@ -29,22 +24,18 @@ class Sequential(SimulationStep):
             self.substeps = tuple(substeps)
         else:
             raise TypeError("All substeps must be of type `SimulationStep`")
-        
-        self._return_logp = any(x.return_logprob() for x in self.substeps)
-        
 
+        self._return_logp = any(x.return_logprob() for x in self.substeps)
 
     @jax.named_scope("jax_morph.Sequential")
     def __call__(self, state, *, key=None, **kwargs):
-
 
         if key is None:
             keys = [None] * len(self.substeps)
         else:
             keys = jax.random.split(key, len(self.substeps))
 
-
-        logp = np.float_(0.)
+        logp = np.float_(0.0)
 
         for substep, key in zip(self.substeps, keys):
 
@@ -54,16 +45,13 @@ class Sequential(SimulationStep):
             else:
                 state = substep(state, key=key)
 
-
         if self._return_logp:
             return state, logp
         else:
             return state
-        
 
     def copy(self):
         return Sequential(self.substeps)
-
 
     def __getitem__(self, i: Union[int, slice]) -> Callable:
         if isinstance(i, int):
@@ -78,36 +66,37 @@ class Sequential(SimulationStep):
 
     def __len__(self):
         return len(self.substeps)
-    
 
 
 ###------------SIMULATION FUNCTION-----------------###
+
 
 @eqx.filter_jit
 def simulate(model, state, key, n_steps=1, *, history=False):
 
     subkeys = jax.random.split(key, n_steps)
 
-    #STOCHASTIC MODEL
+    # STOCHASTIC MODEL
     if model.return_logprob():
 
         def _scan_fn(state, k):
             state, logp = model(state, key=k)
             return state, (state, logp)
-        
+
         state, (trajectory, logp) = jax.lax.scan(_scan_fn, state, np.asarray(subkeys))
 
         if history:
             return trajectory, logp
         else:
             return state, logp
-        
-    #DETERMINISTIC (OR REPARAMETRIZED) MODEL
+
+    # DETERMINISTIC (OR REPARAMETRIZED) MODEL
     else:
+
         def _scan_fn(state, k):
             state = model(state, key=k)
             return state, state
-        
+
         state, trajectory = jax.lax.scan(_scan_fn, state, np.asarray(subkeys))
 
         if history:

@@ -10,26 +10,25 @@ from functools import partial
 
 ###------------BASE CELL STATE-----------------###
 
+
 class BaseCellState(eqx.Module):
-    '''
+    """
     Module containing the basic features of a system state.
 
-    '''
+    """
 
     # METHODS
-    displacement:   jax_md.space.DisplacementFn = eqx.field(static=True)
-    shift:          jax_md.space.ShiftFn = eqx.field(static=True)
+    displacement: jax_md.space.DisplacementFn = eqx.field(static=True)
+    shift: jax_md.space.ShiftFn = eqx.field(static=True)
 
     # STATE
-    position:   jax.Array
-    celltype:   jax.Array
-    radius:     jax.Array
-
+    position: jax.Array
+    celltype: jax.Array
+    radius: jax.Array
 
     @classmethod
     def empty(cls, n_dim=2, n_cell_types=1):
-
-        '''
+        """
         Intializes a CellState with no cells (empty data structures, with correct shapes).
 
         Parameters
@@ -37,25 +36,22 @@ class BaseCellState(eqx.Module):
         n_dim: int
             Number of spatial dimensions.
 
-        '''
+        """
 
-        assert n_dim == 2 or n_dim == 3, 'n_dim must be 2 or 3'
+        assert n_dim == 2 or n_dim == 3, "n_dim must be 2 or 3"
 
         disp, shift = jax_md.space.free()
-        
 
         args = {
-            'displacement'  :   disp,
-            'shift'         :   shift,
-            'position'  :   np.empty(shape=(0, n_dim), dtype=np.float32),
-            'celltype'  :   np.empty(shape=(0,n_cell_types), dtype=np.float32),
-            'radius'    :   np.empty(shape=(0,1), dtype=np.float32),
-            }
-        
-        return cls(**args)
-    
+            "displacement": disp,
+            "shift": shift,
+            "position": np.empty(shape=(0, n_dim), dtype=np.float32),
+            "celltype": np.empty(shape=(0, n_cell_types), dtype=np.float32),
+            "radius": np.empty(shape=(0, 1), dtype=np.float32),
+        }
 
-    
+        return cls(**args)
+
     def elongate(self, n_add):
         """Elongate state array fields to accomodate additional particles."""
 
@@ -69,22 +65,18 @@ class BaseCellState(eqx.Module):
 
             return x
 
-
         return jax.tree_map(_elongate, self)
-
 
     def delete(self, del_idx):
         """Delete state array fields to do regeneration experiments."""
-        
+
         def _delete(x, del_idx):
-            
+
             if isinstance(x, jax.Array):
                 x = np.delete(x, del_idx, axis=0)
             return x
-            
-        return jax.tree_map(partial(_delete, del_idx=del_idx), self)
-    
 
+        return jax.tree_map(partial(_delete, del_idx=del_idx), self)
 
 
 ###------------SIMULATION STEP ABC-----------------###
