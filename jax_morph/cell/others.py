@@ -7,7 +7,7 @@ from .._base import SimulationStep
 
 
 class SecretionMaskByCellType(SimulationStep):
-    ctype_sec_chem: np.DeviceArray = eqx.field(static=True)
+    ctype_sec_chem: jax.Array = eqx.field(static=True)
 
     def return_logprob(self) -> bool:
         return False
