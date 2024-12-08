@@ -148,62 +148,127 @@ class SteadyStateDiffusion(SimulationStep):
         return state
 
 
-class ApproxSteadyStateDiffusion(SimulationStep):
+class ExponentialSteadyStateDiffusion(SimulationStep):
     diffusion_coeff: Union[float, jax.Array]
     degradation_rate: Union[float, jax.Array]
+
+    def __init__(
+        self,
+        diffusion_coeff: Union[float, jax.Array] = 1.0,
+        degradation_rate: Union[float, jax.Array] = 1.0,
+    ):
+        """
+        Initialize the ApproxSteadyStateDiffusion simulation step.
+
+        This class calculates the steady-state diffusion of chemicals in an open system with constant uniform degradation.
+        Each cell is treated as a point source, and the analytical solution for the steady-state concentration
+        of a point source in space is used.
+
+        Args:
+            diffusion_coeff (float or jax.Array): Diffusion coefficient(s) for the chemicals.
+                Can be a single float for all chemicals or a 1D array with a coefficient for each chemical.
+            degradation_rate (float or jax.Array): Degradation rate(s) of chemicals.
+                Can be a single float for all chemicals or a 1D array with a rate for each chemical.
+
+        Raises:
+            ValueError: If the inputs are not of the correct type (float or jax.Array) or shape (scalar or 1D).
+            ValueError: If both inputs are arrays but have different shapes.
+
+        Note:
+            If both diffusion_coeff and degradation_rate are provided as arrays, they must have the same shape,
+            corresponding to the number of chemicals in the simulation.
+        """
+        # Check diffusion_coeff
+        if isinstance(diffusion_coeff, (float, int)):
+            self.diffusion_coeff = float(diffusion_coeff)
+        elif isinstance(diffusion_coeff, jax.Array):
+            if diffusion_coeff.ndim == 0 or diffusion_coeff.ndim == 1:
+                self.diffusion_coeff = diffusion_coeff
+            else:
+                raise ValueError("diffusion_coeff must be a float or a 1D array")
+        else:
+            raise ValueError("diffusion_coeff must be a float or a JAX array")
+
+        # Check degradation_rate
+        if isinstance(degradation_rate, (float, int)):
+            self.degradation_rate = float(degradation_rate)
+        elif isinstance(degradation_rate, jax.Array):
+            if degradation_rate.ndim == 0 or degradation_rate.ndim == 1:
+                self.degradation_rate = degradation_rate
+            else:
+                raise ValueError("degradation_rate must be a float or a 1D array")
+        else:
+            raise ValueError("degradation_rate must be a float or a JAX array")
+
+        # Check that if both are arrays, they have the same shape
+        if isinstance(self.diffusion_coeff, jax.Array) and isinstance(
+            self.degradation_rate, jax.Array
+        ):
+            if self.diffusion_coeff.shape != self.degradation_rate.shape:
+                raise ValueError(
+                    "If both diffusion_coeff and degradation_rate are arrays, they must have the same shape"
+                )
 
     def return_logprob(self) -> bool:
         return False
 
-    def __init__(self, *, diffusion_coeff=2.0, degradation_rate=1.0, **kwargs):
-        """
-        OLD APPROACH:
-        Diffusion approximated by sum of exponential chemical profiles.
-        """
+    @staticmethod
+    @eqx.filter_jit
+    def _compute_steady_state_diffusion(r, sec_rate, deg_rate, diff_coeff):
+        """Compute steady-state diffusion for a single chemical."""
+        prefactor = sec_rate / (2 * np.sqrt(deg_rate * diff_coeff))
+        scaling = np.exp(-r * np.sqrt(deg_rate / diff_coeff))
+        return prefactor * scaling
 
-        self.diffusion_coeff = diffusion_coeff
-        self.degradation_rate = degradation_rate
-
+    @eqx.filter_jit
     @jax.named_scope("jax_morph.ApproxSteadyStateDiffusion")
     def __call__(self, state, *, key=None, **kwargs):
+        """
+        Apply approximate steady-state diffusion to the chemical field.
 
-        def diffuse_onechem_ss(r, secRate, degRate, diffCoeff):
-            diff = (
-                secRate
-                / (2 * np.sqrt(degRate * diffCoeff))
-                * np.exp(-r * np.sqrt(degRate / diffCoeff))
-            )
+        Args:
+            state: Current simulation state.
+            key: Random key (unused in this method).
+            **kwargs: Additional keyword arguments.
 
-            return diff
-
+        Returns:
+            Updated simulation state with diffused chemical field.
+        """
+        # Calculate pairwise distances
         metric = jax_md.space.metric(state.displacement)
-        d = jax_md.space.map_product(metric)
+        distances = jax_md.space.map_product(metric)(state.position, state.position)
 
-        # calculate all pairwise distances
-        dist = d(state.position, state.position)
+        # Determine vmap axes for diffusion_coeff and degradation_rate
+        diff_axis = (
+            0
+            if isinstance(self.diffusion_coeff, jax.Array)
+            and self.diffusion_coeff.ndim > 0
+            else None
+        )
+        deg_axis = (
+            0
+            if isinstance(self.degradation_rate, jax.Array)
+            and self.degradation_rate.ndim > 0
+            else None
+        )
 
-        # loop over all chemicals (vmap in future)
-        new_chem = []
-        for i in np.arange(state.secretion_rate.shape[1]):
-
-            c = diffuse_onechem_ss(
-                dist,
-                state.secretion_rate[:, i],
-                self.degradation_rate,
-                self.diffusion_coeff,
+        # Vectorized function to apply diffusion to all chemicals
+        def diffuse_all_chems(sec_rate, diff_coeff, deg_rate):
+            concentrations = self._compute_steady_state_diffusion(
+                distances,
+                sec_rate,
+                deg_rate,
+                diff_coeff,
             )
+            concentrations = concentrations.sum(axis=1)
+            return np.where(state.celltype.sum(1) > 0, concentrations, 0.0)
 
-            c = c.sum(axis=1)
+        # Apply diffusion to all chemicals using eqx.filter_vmap
+        new_chemical_field = eqx.filter_vmap(
+            diffuse_all_chems,
+            in_axes=(0, diff_axis, deg_axis),
+            out_axes=1,
+        )(state.secretion_rate.T, self.diffusion_coeff, self.degradation_rate)
 
-            # zero out concentration on empty sites
-            c = np.where(state.celltype.sum(1) > 0, c, 0.0)
-
-            c = np.reshape(c, (-1, 1))  # make into column vector
-            new_chem.append(c)
-
-        new_chem = np.hstack(new_chem)
-
-        # update chemical field
-        state = eqx.tree_at(lambda s: s.chemical, state, new_chem)
-
-        return state
+        # Update the chemical field in the state
+        return eqx.tree_at(lambda s: s.chemical, state, new_chemical_field)
