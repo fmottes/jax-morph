@@ -238,6 +238,10 @@ class ExponentialSteadyStateDiffusion(SimulationStep):
         metric = jax_md.space.metric(state.displacement)
         distances = jax_md.space.map_product(metric)(state.position, state.position)
 
+        # clip diffusion_coeff and degradation_rate to ensure they are non-negative
+        clipped_diff_coeff = np.clip(self.diffusion_coeff, 1e-2, None)
+        clipped_deg_rate = np.clip(self.degradation_rate, 1e-2, None)
+
         # Determine vmap axes for diffusion_coeff and degradation_rate
         diff_axis = (
             0
@@ -268,7 +272,7 @@ class ExponentialSteadyStateDiffusion(SimulationStep):
             diffuse_all_chems,
             in_axes=(0, diff_axis, deg_axis),
             out_axes=1,
-        )(state.secretion_rate.T, self.diffusion_coeff, self.degradation_rate)
+        )(state.secretion_rate.T, clipped_diff_coeff, clipped_deg_rate)
 
         # Update the chemical field in the state
         return eqx.tree_at(lambda s: s.chemical, state, new_chemical_field)
