@@ -239,8 +239,8 @@ class ExponentialSteadyStateDiffusion(SimulationStep):
         distances = jax_md.space.map_product(metric)(state.position, state.position)
 
         # clip diffusion_coeff and degradation_rate to ensure they are non-negative
-        clipped_diff_coeff = np.clip(self.diffusion_coeff, 1e-2, None)
-        clipped_deg_rate = np.clip(self.degradation_rate, 1e-2, None)
+        clipped_diff_coeff = np.clip(np.asarray(self.diffusion_coeff), 1e-2, None)
+        clipped_deg_rate = np.clip(np.asarray(self.degradation_rate), 1e-2, None)
 
         # Determine vmap axes for diffusion_coeff and degradation_rate
         diff_axis = (
