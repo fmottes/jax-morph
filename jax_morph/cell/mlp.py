@@ -281,9 +281,13 @@ class CellStateMLP(SimulationStep):
         self.output_fields = output_fields
         self.memory = memory
 
-        in_shape = np.concatenate(
-            [getattr(state, field) for field in input_fields], axis=1
-        ).shape[-1]
+        if self.input_fields:
+            in_shape = np.concatenate(
+                [getattr(state, field) for field in input_fields], axis=1
+            ).shape[-1]
+        else:
+            in_shape = 0
+
         out_shape = np.concatenate(
             [getattr(state, field) for field in output_fields], axis=1
         ).shape[-1]
@@ -333,10 +337,12 @@ class CellStateMLP(SimulationStep):
     @jax.named_scope("jax_morph.CellStateMLP")
     def __call__(self, state, *, key=None, **kwargs):
 
-        # concatenate input features
-        in_features = np.concatenate(
-            [getattr(state, field) for field in self.input_fields], axis=1
-        )
+        if self.input_fields:
+            in_features = np.concatenate(
+                [getattr(state, field) for field in self.input_fields], axis=1
+            )
+        else:
+            in_features = np.empty((state.hidden_state.shape[0], 0))
 
         out = jax.vmap(self.mlp)(in_features)
 
