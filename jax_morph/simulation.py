@@ -29,16 +29,16 @@ class Sequential(SimulationStep):
         self.substeps = tuple(substeps)
         self._return_logp = any(x.return_logprob() for x in self.substeps)
 
-        # Create a dictionary of named substeps
+        # Create a lightweight dictionary of named substeps with indices
         self._named_substeps = {}
-        for substep in substeps:
+        for i, substep in enumerate(substeps):
             name = substep.__class__.__name__
             if name in self._named_substeps:
-                i = 1
-                while f"{name}_{i}" in self._named_substeps:
-                    i += 1
-                name = f"{name}_{i}"
-            self._named_substeps[name] = substep
+                j = 1
+                while f"{name}_{j}" in self._named_substeps:
+                    j += 1
+                name = f"{name}_{j}"
+            self._named_substeps[name] = i
 
     @jax.named_scope("jax_morph.Sequential")
     def __call__(self, state, *, key=None, **kwargs):
@@ -68,7 +68,10 @@ class Sequential(SimulationStep):
 
     def __getattr__(self, name: str) -> Any:
         if name in self._named_substeps:
-            return self._named_substeps[name]
+            # Get the index of the substep from the lightweight dictionary
+            index = self._named_substeps[name]
+            # Return the substep from the current instance's tuple
+            return self.substeps[index]
         raise AttributeError(
             f"'{self.__class__.__name__}' object has no attribute '{name}'"
         )
