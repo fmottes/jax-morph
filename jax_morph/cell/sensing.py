@@ -15,13 +15,19 @@ from typing import Union
 
 class LocalChemicalGradients(SimulationStep):
     neighbor_radius: Union[float, None] = eqx.field(static=True)
+    _coord_system: str = eqx.field(static=True)
 
     def return_logprob(self) -> bool:
         return False
 
-    def __init__(self, *, neighbor_radius=None, **kwargs):
+    def __init__(self, *, neighbor_radius=None, coordinates="cartesian", **kwargs):
 
         self.neighbor_radius = neighbor_radius
+
+        # check if coordinates are valid (cartesian or polar)
+        if coordinates not in ["cartesian", "polar", "spherical"]:
+            raise ValueError(f"Invalid coordinate system: {coordinates}")
+        self._coord_system = coordinates
 
     @jax.named_scope("jax_morph.LocalChemicalGradients")
     def __call__(self, state, *, key=None, **kwargs):
@@ -51,7 +57,7 @@ class LocalChemicalGradients(SimulationStep):
         # - cells less than one radius away (+ small tolerance)
         # - cells differents from themselves
         # - cells that exist
-        if None == self.neighbor_radius:
+        if self.neighbor_radius is None:
             # "touching" distance betw. cells
             R = (state.radius + state.radius.T) * c_alive
         else:
@@ -77,6 +83,24 @@ class LocalChemicalGradients(SimulationStep):
 
         # calc grads (no non-existing cells or lone cells w/ no neighbors)
         chemgrads = _grad_chem(state.chemical)
+
+        if self._coord_system == "polar":
+            # convert to polar coordinates (r, theta)
+            x_grads = chemgrads[:, 0, :]
+            y_grads = chemgrads[:, 1, :]
+            r_grads = np.sqrt(x_grads**2 + y_grads**2)
+            theta_grads = np.arctan2(y_grads, x_grads)
+            chemgrads = np.stack([r_grads, theta_grads], axis=1)
+
+        elif self._coord_system == "spherical":
+            # convert to spherical coordinates (r, theta, phi)
+            x_grads = chemgrads[:, 0, :]
+            y_grads = chemgrads[:, 1, :]
+            z_grads = chemgrads[:, 2, :]
+            r_grads = np.sqrt(x_grads**2 + y_grads**2 + z_grads**2)
+            theta_grads = np.arctan2(y_grads, x_grads)
+            phi_grads = np.arccos(z_grads / r_grads)
+            chemgrads = np.stack([r_grads, theta_grads, phi_grads], axis=1)
 
         # transform into ncells x (grad_x + grad_y)
         # reshape like ncells x ndim x nchem to revert
