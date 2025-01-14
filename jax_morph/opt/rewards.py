@@ -1,4 +1,32 @@
+import jax
 import jax.numpy as np
+
+
+def discounted_returns(rewards, GAMMA=0.97):
+    """
+    Calculate the discounted returns for a sequence of rewards.
+
+    Args:
+        rewards (array-like): A sequence of rewards.
+        GAMMA (float, optional): The discount factor. Defaults to 0.97.
+
+    Returns:
+        numpy.ndarray: An array of discounted returns, where each element represents the cumulative discounted return from that point forward.
+    """
+
+    def discounting_add(carry, reward):
+        return GAMMA * carry + reward, GAMMA * carry + reward
+
+    # Reverse the rewards array
+    reversed_rewards = np.flip(rewards, axis=0)
+
+    # Initialize the carry to be the last element
+    _, discounted_returns_reversed = jax.lax.scan(
+        discounting_add, 0.0, reversed_rewards
+    )
+    discounted_returns = np.flip(discounted_returns_reversed, axis=0)
+
+    return discounted_returns
 
 
 def reward_ssq_diff(coordinate_idx=0):
