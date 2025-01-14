@@ -90,16 +90,27 @@ class LocalChemicalGradients(SimulationStep):
             y_grads = chemgrads[:, 1, :]
             r_grads = np.sqrt(x_grads**2 + y_grads**2)
             theta_grads = np.arctan2(y_grads, x_grads)
+
+            # transform theta to [0, 2pi] and scale by 100 (comparable order of magnitude to r)
+            theta_grads = np.where(theta_grads < 0, theta_grads + 2 * np.pi, theta_grads) * 100
+
             chemgrads = np.stack([r_grads, theta_grads], axis=1)
 
         elif self._coord_system == "spherical":
             # convert to spherical coordinates (r, theta, phi)
-            x_grads = chemgrads[:, 0, :]
-            y_grads = chemgrads[:, 1, :]
-            z_grads = chemgrads[:, 2, :]
+            x_grads = chemgrads[:, 0, :] + 1e-8
+            y_grads = chemgrads[:, 1, :] + 1e-8
+            z_grads = chemgrads[:, 2, :] + 1e-8
             r_grads = np.sqrt(x_grads**2 + y_grads**2 + z_grads**2)
             theta_grads = np.arctan2(y_grads, x_grads)
             phi_grads = np.arccos(z_grads / r_grads)
+
+            # transform theta to [0, 2pi]
+            theta_grads = np.where(theta_grads < 0, theta_grads + 2 * np.pi, theta_grads)
+
+            # transform phi to [0, pi]
+            phi_grads = np.where(phi_grads < 0, phi_grads + np.pi, phi_grads)
+
             chemgrads = np.stack([r_grads, theta_grads, phi_grads], axis=1)
 
         # transform into ncells x (grad_x + grad_y)
