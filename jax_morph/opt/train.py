@@ -7,7 +7,7 @@ from tqdm import trange
 from ..simulation import simulate
 from .rewards import discounted_returns
 
-from typing import NamedTuple
+from typing import NamedTuple, Tuple
 
 
 class ReinforceTrainingLog(NamedTuple):
@@ -33,6 +33,16 @@ class ReinforceTrainingLog(NamedTuple):
     batch_size: int
     return_discount: float
     optimizer: str
+    keyboard_interrupt: bool
+
+    def model_at_epoch(self, epoch: int) -> eqx.Module:
+        """Returns the model saved at a given epoch."""
+
+        if epoch not in self.saved_models:
+            raise ValueError(f"Epoch {epoch} not found in saved models")
+
+        params_model = self.saved_models[epoch]
+        return eqx.combine(params_model, self.static_model)
 
 
 def train_reinforce(
@@ -47,7 +57,7 @@ def train_reinforce(
     return_discount=0.97,
     optimizer=optax.adam,
     save_model_every=None,
-):
+) -> Tuple[eqx.Module, ReinforceTrainingLog]:
     """Trains a model using policy gradients class of algorithms.
 
     Safely interrupts training when hit with KeyboardInterrupt.
@@ -120,6 +130,9 @@ def train_reinforce(
     opt = optimizer(learning_rate)
     opt_state = opt.init(eqx.filter(model, eqx.is_array))
 
+    _, static_model = eqx.partition(model, eqx.is_array)
+
+    keyboard_interrupt = False
     pbar = trange(epochs)
     for epoch in pbar:
 
@@ -133,21 +146,27 @@ def train_reinforce(
             )
 
             if save_model_every is not None and epoch % save_model_every == 0:
-                saved_models[epoch] = model
+                params_model, _ = eqx.partition(model, eqx.is_array)
+                saved_models[epoch] = params_model
 
             losses += [float(loss)]
             reward += [float(rewards.sum(-1).mean())]
             pbar.set_description(f"Loss: {loss:.2f}, Reward: {reward[-1]:.2f}")
 
         except KeyboardInterrupt:
-            print("Training Interrupted")
+            keyboard_interrupt = True
             break
 
     saved_models[epoch] = model
 
+    if keyboard_interrupt:
+        print(f"Training Interrupted after {epoch} epochs ({epoch/epochs*100:.2f}%)")
+        epochs = epoch
+
     log = ReinforceTrainingLog(
         losses=losses,
         rewards=reward,
+        static_model=static_model,
         saved_models=saved_models,
         istate=istate,
         epochs=epochs,
@@ -155,6 +174,7 @@ def train_reinforce(
         batch_size=batch_size,
         return_discount=return_discount,
         optimizer=optimizer.__name__,
+        keyboard_interrupt=keyboard_interrupt,
     )
 
     return model, log
