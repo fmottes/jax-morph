@@ -17,6 +17,8 @@ class GeneNetwork(SimulationStep):
     This class implements a gene regulatory network model that evolves gene expression levels
     over time according to a system of ordinary differential equations (ODEs).
 
+    The interaction matrix is defined as W (i -> j), where i is the source gene and j is the target gene.
+
     Attributes:
         input_fields: Names of input fields from the state to use as inputs
         output_fields: Names of output fields to write results to
@@ -33,7 +35,7 @@ class GeneNetwork(SimulationStep):
 
     where:
         x: Gene expression levels
-        W: interaction_matrix
+        W: interaction_matrix (i -> j)
         b: expression_offset
         γ: degradation_rate
         I: External inputs
@@ -57,7 +59,7 @@ class GeneNetwork(SimulationStep):
 
         Inputs = args
         interactions = rescaled_algebraic_sigmoid(
-            x @ self.interaction_matrix + self.expression_offset
+            self.interaction_matrix.T @ x + self.expression_offset
         )
         degradation = np.atleast_2d(self.degradation_rate) * x
 
