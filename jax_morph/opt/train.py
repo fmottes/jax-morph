@@ -47,7 +47,7 @@ class ReinforceTrainingLog(NamedTuple):
 
 def train_reinforce(
     key,
-    model,
+    model ,
     istate,
     rewards_fn,
     loss_fn,
