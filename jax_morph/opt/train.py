@@ -26,6 +26,7 @@ class ReinforceTrainingLog(NamedTuple):
 
     losses: list
     rewards: list
+    static_model: eqx.Module
     saved_models: dict
     istate: eqx.Module
     epochs: int
@@ -47,7 +48,7 @@ class ReinforceTrainingLog(NamedTuple):
 
 def train_reinforce(
     key,
-    model ,
+    model,
     istate,
     rewards_fn,
     loss_fn,
@@ -157,7 +158,7 @@ def train_reinforce(
             keyboard_interrupt = True
             break
 
-    saved_models[epoch] = model
+    saved_models[epoch] = eqx.partition(model, eqx.is_array)[0]
 
     if keyboard_interrupt:
         print(f"Training Interrupted after {epoch} epochs ({epoch/epochs*100:.2f}%)")
