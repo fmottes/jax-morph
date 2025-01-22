@@ -40,7 +40,10 @@ class ReinforceTrainingLog(NamedTuple):
         """Returns the model saved at a given epoch."""
 
         if epoch not in self.saved_models:
-            raise ValueError(f"Epoch {epoch} not found in saved models")
+            if -1 == epoch:
+                epoch = self.epochs
+            else:
+                raise ValueError(f"Epoch {epoch} not found in saved models")
 
         params_model = self.saved_models[epoch]
         return eqx.combine(params_model, self.static_model)
