@@ -48,7 +48,7 @@ def train_reinforce(
     optimizer=optax.adam,
     save_model_every=None,
 ):
-    """Trains a model using the REINFORCE algorithm (policy gradient method).
+    """Trains a model using policy gradients class of algorithms.
 
     Safely interrupts training when hit with KeyboardInterrupt.
 
