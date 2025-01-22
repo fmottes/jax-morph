@@ -11,5 +11,7 @@ from . import opt as opt
 from .simulation import Sequential, simulate
 from ._base import BaseCellState, SimulationStep
 
+from jax_md import space
+
 
 __version__ = importlib.metadata.version("jax_morph")
