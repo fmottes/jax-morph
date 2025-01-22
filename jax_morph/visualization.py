@@ -1,15 +1,13 @@
 import jax.numpy as np
 import matplotlib.pyplot as plt
-import networkx as nx
 
 # set global properties of plots
 plt.rcParams.update({"font.size": 18})
 
 
-import networkx as nx
-
-
 def draw_network(W, eps, labels, shells, ax=None):
+
+    import networkx as nx
 
     G = nx.from_numpy_array(W.T, create_using=nx.DiGraph)
     edge_act = [(u, v) for u, v, w in G.edges(data=True) if w["weight"] > eps]
@@ -93,7 +91,7 @@ def draw_network(W, eps, labels, shells, ax=None):
 
 def draw_circles_ctype(state, ax=None, cm=plt.cm.coolwarm, grid=False, **kwargs):
 
-    if None == ax:
+    if ax is None:
         ax = plt.axes()
 
     alive_cells = np.squeeze(state.celltype.sum(1) > 0)
@@ -118,7 +116,7 @@ def draw_circles_ctype(state, ax=None, cm=plt.cm.coolwarm, grid=False, **kwargs)
         circle = plt.Circle(cell, radius=radius, color=c, alpha=0.5, **kwargs)
         ax.add_patch(circle)
 
-    ## calculate ax limits
+    # calculate ax limits
     xmin = np.min(state.position[:, 0][alive_cells])
     xmax = np.max(state.position[:, 0][alive_cells])
 
@@ -161,7 +159,7 @@ def draw_circles_ctype(state, ax=None, cm=plt.cm.coolwarm, grid=False, **kwargs)
 # Visualization of multiple cell types
 def draw_circles_ctypes(state, ax=None, cm=plt.cm.coolwarm, grid=False, **kwargs):
 
-    if None == ax:
+    if ax is None:
         ax = plt.axes()
 
     alive_cells = np.squeeze(state.celltype.sum(1) > 0)
@@ -176,7 +174,7 @@ def draw_circles_ctypes(state, ax=None, cm=plt.cm.coolwarm, grid=False, **kwargs
         circle = plt.Circle(cell, radius=radius, color=c, alpha=0.5, **kwargs)
         ax.add_patch(circle)
 
-    ## calculate ax limits
+    # calculate ax limits
     xmin = np.min(state.position[:, 0][alive_cells])
     xmax = np.max(state.position[:, 0][alive_cells])
 
@@ -230,7 +228,7 @@ def draw_circles_chem(
     **kwargs,
 ):
 
-    if None == ax:
+    if ax is None:
         ax = plt.axes()
 
     alive_cells = np.squeeze(state.celltype.sum(1) > 0)
@@ -294,7 +292,7 @@ def draw_circles_chem(
         cbar = plt.colorbar(sm, ax=ax, fraction=0.05, alpha=0.5)  # rule of thumb
         cbar.set_label("Conc. Chem. " + str(chem), labelpad=20)
 
-    ## calculate ax limits
+    # calculate ax limits
     xmin = np.min(state.position[:, 0][alive_cells])
     xmax = np.max(state.position[:, 0][alive_cells])
 
@@ -346,7 +344,7 @@ def draw_circles_stress(
     **kwargs,
 ):
 
-    if None == ax:
+    if ax is None:
         ax = plt.axes()
 
     alive_cells = np.squeeze(state.celltype.sum(1) > 0)
@@ -402,7 +400,7 @@ def draw_circles_stress(
         cbar = plt.colorbar(sm, ax=ax, fraction=0.05, alpha=0.5)  # rule of thumb
         cbar.set_label("Mech. Stress", labelpad=20)
 
-    ## calculate ax limits
+    # calculate ax limits
     xmin = np.min(state.position[:, 0][alive_cells])
     xmax = np.max(state.position[:, 0][alive_cells])
 
@@ -455,7 +453,7 @@ def draw_circles_division(
     **kwargs,
 ):
 
-    if None == ax:
+    if ax is None:
         ax = plt.axes()
 
     alive_cells = np.squeeze(state.celltype.sum(1) > 0)
@@ -522,7 +520,7 @@ def draw_circles_division(
         cbar = plt.colorbar(sm, ax=ax, fraction=0.05, alpha=0.5)  # rule of thumb
         cbar.set_label(cbar_text, labelpad=20)
 
-    ## calculate ax limits
+    # calculate ax limits
     xmin = np.min(state.position[:, 0][alive_cells])
     xmax = np.max(state.position[:, 0][alive_cells])
 
@@ -577,14 +575,14 @@ def draw_circles(
     **kwargs,
 ):
 
-    if None == ax:
+    if ax is None:
         ax = plt.axes()
 
     alive_cells = np.squeeze(state.celltype.sum(1) > 0)
 
     state_values = np.float32(state_values)[alive_cells]
 
-    if min_val == None:
+    if min_val is None:
         # state_values = (state_values-state_values.min()+1e-20)/(state_values.max()-state_values.min()+1e-20)
         state_values = state_values
         min_val, max_val = state_values.min(), state_values.max()
@@ -599,14 +597,14 @@ def draw_circles(
         circle = plt.Circle(cell, radius=radius, fc=c, alpha=0.5, **kwargs)
         ax.add_patch(circle)
 
-    ## calculate ax limits
+    # calculate ax limits
     xmin = np.min(state.position[:, 0][alive_cells])
     xmax = np.max(state.position[:, 0][alive_cells])
 
     ymin = np.min(state.position[:, 1][alive_cells])
     ymax = np.max(state.position[:, 1][alive_cells])
 
-    if min_coord == None:
+    if min_coord is None:
         max_coord = max([xmax, ymax]) + 3
         min_coord = min([xmin, ymin]) - 3
 
@@ -635,7 +633,7 @@ def draw_circles(
     sm._A = []
     if plt_cbar:
         cbar = plt.colorbar(sm, ax=ax, fraction=0.05, alpha=0.5)  # rule of thumb
-        if cbar_title != None:
+        if cbar_title is not None:
             cbar.set_label(cbar_title, labelpad=20)
 
     background_color = [56 / 256] * 3
@@ -810,11 +808,13 @@ def draw_spheres_division(
 
     if edges:
         ct_color = cm_edges(np.float32(state.celltype - 1)[alive_cells])
-        for cell, radius, c, ctc in zip(
-            state.position[alive_cells],
-            state.radius[alive_cells].squeeze(),
-            color,
-            ct_color,
+        for i, (cell, radius, c, ctc) in enumerate(
+            zip(
+                state.position[alive_cells],
+                state.radius[alive_cells].squeeze(),
+                color,
+                ct_color,
+            )
         ):
             u = np.linspace(0, 2 * np.pi, 100)
             v = np.linspace(0, np.pi, 100)
