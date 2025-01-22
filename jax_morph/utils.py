@@ -1,7 +1,25 @@
 import jax
 import jax.numpy as np
 import jax.tree_util as jtu
-import equinox as eqx
+
+
+# Generate fresh key
+def generate_random_key():
+    """Use the current time as a seed value to generate a fresh jax.random.PRNGKey.
+
+    Returns:
+        jax.random.PRNGKey: A fresh key
+    """
+
+    # Get the current time in nanoseconds
+    import time
+
+    current_time_ns = time.time_ns()
+    random_seed = current_time_ns % (2**16)  # To limit it to a 16-bit integer
+
+    key = jax.random.PRNGKey(random_seed)
+
+    return key
 
 
 # Logistic function
