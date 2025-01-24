@@ -5,7 +5,255 @@ import matplotlib.pyplot as plt
 plt.rcParams.update({"font.size": 18})
 
 
-def draw_network(W, eps, labels, shells, ax=None):
+def draw_network_shells(W, labels, shells, pruning_threshold=0.0, ax=None, style=None):
+    """Draw a network with improved aesthetics.
+
+    Args:
+        W: Weight matrix
+        eps: Threshold for edge weights
+        labels: Node labels dictionary
+        shells: List of lists defining node arrangement in shells. First shell is the innermost (output layer), last shell is the outermost (input layer).
+        ax: Matplotlib axis (optional)
+        style: Dict of visual parameters (optional)
+    """
+    import networkx as nx
+    import matplotlib.patches as mpatches
+
+    # Default style parameters
+    default_style = {
+        "node_size": 900,
+        # "node_colors": ["#2ecc71", "#3498db", "#e74c3c"][::-1],  # color palette
+        "node_colors": ["indianred", "steelblue", "seagreen"],
+        "node_alpha": 0.5,
+        "edge_width_scale": 2,
+        "edge_curve": 0.23,
+        "edge_margin": 20,
+        "font_size": 10,
+        "font_color": "#2c3e50",
+        # "pos_edge_color": "darkgreen",  # Green for positive edges
+        # "neg_edge_color": "darkred",  # Red for negative edges
+        "pos_edge_color": "black",
+        "neg_edge_color": "black",
+        "node_edgecolor": "black",
+        "node_linewidth": 0.5,
+    }
+
+    # Update style with user parameters if provided
+    if style is not None:
+        default_style.update(style)
+
+    # Create directed graph
+    G = nx.from_numpy_array(W, create_using=nx.DiGraph)
+
+    # Get edges and weights
+    edge_act = []
+    edge_in = []
+    W_act = []
+    W_in = []
+
+    for u, v, w in G.edges(data=True):
+        weight = w["weight"]
+        if weight > pruning_threshold:
+            edge_act += [(u, v)]
+            W_act += [weight]
+        elif weight < -pruning_threshold:
+            edge_in += [(u, v)]
+            W_in += [weight]
+
+    W_act = np.array(W_act)
+    W_in = np.array(W_in)
+
+    w_scale = np.maximum(np.max(W_act), np.max(-W_in))
+
+    # Get active nodes
+    nodelist = [
+        n
+        for n in G.nodes
+        if (n in np.array(edge_act).flatten() or n in np.array(edge_in).flatten())
+    ]
+
+    # Filter shells to only include active nodes
+    shells = [[n for n in shell if n in nodelist] for shell in shells]
+
+    # Create layout
+    # pos = nx.shell_layout(G, shells)
+    pos = nx.planar_layout(G)
+
+    # Assign colors to nodes based on shell membership
+    node_colors = (
+        [default_style["node_colors"][2]] * len(shells[2])
+        + [default_style["node_colors"][1]] * len(shells[1])
+        + [default_style["node_colors"][0]] * len(shells[0])
+    )
+
+    if ax is None:
+        ax = plt.gca()
+
+    # Draw nodes
+    nx.draw_networkx_nodes(
+        G,
+        pos,
+        nodelist=nodelist,
+        node_size=default_style["node_size"],
+        node_color=node_colors,
+        edgecolors=default_style["node_edgecolor"],
+        linewidths=default_style["node_linewidth"],
+        alpha=default_style["node_alpha"],
+        ax=ax,
+    )
+
+    # Draw positive edges
+    if len(W_act) > 0:
+        edge_widths = W_act / w_scale * default_style["edge_width_scale"]
+        nx.draw_networkx_edges(
+            G,
+            pos,
+            edgelist=edge_act,
+            edge_color=default_style["pos_edge_color"],
+            width=edge_widths,
+            alpha=0.7,
+            arrows=True,
+            arrowsize=30,
+            node_size=default_style["node_size"],
+            arrowstyle="-|>",
+            connectionstyle=f'arc3,rad={default_style["edge_curve"]}',
+            min_source_margin=default_style["edge_margin"],
+            min_target_margin=default_style["edge_margin"],
+            ax=ax,
+        )
+
+    # Draw negative edges
+    if len(W_in) > 0:
+        edge_widths = -W_in / w_scale * default_style["edge_width_scale"]
+        nx.draw_networkx_edges(
+            G,
+            pos,
+            edgelist=edge_in,
+            edge_color=default_style["neg_edge_color"],
+            style="--",
+            arrowstyle=mpatches.ArrowStyle.BarAB(widthA=0.0, widthB=0.9),
+            width=edge_widths,
+            alpha=0.7,
+            arrows=True,
+            arrowsize=10,
+            node_size=default_style["node_size"],
+            connectionstyle=f'arc3,rad={-default_style["edge_curve"]}',
+            min_source_margin=default_style["edge_margin"],
+            min_target_margin=default_style["edge_margin"],
+            ax=ax,
+        )
+
+    # Draw labels
+    # Split nodes into input/hidden/output based on shells
+    input_nodes = shells[-1]  # Left shell
+    output_nodes = shells[0]  # Right shell
+    hidden_nodes = [n for shell in shells[1:-1] for n in shell]  # Middle shells
+
+    # Draw labels for hidden nodes centered on nodes
+    nx.draw_networkx_labels(
+        G,
+        pos,
+        labels={n: labels[n] for n in hidden_nodes},
+        font_size=default_style["font_size"],
+        font_color=default_style["font_color"],
+        font_weight="bold",
+        ax=ax,
+    )
+
+    # Draw labels for input/output nodes below nodes
+    pos_below = {n: (pos[n][0], pos[n][1] - 0.03) for n in input_nodes + output_nodes}
+    nx.draw_networkx_labels(
+        G,
+        pos_below,
+        labels={n: labels[n] for n in input_nodes + output_nodes},
+        font_size=default_style["font_size"],
+        font_color=default_style["font_color"],
+        font_weight="bold",
+        ax=ax,
+    )
+
+    # Style the plot
+    ax.set_facecolor("white")
+    ax.axis("off")
+
+    return ax
+
+
+def draw_gene_network(network, ax=None, style=None):
+    """Draw a gene regulatory network visualization from a GeneNetwork instance.
+
+    Args:
+        network: GeneNetwork instance to visualize
+        eps: Threshold for edge weights (default: 0.1)
+        ax: Matplotlib axis (optional)
+        style: Dict of visual parameters (optional)
+    """
+
+    # Default style parameters
+    default_style = {
+        "node_size": 1000,
+        "node_colors": [
+            "#2ecc71",
+            "#3498db",
+            "#e74c3c",
+        ],  # Input, Hidden, Output colors
+        "node_alpha": 0.5,
+        "edge_width_scale": 2,
+        "edge_curve": 0.23,
+        "font_size": 10,
+        "font_color": "#2c3e50",
+        "pos_edge_color": "#2ecc71",  # Green for positive edges
+        "neg_edge_color": "#e74c3c",  # Red for negative edges
+    }
+
+    if style is not None:
+        default_style.update(style)
+
+    # Create node labels using the network's attributes
+    labels = {}
+    idx = 0
+
+    # Input nodes
+    for i, field in enumerate(network.input_fields):
+        labels[idx] = f"IN_{field}"
+        idx += 1
+
+    # Hidden nodes
+    for i in range(network.hidden_size):
+        labels[idx] = f"H{i+1}"
+        idx += 1
+
+    # Output nodes
+    for i, field in enumerate(network.output_fields):
+        labels[idx] = f"OUT_{field}"
+        idx += 1
+
+    # Create shells for layout using correct sizes
+    shells = [
+        list(range(network.input_size)),  # Input layer
+        list(
+            range(network.input_size, network.input_size + network.hidden_size)
+        ),  # Hidden layer
+        list(
+            range(
+                network.input_size + network.hidden_size,
+                network.input_size + network.hidden_size + network.output_size,
+            )
+        ),  # Output layer
+    ][::-1]
+
+    # Use the existing draw_network_shells function with the interaction matrix
+    # Note: interaction matrix is already in the correct orientation (i -> j)
+    return draw_network_shells(
+        network.interaction_matrix,
+        labels=labels,
+        shells=shells,
+        ax=ax,
+        style=style,
+    )
+
+
+def OLD_draw_network(W, eps, labels, shells, ax=None):
 
     import networkx as nx
 
