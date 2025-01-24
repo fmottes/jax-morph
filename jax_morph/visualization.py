@@ -76,8 +76,8 @@ def draw_network_shells(W, labels, shells, pruning_threshold=0.0, ax=None, style
     shells = [[n for n in shell if n in nodelist] for shell in shells]
 
     # Create layout
-    # pos = nx.shell_layout(G, shells)
-    pos = nx.planar_layout(G)
+    pos = nx.shell_layout(G, shells)
+    # pos = nx.planar_layout(G)
 
     # Assign colors to nodes based on shell membership
     node_colors = (
