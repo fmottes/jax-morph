@@ -43,9 +43,12 @@ class GeneNetwork(SimulationStep):
     """
 
     input_fields: Sequence[str] = eqx.field(static=True)
+    input_size: int = eqx.field(static=True)
     output_fields: Sequence[str] = eqx.field(static=True)
+    output_size: int = eqx.field(static=True)
     out_indices: tuple = eqx.field(static=True)
     transform_output: Union[Callable, None] = eqx.field(static=True)
+    hidden_size: int = eqx.field(static=True)
     dt: float = eqx.field(static=True)
     T: float = eqx.field(static=True)
     interaction_matrix: jax.Array
@@ -59,7 +62,7 @@ class GeneNetwork(SimulationStep):
 
         Inputs = args
         interactions = rescaled_algebraic_sigmoid(
-            self.interaction_matrix.T @ x + self.expression_offset
+            x @ self.interaction_matrix + self.expression_offset
         )
         degradation = np.atleast_2d(self.degradation_rate) * x
 
@@ -119,7 +122,11 @@ class GeneNetwork(SimulationStep):
             [getattr(state, field) for field in output_fields], axis=1
         ).shape[-1]
 
-        system_size = int(in_shape + state.hidden_state.shape[-1] + out_shape)
+        self.input_size = in_shape
+        self.output_size = out_shape
+        self.hidden_size = state.hidden_state.shape[-1]
+
+        system_size = int(self.input_size + self.hidden_size + self.output_size)
 
         self.interaction_matrix = interaction_init(
             key, shape=(system_size, system_size)
