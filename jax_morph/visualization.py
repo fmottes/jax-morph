@@ -63,7 +63,14 @@ def draw_network_shells(W, labels, shells, pruning_threshold=0.0, ax=None, style
     W_act = np.array(W_act)
     W_inh = np.array(W_inh)
 
-    w_scale = np.maximum(np.max(W_act), np.max(-W_inh))
+    # Handle empty arrays by using -inf for empty max operations
+    w_scale = np.maximum(
+        np.max(W_act) if W_act.size > 0 else -np.inf,
+        np.max(-W_inh) if W_inh.size > 0 else -np.inf,
+    )
+    # If both arrays were empty, set scale to 1 to avoid -inf
+    if w_scale == -np.inf:
+        w_scale = 1.0
 
     # Get active nodes
     nodelist = [
