@@ -47,9 +47,9 @@ def draw_network_shells(W, labels, shells, pruning_threshold=0.0, ax=None, style
 
     # Get edges and weights
     edge_act = []
-    edge_in = []
+    edge_inh = []
     W_act = []
-    W_in = []
+    W_inh = []
 
     for u, v, w in G.edges(data=True):
         weight = w["weight"]
@@ -57,19 +57,19 @@ def draw_network_shells(W, labels, shells, pruning_threshold=0.0, ax=None, style
             edge_act += [(u, v)]
             W_act += [weight]
         elif weight < -pruning_threshold:
-            edge_in += [(u, v)]
-            W_in += [weight]
+            edge_inh += [(u, v)]
+            W_inh += [weight]
 
     W_act = np.array(W_act)
-    W_in = np.array(W_in)
+    W_inh = np.array(W_inh)
 
-    w_scale = np.maximum(np.max(W_act), np.max(-W_in))
+    w_scale = np.maximum(np.max(W_act), np.max(-W_inh))
 
     # Get active nodes
     nodelist = [
         n
         for n in G.nodes
-        if (n in np.array(edge_act).flatten() or n in np.array(edge_in).flatten())
+        if (n in np.array(edge_act).flatten() or n in np.array(edge_inh).flatten())
     ]
 
     # Filter shells to only include active nodes
@@ -123,12 +123,12 @@ def draw_network_shells(W, labels, shells, pruning_threshold=0.0, ax=None, style
         )
 
     # Draw negative edges
-    if len(W_in) > 0:
-        edge_widths = -W_in / w_scale * default_style["edge_width_scale"]
+    if len(W_inh) > 0:
+        edge_widths = -W_inh / w_scale * default_style["edge_width_scale"]
         nx.draw_networkx_edges(
             G,
             pos,
-            edgelist=edge_in,
+            edgelist=edge_inh,
             edge_color=default_style["neg_edge_color"],
             style="--",
             arrowstyle=mpatches.ArrowStyle.BarAB(widthA=0.0, widthB=0.9),
