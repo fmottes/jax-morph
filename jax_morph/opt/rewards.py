@@ -29,7 +29,7 @@ def discounted_returns(rewards, GAMMA=0.97):
     return discounted_returns
 
 
-def reward_ssq_diff(coordinate_idx=0):
+def reward_ssq_diff(coordinate_idx=0, center_of_mass=False):
     """Return a reward function that rewards increasing the sum of squares of the given coordinate. Rewards are calculated as the difference in the sum of squares between each time step.
 
     Args:
@@ -50,6 +50,9 @@ def reward_ssq_diff(coordinate_idx=0):
         """
 
         pos = trajectory.position[:, :, coordinate_idx]
+
+        if center_of_mass:
+            pos = pos - pos.mean(axis=1)[:, np.newaxis]
 
         rewards = (pos**2).sum(axis=1)
         rewards = np.diff(rewards)
