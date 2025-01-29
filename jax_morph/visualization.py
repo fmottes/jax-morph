@@ -36,6 +36,7 @@ def draw_network_shells(W, labels, shells, pruning_threshold=0.0, ax=None, style
         "neg_edge_color": "black",
         "node_edgecolor": "black",
         "node_linewidth": 0.5,
+        "node_label_offset": 0.05,
     }
 
     # Update style with user parameters if provided
@@ -168,7 +169,10 @@ def draw_network_shells(W, labels, shells, pruning_threshold=0.0, ax=None, style
     )
 
     # Draw labels for input/output nodes below nodes
-    pos_below = {n: (pos[n][0], pos[n][1] - 0.03) for n in input_nodes + output_nodes}
+    pos_below = {
+        n: (pos[n][0], pos[n][1] - default_style["node_label_offset"])
+        for n in input_nodes + output_nodes
+    }
     nx.draw_networkx_labels(
         G,
         pos_below,
@@ -183,7 +187,7 @@ def draw_network_shells(W, labels, shells, pruning_threshold=0.0, ax=None, style
     ax.set_facecolor("white")
     ax.axis("off")
 
-    return ax
+    return plt.gcf(), ax
 
 
 def draw_gene_network(network, ax=None, style=None):
@@ -349,6 +353,12 @@ def draw_circles_ctype(state, ax=None, cm=plt.cm.coolwarm, grid=False, **kwargs)
     if ax is None:
         ax = plt.axes()
 
+    if "alpha" in kwargs:
+        alpha = kwargs["alpha"]
+        kwargs.pop("alpha")
+    else:
+        alpha = 0.5
+
     alive_cells = np.squeeze(state.celltype.sum(1) > 0)
 
     # only usable for two cell types
@@ -368,7 +378,7 @@ def draw_circles_ctype(state, ax=None, cm=plt.cm.coolwarm, grid=False, **kwargs)
         state.radius[alive_cells].squeeze(),
         color[alive_cells],
     ):
-        circle = plt.Circle(cell, radius=radius, color=c, alpha=0.5, **kwargs)
+        circle = plt.Circle(cell, radius=radius, color=c, alpha=alpha, **kwargs)
         ax.add_patch(circle)
 
     # calculate ax limits
@@ -417,6 +427,12 @@ def draw_circles_ctypes(state, ax=None, cm=plt.cm.coolwarm, grid=False, **kwargs
     if ax is None:
         ax = plt.axes()
 
+    if "alpha" in kwargs:
+        alpha = kwargs["alpha"]
+        kwargs.pop("alpha")
+    else:
+        alpha = 0.5
+
     alive_cells = np.squeeze(state.celltype.sum(1) > 0)
     color_levels = (np.argmax(state.celltype, axis=-1) + 1) / state.celltype.shape[1]
     color = cm(color_levels)
@@ -426,7 +442,7 @@ def draw_circles_ctypes(state, ax=None, cm=plt.cm.coolwarm, grid=False, **kwargs
         state.radius[alive_cells].squeeze(),
         color[alive_cells],
     ):
-        circle = plt.Circle(cell, radius=radius, color=c, alpha=0.5, **kwargs)
+        circle = plt.Circle(cell, radius=radius, color=c, alpha=alpha, **kwargs)
         ax.add_patch(circle)
 
     # calculate ax limits
@@ -486,6 +502,12 @@ def draw_circles_chem(
     if ax is None:
         ax = plt.axes()
 
+    if "alpha" in kwargs:
+        alpha = kwargs["alpha"]
+        kwargs.pop("alpha")
+    else:
+        alpha = 0.5
+
     alive_cells = np.squeeze(state.celltype.sum(1) > 0)
 
     chemical = state.chemical[:, chem][alive_cells]
@@ -517,7 +539,7 @@ def draw_circles_chem(
             ct_color,
         ):
             circle = plt.Circle(
-                cell, radius=radius, fc=c, ec=ctc, lw=2, alpha=0.5, **kwargs
+                cell, radius=radius, fc=c, ec=ctc, lw=2, alpha=alpha, **kwargs
             )
             ax.add_patch(circle)
 
@@ -525,7 +547,7 @@ def draw_circles_chem(
         for i, (cell, radius, c) in enumerate(
             zip(state.position[alive_cells], state.radius[alive_cells].squeeze(), color)
         ):
-            circle = plt.Circle(cell, radius=radius, fc=c, alpha=0.5, **kwargs)
+            circle = plt.Circle(cell, radius=radius, fc=c, alpha=alpha, **kwargs)
             ax.add_patch(circle)
             if labels:
                 ax.text(
@@ -602,6 +624,12 @@ def draw_circles_stress(
     if ax is None:
         ax = plt.axes()
 
+    if "alpha" in kwargs:
+        alpha = kwargs["alpha"]
+        kwargs.pop("alpha")
+    else:
+        alpha = 0.5
+
     alive_cells = np.squeeze(state.celltype.sum(1) > 0)
 
     stress = state.mechanical_stress[alive_cells]
@@ -624,7 +652,7 @@ def draw_circles_stress(
             ct_color,
         ):
             circle = plt.Circle(
-                cell, radius=radius, fc=c, ec=ctc, lw=2, alpha=0.5, **kwargs
+                cell, radius=radius, fc=c, ec=ctc, lw=2, alpha=alpha, **kwargs
             )
             ax.add_patch(circle)
 
@@ -632,7 +660,7 @@ def draw_circles_stress(
         for i, (cell, radius, c) in enumerate(
             zip(state.position[alive_cells], state.radius[alive_cells].squeeze(), color)
         ):
-            circle = plt.Circle(cell, radius=radius, fc=c, alpha=0.5, **kwargs)
+            circle = plt.Circle(cell, radius=radius, fc=c, alpha=alpha, **kwargs)
             ax.add_patch(circle)
             if labels:
                 ax.text(
@@ -711,6 +739,12 @@ def draw_circles_division(
     if ax is None:
         ax = plt.axes()
 
+    if "alpha" in kwargs:
+        alpha = kwargs["alpha"]
+        kwargs.pop("alpha")
+    else:
+        alpha = 0.5
+
     alive_cells = np.squeeze(state.celltype.sum(1) > 0)
 
     divrate = state.division[alive_cells]
@@ -731,7 +765,7 @@ def draw_circles_division(
             ct_color,
         ):
             circle = plt.Circle(
-                cell, radius=radius, fc=c, ec=ctc, lw=2, alpha=0.5, **kwargs
+                cell, radius=radius, fc=c, ec=ctc, lw=2, alpha=alpha, **kwargs
             )
             ax.add_patch(circle)
 
@@ -740,7 +774,7 @@ def draw_circles_division(
         for i, (cell, radius, c) in enumerate(
             zip(state.position[alive_cells], state.radius[alive_cells].squeeze(), color)
         ):
-            circle = plt.Circle(cell, radius=radius, fc=c, alpha=0.5, **kwargs)
+            circle = plt.Circle(cell, radius=radius, fc=c, alpha=alpha, **kwargs)
             ax.add_patch(circle)
             if labels:
                 ax.text(
@@ -833,6 +867,12 @@ def draw_circles(
     if ax is None:
         ax = plt.axes()
 
+    if "alpha" in kwargs:
+        alpha = kwargs["alpha"]
+        kwargs.pop("alpha")
+    else:
+        alpha = 0.5
+
     alive_cells = np.squeeze(state.celltype.sum(1) > 0)
 
     state_values = np.float32(state_values)[alive_cells]
@@ -849,7 +889,7 @@ def draw_circles(
     for cell, radius, c in zip(
         state.position[alive_cells], state.radius[alive_cells].squeeze(), color
     ):
-        circle = plt.Circle(cell, radius=radius, fc=c, alpha=0.5, **kwargs)
+        circle = plt.Circle(cell, radius=radius, fc=c, alpha=alpha, **kwargs)
         ax.add_patch(circle)
 
     # calculate ax limits
@@ -922,7 +962,6 @@ def draw_spheres(
     max_val=None,
     elev=70,
     azim=-80,
-    alpha=0.6,
     **kwargs,
 ):
     """
@@ -936,6 +975,12 @@ def draw_spheres(
         ax = fig.add_subplot(111, projection="3d")
     else:
         fig = plt.gcf()
+
+    if "alpha" in kwargs:
+        alpha = kwargs["alpha"]
+        kwargs.pop("alpha")
+    else:
+        alpha = 0.6
 
     alive_cells = np.squeeze(state.celltype.sum(1) > 0)
 
@@ -991,8 +1036,8 @@ def draw_spheres(
     xmin, ymin, zmin = np.min(state.position[alive_cells], axis=0)
     xmax, ymax, zmax = np.max(state.position[alive_cells], axis=0)
 
-    max_coord = max([xmax, ymax, zmax]) + 3
-    min_coord = min([xmin, ymin, zmin]) - 3
+    max_coord = max([xmax, ymax, zmax]) + 1
+    min_coord = min([xmin, ymin, zmin]) - 1
 
     ax.set_xlim(min_coord, max_coord)
     ax.set_ylim(min_coord, max_coord)
@@ -1054,6 +1099,12 @@ def draw_spheres_division(
     else:
         fig = plt.gcf()
 
+    if "alpha" in kwargs:
+        alpha = kwargs["alpha"]
+        kwargs.pop("alpha")
+    else:
+        alpha = 0.6
+
     alive_cells = np.squeeze(state.celltype.sum(1) > 0)
     divrate = state.division[alive_cells]
     divrate = (divrate - divrate.min() + 1e-20) / (
@@ -1077,7 +1128,7 @@ def draw_spheres_division(
             y = radius * np.outer(np.sin(u), np.sin(v)) + cell[1]
             z = radius * np.outer(np.ones(np.size(u)), np.cos(v)) + cell[2]
             ax.plot_surface(
-                x, y, z, color=c, edgecolors=ctc, linewidth=0.5, alpha=0.5, **kwargs
+                x, y, z, color=c, edgecolors=ctc, linewidth=0.5, alpha=alpha, **kwargs
             )
             if labels:
                 ax.text(
@@ -1097,7 +1148,7 @@ def draw_spheres_division(
             x = radius * np.outer(np.cos(u), np.sin(v)) + cell[0]
             y = radius * np.outer(np.sin(u), np.sin(v)) + cell[1]
             z = radius * np.outer(np.ones(np.size(u)), np.cos(v)) + cell[2]
-            ax.plot_surface(x, y, z, color=c, alpha=0.5, **kwargs)
+            ax.plot_surface(x, y, z, color=c, alpha=alpha, **kwargs)
             if labels:
                 ax.text(
                     cell[0],
@@ -1133,8 +1184,8 @@ def draw_spheres_division(
 
     xmin, ymin, zmin = np.min(state.position[alive_cells], axis=0)
     xmax, ymax, zmax = np.max(state.position[alive_cells], axis=0)
-    max_coord = max([xmax, ymax, zmax]) + 3
-    min_coord = min([xmin, ymin, zmin]) - 3
+    max_coord = max([xmax, ymax, zmax]) + 1
+    min_coord = min([xmin, ymin, zmin]) - 1
 
     ax.set_xlim(min_coord, max_coord)
     ax.set_ylim(min_coord, max_coord)
