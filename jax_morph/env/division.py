@@ -172,7 +172,7 @@ class CellDivisionReparam(SimulationStep):
 
         state = eqx.tree_at(lambda s: s.radius, state, resize_rad)
 
-        ### POSITION OF NEW CELLS
+        # POSITION OF NEW CELLS
         angle = jax.random.uniform(subkey_place, minval=0.0, maxval=2 * np.pi)
 
         cell_displacement = (
@@ -250,7 +250,7 @@ class IndependentCellDivision(SimulationStep):
 
         state = eqx.tree_at(lambda s: s.radius, state, resize_rad)
 
-        ### POSITION OF NEW CELLS
+        # POSITION OF NEW CELLS
         angle = jax.random.uniform(
             subkey_place,
             shape=(len(idx_dividing_cells), 1),
