@@ -20,7 +20,7 @@ def differentiable_clip(x, min=0., max=1.):
 
 # Rescaled algebraic sigmoid (better gradients - between 0 and 1)
 def rescaled_algebraic_sigmoid(x):
-    return 0.5 + (x / (2 * np.sqrt(1 + x**2)))
+    return 0.5 + ((x-1.5) / (2 * np.sqrt(1 + (x-1.5)**2)))
 
 
 ###-----------TRAJECTORY-----------------###
