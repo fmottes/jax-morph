@@ -14,7 +14,11 @@ class CellDivision(SimulationStep):
         return not self.straight_through
 
     def __init__(
-        self, *, birth_radius_multiplier="auto", straight_through=False, **kwargs
+        self,
+        *,
+        birth_radius_multiplier="auto",
+        straight_through=False,
+        **kwargs,
     ):
 
         self.birth_radius_multiplier = birth_radius_multiplier
@@ -205,7 +209,7 @@ class IndependentCellDivision(SimulationStep):
         *,
         birth_radius_multiplier=float(1 / np.sqrt(2)),
         straight_through=False,
-        **kwargs
+        **kwargs,
     ):
 
         self.birth_radius_multiplier = birth_radius_multiplier
