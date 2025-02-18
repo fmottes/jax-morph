@@ -747,12 +747,12 @@ def draw_circles_division(
 
     alive_cells = np.squeeze(state.celltype.sum(1) > 0)
 
-    divrate = state.division[alive_cells]
-    divrate = (divrate - divrate.min() + 1e-20) / (
-        divrate.max() - divrate.min() + 1e-20
+    division = state.division[alive_cells]
+    division = (division - division.min() + 1e-20) / (
+        division.max() - division.min() + 1e-20
     )
 
-    color = cm(divrate)
+    color = cm(division)
 
     if edges:
         # only usable for two cell types
@@ -787,11 +787,11 @@ def draw_circles_division(
     # show colorbar
     if colorbar:
         if probability:
-            divrate = state.divrate[alive_cells] / (
+            division = state.division[alive_cells] / (
                 state.division[alive_cells].sum() + 1e-20
             )
             sm = plt.cm.ScalarMappable(
-                cmap=cm, norm=plt.Normalize(vmin=divrate.min(), vmax=divrate.max())
+                cmap=cm, norm=plt.Normalize(vmin=division.min(), vmax=division.max())
             )
             sm._A = []
             cbar_text = "Division Probability"
@@ -1106,11 +1106,11 @@ def draw_spheres_division(
         alpha = 0.6
 
     alive_cells = np.squeeze(state.celltype.sum(1) > 0)
-    divrate = state.division[alive_cells]
-    divrate = (divrate - divrate.min() + 1e-20) / (
-        divrate.max() - divrate.min() + 1e-20
+    division = state.division[alive_cells]
+    division = (division - division.min() + 1e-20) / (
+        division.max() - division.min() + 1e-20
     )
-    color = cm(divrate)
+    color = cm(division)
 
     if edges:
         ct_color = cm_edges(np.float32(state.celltype - 1)[alive_cells])
@@ -1161,11 +1161,11 @@ def draw_spheres_division(
 
     if colorbar:
         if probability:
-            divrate = state.division[alive_cells] / (
+            division = state.division[alive_cells] / (
                 state.division[alive_cells].sum() + 1e-20
             )
             sm = plt.cm.ScalarMappable(
-                cmap=cm, norm=plt.Normalize(vmin=divrate.min(), vmax=divrate.max())
+                cmap=cm, norm=plt.Normalize(vmin=division.min(), vmax=division.max())
             )
             sm._A = []
             cbar_text = "Division Probability"
