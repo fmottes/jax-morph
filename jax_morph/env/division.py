@@ -207,7 +207,7 @@ class IndependentCellDivision(SimulationStep):
     def __init__(
         self,
         *,
-        birth_radius_multiplier=float(1 / np.sqrt(2)),
+        birth_radius_multiplier="auto",
         straight_through=False,
         **kwargs,
     ):
@@ -215,15 +215,25 @@ class IndependentCellDivision(SimulationStep):
         self.birth_radius_multiplier = birth_radius_multiplier
         self.straight_through = straight_through
 
-    @jax.named_scope("jax_morph.CellDivision")
+    @jax.named_scope("jax_morph.IndependentCellDivision")
     def __call__(self, state, *, key=None, **kwargs):
 
         idx_new_cell = np.count_nonzero(state.celltype.sum(1))
+
+        # Determine dimensionality dynamically
+        dimension = state.position.shape[1]
+
+        # # Adjust birth radius multiplier to have half the volume after division
+        if self.birth_radius_multiplier == "auto":
+            birth_radius_multiplier = float(2 ** (-1 / dimension))
+        else:
+            birth_radius_multiplier = self.birth_radius_multiplier
 
         # split key
         subkey_div, subkey_place = jax.random.split(key, 2)
 
         p = state.division.squeeze()
+        p = np.clip(p, 1e-6, 1.0)
 
         div_sample = jax.random.bernoulli(subkey_div, p)
 
@@ -244,29 +254,59 @@ class IndependentCellDivision(SimulationStep):
 
         state = jax.tree_map(lambda x: np.dot(division_matrix, x), state)
 
-        # resize cell radii
+        # Resize cell radii
         resize_rad = state.radius.at[idx_new_cells].set(
-            state.radius[idx_new_cells] * self.birth_radius_multiplier
+            state.radius[idx_new_cells] * birth_radius_multiplier
         )
         resize_rad = resize_rad.at[idx_dividing_cells].set(
-            state.radius[idx_dividing_cells] * self.birth_radius_multiplier
+            state.radius[idx_dividing_cells] * birth_radius_multiplier
         )
 
         state = eqx.tree_at(lambda s: s.radius, state, resize_rad)
 
-        # POSITION OF NEW CELLS
-        angle = jax.random.uniform(
-            subkey_place,
-            shape=(len(idx_dividing_cells), 1),
-            minval=0.0,
-            maxval=2 * np.pi,
-        )
+        # Position of new cells
+        if dimension == 2:
+            angle = jax.random.uniform(
+                subkey_place,
+                shape=(len(idx_dividing_cells), 1),
+                minval=0.0,
+                maxval=2 * np.pi,
+            )
 
-        cell_displacement = (
-            state.radius[idx_dividing_cells]
-            * self.birth_radius_multiplier
-            * np.hstack([np.cos(angle), np.sin(angle)])
-        )
+            cell_displacement = (
+                state.radius[idx_dividing_cells]
+                * birth_radius_multiplier
+                * np.hstack([np.cos(angle), np.sin(angle)])
+            )
+
+        elif dimension == 3:
+            angle_keys = jax.random.split(subkey_place, 2)
+            phi = jax.random.uniform(
+                angle_keys[0],
+                shape=idx_dividing_cells.shape,
+                minval=0.0,
+                maxval=2 * np.pi,
+            )[:, None]
+            theta = jax.random.uniform(
+                angle_keys[1],
+                shape=idx_dividing_cells.shape,
+                minval=0.0,
+                maxval=np.pi,
+            )[:, None]
+            r = state.radius[idx_dividing_cells] * birth_radius_multiplier
+
+            cell_displacement = (
+                r
+                * np.array(
+                    [
+                        np.sin(theta) * np.cos(phi),
+                        np.sin(theta) * np.sin(phi),
+                        np.cos(theta),
+                    ],
+                ).T.squeeze()
+            )
+        else:
+            raise ValueError("Unsupported dimension: must be 2 or 3")
 
         new_position = state.position.at[idx_new_cells].set(
             state.position[idx_dividing_cells] - cell_displacement
@@ -277,15 +317,21 @@ class IndependentCellDivision(SimulationStep):
 
         state = eqx.tree_at(lambda s: s.position, state, new_position)
 
+        new_division = state.division.at[idx_new_cells].set(0.0)
+        new_division = new_division.at[idx_dividing_cells].set(0.0)
+
+        state = eqx.tree_at(lambda s: s.division, state, new_division)
+
         if self.straight_through:
             return state
 
         else:
-            safe_p = np.where(p > 0.0, p, 0.5)
+            # # Calculate log probabilities, handling zeros safely
+            safe_p = np.where(p > 0.0, p, 1.0)  # avoid log(0)
 
             safe_logp = np.where(p > 0.0, np.log(safe_p), jax.lax.stop_gradient(0.0))
             alive_1mlogp = np.where(
-                p > 0, np.log(1 - safe_p), jax.lax.stop_gradient(0.0)
+                p > 0.0, np.log(1 - safe_p), jax.lax.stop_gradient(0.0)
             )
 
             logp = np.where(div_sample > 0, safe_logp, alive_1mlogp)
