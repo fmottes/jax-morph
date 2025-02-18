@@ -59,6 +59,7 @@ def train_reinforce(
     learning_rate=1e-3,
     batch_size=4,
     return_discount=0.97,
+    n_sim_steps=None,
     optimizer=optax.adam,
     save_model_every=None,
 ) -> Tuple[eqx.Module, ReinforceTrainingLog]:
@@ -85,7 +86,10 @@ def train_reinforce(
             - log (ReinforceTrainingLog): Training log containing losses, rewards, saved models and training parameters
     """
 
-    N_ADD = int(istate.celltype.shape[0] - istate.celltype.sum(-1).sum(-1))
+    if n_sim_steps is None:
+        N_ADD = int(istate.celltype.shape[0] - istate.celltype.sum(-1).sum(-1))
+    else:
+        N_ADD = n_sim_steps
 
     # JIT-compiled functions
     simulate_batch = eqx.filter_jit(
