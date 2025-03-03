@@ -8,7 +8,7 @@ from ._base import SimulationStep
 from typing import Callable, Union, Sequence, Any
 
 
-###------------SEQUENTIAL SIMULATION STEP-----------------###
+# ------------SEQUENTIAL SIMULATION STEP-----------------
 
 
 class Sequential(SimulationStep):
@@ -53,8 +53,8 @@ class Sequential(SimulationStep):
         for substep, key in zip(self.substeps, keys):
 
             if substep.return_logprob():
-                state, logp = substep(state, key=key)
-                logp += logp
+                state, substep_logp = substep(state, key=key)
+                logp += substep_logp
             else:
                 state = substep(state, key=key)
 
@@ -91,7 +91,7 @@ class Sequential(SimulationStep):
         return len(self.substeps)
 
 
-###------------SIMULATION FUNCTION-----------------###
+# ------------SIMULATION FUNCTION-----------------
 
 
 @eqx.filter_jit
