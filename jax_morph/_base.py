@@ -118,11 +118,21 @@ class SimulationStep(eqx.Module):
         return tuple(set(self._read_state_fields + self._write_state_fields))
 
     @property
-    def read_state_fields(self):
+    def read_state_fields(self) -> tuple[str, ...]:
+        """Get the fields this step needs to read from the state.
+
+        Returns:
+            tuple[str, ...]: Fields that this step reads
+        """
         return self._read_state_fields
 
     @property
-    def write_state_fields(self):
+    def write_state_fields(self) -> tuple[str, ...]:
+        """Get the fields this step may modify in the state.
+
+        Returns:
+            tuple[str, ...]: Fields that this step writes to
+        """
         return self._write_state_fields
 
     def check_state_fields(self, state: BaseCellState) -> None:
