@@ -107,7 +107,7 @@ def ReinforceLoss(cost_fn, *, n_sim_steps, n_episodes=1, n_val_episodes=0, gamma
 
     return Loss(loss_fn=_reinforce_loss, has_aux=(n_val_episodes > 0))
     
-def SimpleLoss(cost_fn, *, n_sim_steps, n_episodes=1, n_val_episodes=0, lambda_l1=0., normalize_cost_returns=False, istate_func=None):
+def SimpleLoss(cost_fn, *, n_sim_steps, n_episodes=1, n_val_episodes=0, lambda_l1=0., normalize_cost_returns=False, istate_func=None, checkpoint=False):
 
     n_episodes = int(n_episodes)
     n_val_episodes = int(n_val_episodes)
@@ -124,7 +124,7 @@ def SimpleLoss(cost_fn, *, n_sim_steps, n_episodes=1, n_val_episodes=0, lambda_l
 
         def _sim(key, istate, model, n_sim_steps):
             istate = istate_func(key, istate)
-            trajectory = simulate(model, istate, key, n_sim_steps, history=True)
+            trajectory = simulate(model, istate, key, n_sim_steps, history=True, checkpoint=checkpoint)
             
             # My simulations don't have cell divisions so no logprob returned.
             if isinstance(trajectory, tuple):

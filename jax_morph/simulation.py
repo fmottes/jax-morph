@@ -84,7 +84,7 @@ class Sequential(SimulationStep):
 ###------------SIMULATION FUNCTION-----------------###
 
 @eqx.filter_jit
-def simulate(model, state, key, n_steps=1, *, history=False):
+def simulate(model, state, key, n_steps=1, *, history=False, checkpoint=False):
 
     subkeys = jax.random.split(key, n_steps)
 
@@ -107,7 +107,9 @@ def simulate(model, state, key, n_steps=1, *, history=False):
         def _scan_fn(state, k):
             state = model(state, key=k)
             return state, state
-        
+
+        if checkpoint:
+            _scan_fn = jax.checkpoint(_scan_fn)
         state, trajectory = jax.lax.scan(_scan_fn, state, np.asarray(subkeys))
 
         if history:
