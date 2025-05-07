@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "jax-morph"
+version = "0.3"
+description = "Simulation and optimization of clusters of cells growing in space."
+readme = "README.md"
+requires-python = ">=3.8"
+license = { file = "LICENSE" }
+dependencies = [
+    "jax>=0.1.73",
+    "jaxlib>=0.1.52",
+    "jax-md>=0.1.28",
+    "matplotlib",
+    "equinox",
+    "diffrax",
+    "tqdm",
+    "networkx"
+]
+authors = [ 
+    { name = "Francesco Mottes", email = "fmottes@seas.harvard.edu" },
+    { name = "Ramya Deshpande", email = "rdeshpande@seas.harvard.edu" }
+]
+
+[project.urls]
+Homepage = "https://github.com/fmottes/jax-morph"
+
+[tool.setuptools.packages.find]
+where = ["jax_morph"]
+include = ["jax_morph*"] 
