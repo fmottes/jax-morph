@@ -38,11 +38,11 @@ def differentiable_clip(x, min=0.0, max=1.0):
 
 
 # Rescaled algebraic sigmoid (better gradients - between 0 and 1)
-def rescaled_algebraic_sigmoid(x):
-    return 0.5 + (x / (2 * np.sqrt(1 + x**2)))
+def rescaled_algebraic_sigmoid(x, shift=0.0):
+    return 0.5 + ((x + shift) / (2 * np.sqrt(1 + (x + shift) ** 2)))
 
 
-###-----------TRAJECTORY-----------------###
+# -----------TRAJECTORY----------------- #
 
 
 # converts a trajectory to a list of states
@@ -58,7 +58,7 @@ def traj_to_states(trajectory):
     return _to_states(trajectory)
 
 
-###-----------PRINT GRADIENTS-----------------###
+# -----------PRINT GRADIENTS----------------- #
 
 
 @jax.custom_vjp
@@ -83,7 +83,7 @@ def print_bwd(x, g):
 print_tangent.defvjp(print_fwd, print_bwd)
 
 
-###-----------NORMALIZE GRADIENTS-----------------###
+# -----------NORMALIZE GRADIENTS----------------- #
 
 
 @jax.custom_vjp
