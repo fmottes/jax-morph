@@ -1,11 +1,10 @@
-from typing import Any
 import jax
 import jax.numpy as np
 import jax.tree_util as jtu
 
 import equinox as eqx
 
-from ..simulation import simulate
+from jax_morph.simulation import simulate
 
 from functools import partial
 from collections import namedtuple
