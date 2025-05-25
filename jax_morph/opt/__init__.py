@@ -1,4 +1,5 @@
 from . import losses, train, rewards
+from . import _old
 
 # Also expose commonly used functions at the top level
 from .losses import reinforce_loss
