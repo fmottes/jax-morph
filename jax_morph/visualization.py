@@ -285,6 +285,15 @@ def OLD_draw_network(W, eps, labels, shells, ax=None):
         if (n in np.array(edge_act).flatten() or n in np.array(edge_in).flatten())
     ]
 
+    # Handle empty arrays by using -inf for empty max operations
+    w_scale = np.maximum(
+        np.max(W_act) if W_act.size > 0 else -np.inf,
+        np.max(-W_in) if W_in.size > 0 else -np.inf,
+    )
+    # If both arrays were empty, set scale to 1 to avoid -inf
+    if w_scale == -np.inf:
+        w_scale = 1.0
+
     # keep only nodes in nodelist in shells
     shells = [[n for n in shell if n in nodelist] for shell in shells]
 
@@ -312,7 +321,7 @@ def OLD_draw_network(W, eps, labels, shells, ax=None):
             G,
             pos,
             edgelist=edge_act,
-            alpha=W_act / np.max(W_act),
+            alpha=W_act / w_scale,
             node_size=480,
             arrows=True,
             nodelist=nodelist,
@@ -325,7 +334,7 @@ def OLD_draw_network(W, eps, labels, shells, ax=None):
             pos,
             style="--",
             edgelist=edge_in,
-            alpha=-W_in / np.max(-W_in),
+            alpha=-W_in / w_scale,
             node_size=480,
             arrows=True,
             nodelist=nodelist,
