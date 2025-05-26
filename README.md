@@ -1,6 +1,6 @@
 # Jax-Morph
 
-**Note:** This repository contains the code to reproduce the results from [Deshpande, Mottes, et al. 2025](). For the latest version of Jax-Morph, please visit the [main repository](https://github.com/brenner-lab/jax-morph).
+**Note:** This branch (and the associated release) contains the code to reproduce the results from [Deshpande, Mottes, et al. 2025](). For the latest version of Jax-Morph, please visit the [main branch](https://github.com/brenner-lab/jax-morph).
 
 Jax-Morph is a Python library, mainly focused on simulating and optimizing clusters of cells in space. The library leverages the power of JAX for high-performance computations for efficient simulation and optimization workflows.
 
@@ -33,8 +33,9 @@ The easiest way to install Jax-Morph with all dependencies is using the provided
 
 This will automatically install:
 - JAX with CUDA 12 support
-- JAX-MD (latest GitHub version to ensure compatibility)
+- JAX-MD (latest GitHub version)
 - All other required dependencies (Equinox, Diffrax, Optax, Matplotlib, tqdm)
+- Jax-Morph itself
 
 ## Alternative Installation
 
@@ -50,7 +51,6 @@ pip install git+https://github.com/jax-md/jax-md.git
 ```
 
 ---
-
 # Usage
 
 After installation, you can import and start using Jax-Morph in your projects.
@@ -64,7 +64,7 @@ import jax_morph as jxm
 
 For a detailed introduction, check out the tutorial notebooks provided in the [tutorials](./tutorials) directory:
 
-## Jax-Morph Tutorials
+**Jax-Morph Tutorials**
 
 These notebooks cover Jax-Morph usage from basic simulations to more advanced optimizations and simulations.
 
@@ -72,7 +72,7 @@ These notebooks cover Jax-Morph usage from basic simulations to more advanced op
 2. **[Gradients and Optimization](./tutorials/02%20-%20JAX-morph%20Gradients%20and%20Optimization.ipynb)** - Explore automatic differentiation and optimization capabilities in some simple models
 3. **[Elongation](./tutorials/03%20-%20JAX-morph%20-%20Elongation.ipynb)** - Advanced example demonstrating cluster elongation dynamics
 
-## Background: Introduction to Optimization
+**Background: Introduction to Optimization**
 
 These notebooks provide background on optimization with differentiable simulations in general.
 
