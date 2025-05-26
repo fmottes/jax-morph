@@ -1,5 +1,13 @@
+import os
 from setuptools import setup, find_packages
 
+# Get the long description from the README file
+here = os.path.abspath(os.path.dirname(__file__))
+try:
+    with open(os.path.join(here, "README.md"), encoding="utf-8") as f:
+        long_description = f.read()
+except FileNotFoundError:
+    long_description = ""
 
 INSTALL_REQUIRES = [
     "jax>=0.5.0",
@@ -13,12 +21,11 @@ INSTALL_REQUIRES = [
     "networkx>=3.4.2",
 ]
 
-
 setup(
     name="jax-morph",
     version="0.3",
     description="A JAX-based library for simulating morphogenesis",
-    long_description=open("README.md").read(),
+    long_description=long_description,
     long_description_content_type="text/markdown",
     author="Francesco Mottes, Ramya Deshpande",
     author_email="fmottes@seas.harvard.edu, rdeshpande@seas.harvard.edu",
@@ -27,4 +34,6 @@ setup(
     python_requires=">=3.8",
     install_requires=INSTALL_REQUIRES,
     packages=find_packages(include=["jax_morph", "jax_morph.*"]),
+    include_package_data=True,
+    zip_safe=False,
 )
