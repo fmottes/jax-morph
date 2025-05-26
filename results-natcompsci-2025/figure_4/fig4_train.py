@@ -17,7 +17,7 @@ from fig4_istate_and_model import build_istate, build_model
 
 jax.config.update("jax_debug_nans", True)
 jax.config.update("jax_enable_x64", True)
-# os.environ["XLA_PYTHON_CLIENT_MEM_FRACTION"] = ".95"
+os.environ["XLA_PYTHON_CLIENT_MEM_FRACTION"] = ".95"
 
 
 # Change working directory to script location
@@ -53,7 +53,7 @@ if __name__ == "__main__":
 
     OPTIMIZER = optax.adam(1e-3)
 
-    root_dir = "./trained_models/"
+    root_dir = "./new_trained_models/"
 
     # !!! empty training_runs folder
     try:

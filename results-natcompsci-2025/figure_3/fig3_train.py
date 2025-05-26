@@ -54,7 +54,7 @@ if __name__ == "__main__":
 
     OPTIMIZER = optax.adam(1e-2)
 
-    root_dir = "./trained_models/"
+    root_dir = "./new_trained_models/"
 
     # dump json with opt hyperparams
     with open(root_dir + "train-ChemHomeo-opt-hyperparams.json", "w") as f:
