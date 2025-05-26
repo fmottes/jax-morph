@@ -1,0 +1,16 @@
+name: jax-morph
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python>=3.8
+  - pip
+  - pip:
+    - "jax[cuda12]"
+    - git+https://github.com/jax-md/jax-md.git
+    - equinox==0.11.11
+    - diffrax==0.6.2
+    - optax==0.2.4
+    - matplotlib==3.10.0
+    - tqdm==4.67.1
+    - -e . 
