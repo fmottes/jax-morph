@@ -1,6 +1,6 @@
 # Jax-Morph
 
-**Note:** This branch (and the associated release) contains the code to reproduce the results from [Deshpande, Mottes, et al. 2025](). For the latest version of Jax-Morph, please visit the [main branch](https://github.com/brenner-lab/jax-morph).
+**Note:** *This branch (and the associated release) contains the code to reproduce the results from [Deshpande, Mottes, et al. 2025](). For the latest version of Jax-Morph, please visit the [main branch](https://github.com/fmottes/jax-morph).*
 
 Jax-Morph is a Python library, mainly focused on simulating and optimizing clusters of cells in space. The library leverages the power of JAX for high-performance computations for efficient simulation and optimization workflows.
 
@@ -15,40 +15,17 @@ Main features:
 ---
 # Installation
 
-## Using Conda (Recommended)
-
-The easiest way to install Jax-Morph with all dependencies is using the provided environment file:
-
-1. Clone the repository:
-    ```bash
-    git clone https://github.com/fmottes/jax-morph
-    cd jax-morph
-    ```
-
-2. Create and activate the conda environment:
-    ```bash
-    conda env create -f environment.yml
-    conda activate jax-morph
-    ```
-
-This will automatically install:
-- JAX with CUDA 12 support
-- JAX-MD (latest GitHub version)
-- All other required dependencies (Equinox, Diffrax, Optax, Matplotlib, tqdm)
-- Jax-Morph itself
-
-## Alternative Installation
-
-If you prefer to manage dependencies manually, you can install directly with pip:
+You can install locally this **reproducibility version** of Jax-Morph with:
 
 ```bash
-pip install git+https://github.com/fmottes/jax-morph.git
+git clone -b paper-natcompsci-2025 https://github.com/fmottes/jax-morph
+pip install -e jax-morph
 ```
 
-**Note:** When installing manually, it is recommended to use the GitHub version of JAX-MD rather than the PyPI version:
-```bash
-pip install git+https://github.com/jax-md/jax-md.git
-```
+**NOTE 1:** *This will automatically install the GPU version of JAX that packages the CUDA 12 toolkit.*
+
+**NOTE 2:** *If you want to run the notebooks in Google Colab, you first need to install the package using the two commands above.*
+
 
 ---
 # Usage
