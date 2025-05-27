@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "jax-morph"
-version = "0.3"
+version = "0.3.0+natcompsci.2025"
 description = "A JAX-based library for simulating morphogenesis"
 readme = "README.md"
 license = {text = "Apache 2.0"}
