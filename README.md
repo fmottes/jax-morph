@@ -59,10 +59,12 @@ After installation, you can import and start using Jax-Morph in your projects.
 import jax_morph as jxm
 ```
 
+See the [tutorial notebooks](./tutorials) and the next section for more details.
+
 ---
 # Quickstart
 
-For a detailed introduction, check out the tutorial notebooks provided in the [tutorials](./tutorials) directory:
+For a detailed introduction, check out the tutorial notebooks provided in the [tutorials](./tutorials) directory.
 
 **Jax-Morph Tutorials**
 
@@ -100,7 +102,7 @@ To reproduce a specific figure, navigate to the corresponding directory and run 
 ---
 # Reference
 
-If you use Jax-Morph, please cite:
+If you use Jax-Morph, please cite the published paper linked in the release notes. The following citation is for the preprint version:
 
 ```
 @article{deshpandemottes2025,
