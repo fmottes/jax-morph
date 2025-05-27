@@ -10,9 +10,8 @@ except FileNotFoundError:
     long_description = ""
 
 INSTALL_REQUIRES = [
-    "jax>=0.5.0",
-    "jaxlib>=0.5.0",
-    "jax-md>=0.2.25",
+    "jax[cuda12]",
+    "jax-md==0.2.25",
     "matplotlib==3.10.0",
     "equinox==0.11.11",
     "diffrax==0.6.2",
