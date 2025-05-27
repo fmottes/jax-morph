@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "jax-morph"
+version = "0.3"
+description = "A JAX-based library for simulating morphogenesis"
+readme = "README.md"
+license = {text = "Apache 2.0"}
+authors = [
+    {name = "Francesco Mottes, Ramya Deshpande", email = "fmottes@seas.harvard.edu, rdeshpande@seas.harvard.edu"}
+]
+urls = {Homepage = "https://github.com/fmottes/jax-morph"}
+requires-python = ">=3.8"
+dependencies = [
+    "jax[cuda12]",
+    "jax-md @ git+https://github.com/jax-md/jax-md.git",
+    "matplotlib>=3.10.0",
+    "equinox==0.12.2",
+    "diffrax==0.7.0",
+    "optax==0.2.4",
+    "tqdm==4.67.1",
+    "networkx>=3.4.2",
+]
+
+[tool.setuptools.packages.find]
+include = ["jax_morph*"]
