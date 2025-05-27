@@ -11,13 +11,13 @@ except FileNotFoundError:
 
 INSTALL_REQUIRES = [
     "jax[cuda12]",
-    "jax-md",
-    "matplotlib",
-    "equinox",
-    "diffrax",
-    "optax",
-    "tqdm",
-    "networkx",
+    "git+https://github.com/jax-md/jax-md.git",
+    "matplotlib>=3.10.0",
+    "equinox==0.12.2",
+    "diffrax==0.7.0",
+    "optax==0.2.4",
+    "tqdm==4.67.1",
+    "networkx>=3.4.2",
 ]
 
 setup(
