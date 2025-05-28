@@ -1,3 +1,6 @@
+[![DOI](https://zenodo.org/badge/553123780.svg)](https://doi.org/10.5281/zenodo.15531405)
+
+
 # Jax-Morph
 
 **Note:** *This branch (and the associated release) contains the code to reproduce the results from [Deshpande, Mottes, et al. 2025](). For the latest version of Jax-Morph, please visit the [main branch](https://github.com/fmottes/jax-morph).*
@@ -79,7 +82,12 @@ To reproduce a specific figure, navigate to the corresponding directory and run 
 ---
 # Reference
 
-If you use Jax-Morph, please cite the published paper linked in the release notes. The following citation is for the preprint version:
+[![DOI](https://zenodo.org/badge/553123780.svg)](https://doi.org/10.5281/zenodo.15531405)
+
+
+If you use Jax-Morph, please cite both the code DOI in the Zenodo badge above and the published paper linked in the release notes. 
+
+This is the citation for the preprint version:
 
 ```
 @article{deshpandemottes2025,
