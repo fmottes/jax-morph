@@ -1,9 +1,15 @@
 [![DOI](https://zenodo.org/badge/553123780.svg)](https://doi.org/10.5281/zenodo.15531405)
 
 
+<div align="center">
+
 # Jax-Morph
 
-**Note:** *This branch (and the associated release) contains the code to reproduce the results from [Deshpande, Mottes, et al. 2025](). For the latest version of Jax-Morph, please visit the [main branch](https://github.com/fmottes/jax-morph).*
+This work is dedicated to the memory of our dear friend and colleague, [Alma dal Co](https://www.nature.com/articles/s41559-022-01978-7).
+
+</div>
+
+*This branch (and the associated release) contains the code to reproduce the results from [Deshpande, Mottes, et al. 2025](). A more general version of the library is under active development. In the future, please visit the [main branch](https://github.com/fmottes/jax-morph) for the latest version of Jax-Morph.*
 
 Jax-Morph is a Python library, mainly focused on simulating and optimizing clusters of cells in space. The library leverages the power of JAX for high-performance computations for efficient simulation and optimization workflows.
 
