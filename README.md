@@ -5,7 +5,7 @@
 
 # Jax-Morph
 
-This work is dedicated to the memory of our dear friend and colleague, [Alma dal Co](https://www.nature.com/articles/s41559-022-01978-7).
+This work is dedicated to the memory of our dear friend and colleague, [Alma Dal Co](https://www.nature.com/articles/s41559-022-01978-7).
 
 </div>
 
@@ -98,7 +98,7 @@ This is the citation for the preprint version:
 ```
 @article{deshpandemottes2025,
   title={Engineering morphogenesis of cell clusters with differentiable programming},
-  author={Deshpande, Ramya and Mottes, Francesco and Vlad, Ariana-Dalia and Brenner, Michael P and dal Co, Alma},
+  author={Deshpande, Ramya and Mottes, Francesco and Vlad, Ariana-Dalia and Brenner, Michael P and Dal Co, Alma},
   journal={arXiv preprint arXiv:2407.06295},
   year={2025}
 }
