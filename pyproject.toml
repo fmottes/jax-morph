@@ -15,13 +15,13 @@ authors = [
 urls = {Homepage = "https://github.com/fmottes/jax-morph"}
 requires-python = ">=3.10"
 dependencies = [
-    "jax[cuda12]",
+    "jax>=0.5.0",
     "jax-md @ git+https://github.com/jax-md/jax-md.git",
     "matplotlib>=3.10.0",
-    "equinox==0.12.2",
-    "diffrax==0.7.0",
-    "optax==0.2.4",
-    "tqdm==4.67.1",
+    "equinox==0.11.11",
+    "diffrax==0.6.2",
+    "optax>=0.2.4",
+    "tqdm>=4.67.1",
     "networkx>=3.4.2",
 ]
 
