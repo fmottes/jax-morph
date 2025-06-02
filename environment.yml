@@ -9,9 +9,9 @@ dependencies:
     - "jax[cuda12]"
     - "jax-md @ git+https://github.com/jax-md/jax-md.git"
     - matplotlib>=3.10.0
-    - equinox==0.12.2
-    - diffrax==0.7.0
-    - optax==0.2.4
-    - tqdm==4.67.1
+    - equinox>=0.12.2
+    - diffrax>=0.6.2
+    - optax>=0.2.4
+    - tqdm>=4.67.1
     - networkx>=3.4.2
     - -e . 
