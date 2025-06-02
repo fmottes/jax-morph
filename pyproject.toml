@@ -13,7 +13,7 @@ authors = [
     {name = "Ramya Deshpande", email = "rdeshpande@seas.harvard.edu"}
 ]
 urls = {Homepage = "https://github.com/fmottes/jax-morph"}
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 dependencies = [
     "jax[cuda12]",
     "jax-md @ git+https://github.com/jax-md/jax-md.git",
