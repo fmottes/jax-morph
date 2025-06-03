@@ -31,7 +31,7 @@ git clone -b paper-natcompsci-2025 https://github.com/fmottes/jax-morph
 pip install -e jax-morph
 ```
 
-**NOTE 1:** *This will automatically install the GPU version of JAX that packages the CUDA 12 toolkit.*
+**NOTE 1:** *This will automatically install the CPU version of JAX.* 
 
 **NOTE 2:** *If you want to run the notebooks in Google Colab, you first need to install the package using the two commands above.*
 
