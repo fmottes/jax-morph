@@ -90,16 +90,19 @@ To reproduce a specific figure, navigate to the corresponding directory and run 
 
 [![DOI](https://zenodo.org/badge/553123780.svg)](https://doi.org/10.5281/zenodo.15531405)
 
+The final version of the paper can be read [here](https://rdcu.be/eAyqo).
 
-If you use Jax-Morph, please cite both the code DOI in the Zenodo badge above and the published paper linked in the release notes. 
+If you use Jax-Morph, please cite: 
 
-This is the citation for the preprint version:
 
 ```
 @article{deshpandemottes2025,
   title={Engineering morphogenesis of cell clusters with differentiable programming},
   author={Deshpande, Ramya and Mottes, Francesco and Vlad, Ariana-Dalia and Brenner, Michael P and Dal Co, Alma},
-  journal={arXiv preprint arXiv:2407.06295},
-  year={2025}
+  journal   = {Nature Computational Science},
+  year      = {2025},
+  doi       = {10.1038/s43588-025-00851-4},
+  url       = {https://doi.org/10.1038/s43588-025-00851-4}
 }
 ```
+
