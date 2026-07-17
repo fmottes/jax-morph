@@ -2,9 +2,31 @@
 name = "jax-morph"
 version = "0.4.0"
 description = "Differentiable particle-based physics for proliferating cells and active matter, in JAX."
+authors = [
+    { name = "Francesco Mottes", email = "fmottes@seas.harvard.edu" },
+    { name = "Ramya Deshpande", email = "rdeshpande@seas.harvard.edu" },
+]
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "Apache-2.0" }
+keywords = [
+    "active matter",
+    "cell mechanics",
+    "differentiable programming",
+    "jax",
+    "morphogenesis",
+    "particle-based physics",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: Implementation :: CPython",
+]
 dependencies = [
     "jax>=0.4.35",
     "equinox>=0.11.7",
