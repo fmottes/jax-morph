@@ -1,3 +1,8 @@
+> [!IMPORTANT]
+> The code to reproduce the results in
+> [*Engineering morphogenesis of cell clusters with differentiable programming*](https://doi.org/10.1038/s43588-025-00851-4)
+> is available on the [`paper-natcompsci-2025` branch](https://github.com/fmottes/jax-morph/tree/paper-natcompsci-2025).
+
 <p align="center">
   <img src="docs/_static/images/jax-morph-wordmark-white.png" alt="jax-morph" width="720">
 </p>
