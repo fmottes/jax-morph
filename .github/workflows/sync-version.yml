@@ -1,0 +1,40 @@
+# Copy to .github/workflows/sync-version.yml (the "version-sync" option).
+# Pairs with scripts/sync_version.py and a CITATION.cff (scaffold a stub if missing).
+# DELIBERATE house exception: this workflow uses plain actions/setup-python, NOT uv,
+# because the script is stdlib-only (tomllib). Keep it as-is.
+name: Sync Version Check
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  check-version-sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.10'
+
+      - name: Sync version
+        run: python scripts/sync_version.py
+
+      - name: Check for changes
+        id: verify
+        run: |
+          if [ -n "$(git status --porcelain CITATION.cff)" ]; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "::error::CITATION.cff version is out of sync with pyproject.toml"
+            echo "Please run 'python scripts/sync_version.py' to sync versions."
+            git diff CITATION.cff
+            exit 1
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "Versions are in sync"
+          fi

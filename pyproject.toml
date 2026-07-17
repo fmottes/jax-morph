@@ -30,6 +30,8 @@ dev = [
     "numpy>=1.26",
     "scipy>=1.11",
     "matplotlib>=3.8",
+    "pytest-cov>=7.1.0",
+    "pre-commit>=4.6.0",
 ]  # scipy: reference Bessel K in tests
 docs = [
     "mkdocs-material>=9.7.5,<10",

@@ -1,0 +1,52 @@
+# Copy to .github/workflows/publish.yml (the "publish" option). No per-project edits.
+# OUTWARD-FACING / HIGHER STAKES: this pushes to PyPI on a published release.
+# Trusted publishing (OIDC, no API token). Before enabling, the maintainer must:
+#   1. Register a PyPI "trusted publisher" for this repo + this workflow filename.
+#   2. Create a GitHub Environment named `pypi` (Settings > Environments).
+# Without both, the publish job fails.
+name: Publish to PyPI
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        run: uv python install 3.11
+
+      - name: Build package
+        run: uv build
+
+      - name: Upload dist artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: dist
+          path: dist/
+
+  publish-pypi:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: pypi
+    steps:
+      - name: Download dist artifacts
+        uses: actions/download-artifact@v8
+        with:
+          name: dist
+          path: dist/
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1

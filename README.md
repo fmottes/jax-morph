@@ -95,7 +95,7 @@ jxm.guides.guide('optimization/pathwise')
 ---
 ## Reference
 
-If you use Jax-Morph, please cite: 
+If you use Jax-Morph, please cite:
 
 ```
 @article{deshpandemottes2025,

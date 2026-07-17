@@ -1,0 +1,31 @@
+# Copy to .pre-commit-config.yaml (the "pre-commit" option).
+# Activate once with: uv tool install pre-commit && pre-commit install
+#
+# The uv-pre-commit hooks keep the base and all-dependencies requirements
+# exports synchronized with pyproject.toml and uv.lock.
+repos:
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+    -   id: trailing-whitespace
+    -   id: end-of-file-fixer
+    -   id: check-yaml
+    -   id: check-toml
+    -   id: check-added-large-files
+
+-   repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.14.13
+    hooks:
+    -   id: ruff
+        args: [--fix]
+    -   id: ruff-format
+
+-   repo: https://github.com/astral-sh/uv-pre-commit
+    rev: 0.9.26
+    hooks:
+    -   id: pip-compile
+        args: [--upgrade, -o, requirements.txt, pyproject.toml]
+        files: ^(pyproject\.toml|uv\.lock|requirements\.txt)$
+    -   id: pip-compile
+        args: [--upgrade, -o, requirements-all.txt, pyproject.toml, --all-extras, --group, dev, --group, docs, --group, notebook]
+        files: ^(pyproject\.toml|uv\.lock|requirements-all\.txt)$

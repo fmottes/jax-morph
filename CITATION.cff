@@ -1,0 +1,27 @@
+# Minimal CITATION.cff stub scaffolded for version synchronization.
+cff-version: 1.2.0
+title: jax-morph
+message: If you use this software, please cite the preferred article below.
+type: software
+authors:
+  - given-names: Francesco
+    family-names: Mottes
+version: 0.4.0
+preferred-citation:
+  type: article
+  title: Engineering morphogenesis of cell clusters with differentiable programming
+  authors:
+    - given-names: Ramya
+      family-names: Deshpande
+    - given-names: Francesco
+      family-names: Mottes
+    - given-names: Ariana-Dalia
+      family-names: Vlad
+    - given-names: Michael P.
+      family-names: Brenner
+    - given-names: Alma
+      family-names: Dal Co
+  journal: Nature Computational Science
+  year: 2025
+  doi: 10.1038/s43588-025-00851-4
+  url: https://doi.org/10.1038/s43588-025-00851-4
