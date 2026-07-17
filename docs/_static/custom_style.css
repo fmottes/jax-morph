@@ -1,0 +1,106 @@
+
+/* font size for overall webpage */
+html {
+    font-size: 130%;
+}
+
+/* increase max page width (standard is 61rem)*/
+.md-grid {
+    max-width: 65rem;
+}
+
+/* fix max content witdt also for pages with no toc */
+.md-content {
+    max-width: 44rem;
+}
+
+.md-typeset h1 {
+    font-size: 1.6rem;
+}
+
+.md-typeset h2 {
+    font-size: 1.5rem;
+}
+
+/* classes and functions */
+.md-typeset h3 {
+    font-size: 1.3rem;
+}
+
+/* class methods and attributes */
+.md-typeset h4 {
+    font-size: 1.1rem;
+}
+
+.md-typeset h5 {
+    font-size: 1.0rem;
+}
+
+.md-typeset h6 {
+    font-size: 0.9rem;
+}
+
+/* e.g. examples and notes */
+.md-typeset details {
+    font-size: 85% !important;
+}
+
+/* indent docstring of class methods and attributes */
+div.doc-contents div.doc-contents {
+    padding-left: 35px;
+  }
+
+/* hide separated signature block of class attributes */
+div.doc.doc-object.doc-attribute > div.doc-signature.highlight {
+    display: none;
+
+}
+
+/* indent separated signature block of class methods */
+div.doc.doc-object.doc-function > div.doc-signature.highlight {
+    padding-left: 35px;
+}
+
+/* indent rendered docstring of standalone functions */
+div.doc.doc-object.doc-function > div.doc.doc-contents.first {
+    padding-left: 35px;
+}
+
+/* hide labels of class methods and properties */
+span.doc.doc-labels > small{
+    display: none;
+}
+
+/* highlight doc section titles (Arguments, Methods, Parameters, etc) */
+span.doc-section-title {
+    /* background-color: #c4d7f9d9; */
+    border-radius: 2pt;
+    padding: 2pt 5pt 2pt 5pt;
+    display: block;
+    width: 100%;
+
+}
+
+/* default palette colors */
+
+[data-md-color-scheme="default"] .md-typeset h4 {
+    color:rgba(64, 81, 181, 0.9);
+}
+
+[data-md-color-scheme="default"] span.doc-section-title {
+    background-color: #c4d7f9d9;
+}
+
+/* slate palette colors */
+
+[data-md-color-scheme="slate"] .md-typeset h3 {
+    color: #e5e7eb;
+}
+
+[data-md-color-scheme="slate"] .md-typeset h4 {
+    color: #a795ff;
+}
+
+[data-md-color-scheme="slate"] span.doc-section-title {
+    background-color: #333f5bd9;
+}

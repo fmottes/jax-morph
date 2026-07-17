@@ -42,8 +42,6 @@ complete `s_0, ..., s_n` history; `trajectory_logp` scores it with live reconstr
 - **matplotlib** is optional behind the `viz` extra; importing `jax_morph.viz` must continue to
   work without it, and rendering calls must raise an actionable install error.
 - **optax** is notebook-only; do not make it a runtime dependency.
-- No jax-md dependency in the core (free-space geometry, Morse, FIRE, Brownian implemented
-  directly); the `neighbors` extra reserves a future sparse/neighbor-list backend.
 
 ## Commands
 

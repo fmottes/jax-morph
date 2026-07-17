@@ -1,0 +1,137 @@
+site_name: jax-morph
+repo_url: https://github.com/fmottes/jax-morph
+repo_name: fmottes/jax-morph
+edit_uri: ''
+
+watch:
+  - jax_morph/guides
+
+nav:
+  - Getting Started: 'index.md'
+  - Basic Usage: 'basic-usage.md'
+
+  - Key Concepts: 'concepts.md'
+  - Core Abstractions: 'core-abstractions.md'
+  - Writing Custom Steps: 'extending.md'
+  - Serialization: 'serialization.md'
+  - Optimization:
+      - REINFORCE: 'optimization/reinforce.md'
+      - Pathwise: 'optimization/pathwise.md'
+
+  - Example Notebooks:
+      - 'example-notebooks/README.md'
+      - Core Walkthrough: 'example-notebooks/01_core_walkthrough.ipynb'
+      - Mechanics: 'example-notebooks/02_mechanics.ipynb'
+      - Potentials: 'example-notebooks/03_potentials.ipynb'
+      - Physics Examples: 'example-notebooks/04_physics_examples.ipynb'
+      - Control Examples: 'example-notebooks/05_control_examples.ipynb'
+      - 3-D Visualization: 'example-notebooks/06_3d_visualization.ipynb'
+
+  - API Reference:
+      - 'api/index.md'
+      - Core:
+          - State: 'api/core/state.md'
+          - Geometry: 'api/core/geometry.md'
+          - Step primitives: 'api/core/step-primitives.md'
+          - Model: 'api/core/model.md'
+          - Simulate: 'api/core/simulate.md'
+          - Trajectory scoring: 'api/core/scoring.md'
+          - Utilities: 'api/core/utilities.md'
+          - StateFieldSpec constants: 'api/core/constants.md'
+      - Physics:
+          - Mechanics:
+              - Potentials: 'api/physics/mechanics/potentials.md'
+              - Relaxation: 'api/physics/mechanics/relaxation.md'
+              - Dynamics: 'api/physics/mechanics/dynamics.md'
+              - Virial stress: 'api/physics/mechanics/stress.md'
+          - Screened diffusion: 'api/physics/diffusion.md'
+          - Cell growth: 'api/physics/cell-growth.md'
+          - Birth and death: 'api/physics/birth-death.md'
+      - Control: 'api/control.md'
+      - Serialization: 'api/serialization.md'
+      - Visualization: 'api/viz.md'
+
+theme:
+  name: material
+  logo: _static/images/jax-morph-icon-white.png
+  favicon: _static/images/jax-morph-icon-white.png
+  icon:
+    repo: fontawesome/brands/github
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - scheme: slate
+      primary: black
+      accent: indigo
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+  features:
+    - content.code.copy
+    - navigation.top
+    - navigation.indexes
+    - navigation.footer
+    - toc.follow
+    - search.suggest
+    - search.highlight
+
+plugins:
+  - offline
+  - search:
+      separator: '[\s\-,:!=\[\]()"/]+|(?!\b)(?=[A-Z][a-z])|\.(?!\d)|&[lg]t;'
+  - ipynb
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [jax_morph]
+          options:
+            docstring_style: google
+            force_inspection: true
+            heading_level: 3
+            inherited_members: false
+            members_order: source
+            show_bases: false
+            show_if_no_docstring: true
+            show_root_heading: true
+            separate_signature: true
+            show_signature_annotations: true
+            show_source: false
+            filters: ['!^_']
+            group_by_category: true
+            docstring_options:
+              ignore_init_summary: true
+              warn_missing_types: false
+            merge_init_into_class: true
+            docstring_section_style: list
+
+markdown_extensions:
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.superfences
+  - pymdownx.details
+  - pymdownx.snippets:
+      base_path: docs
+  - pymdownx.highlight:
+      default_lang: python
+  - admonition
+  - toc:
+      permalink: '#'
+      toc_depth: 3
+
+extra_javascript:
+  - _static/mathjax.js
+  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
+
+extra_css:
+  - _static/custom_style.css
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/fmottes/jax-morph
+    - icon: fontawesome/brands/python
+      link: https://pypi.org/project/jax-morph/

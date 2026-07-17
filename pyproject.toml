@@ -1,0 +1,81 @@
+[project]
+name = "jax-morph"
+version = "0.4.0"
+description = "Differentiable particle-based physics for proliferating cells and active matter, in JAX."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "Apache-2.0" }
+dependencies = [
+    "jax>=0.4.35",
+    "equinox>=0.11.7",
+    "diffrax>=0.6.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/fmottes/jax-morph"
+Repository = "https://github.com/fmottes/jax-morph"
+Documentation = "https://fmottes.github.io/jax-morph/"
+Issues = "https://github.com/fmottes/jax-morph/issues"
+
+[project.optional-dependencies]
+neighbors = ["jax-md>=0.2.8"]   # future sparse/neighbor-list backend (deferred; not used in v1)
+viz = [
+    "matplotlib>=3.8",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.2",
+    "ruff>=0.6",
+    "numpy>=1.26",
+    "scipy>=1.11",
+    "matplotlib>=3.8",
+]  # scipy: reference Bessel K in tests
+docs = [
+    "mkdocs-material>=9.7.5,<10",
+    "mkdocstrings[python]>=0.26",
+    "mkdocs-gen-files>=0.5",
+    "mkdocs>=1.6,<2", # cap <2: mkdocs 2.0 removes the plugin system, breaking material + mkdocstrings
+    "mkdocs-ipynb>=0.1.1",
+    "pymdown-extensions>=10.16",
+]
+notebook = [
+    "ipykernel>=6.29",
+ "nbconvert>=7.16",
+ "nbformat>=5.10",
+ "optax>=0.2.8",
+]  # run/execute example notebooks
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["jax_morph"]
+
+[tool.ruff]
+line-length = 100
+src = ["jax_morph", "tests"]
+extend-exclude = ["*.ipynb"]   # notebooks
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "NPY", "D"]
+# E741: ambiguous names (l, I) show up in math code; E501/E731 per project conventions
+ignore = ["E741", "E501", "E731"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["D"]   # pydocstyle (D) enforced on library code, not tests
+
+[tool.ruff.lint.isort]
+known-first-party = ["jax_morph"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.format]
+quote-style = "single"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = ["acceptance: heavy full-pipeline double-gradient test; main-gated in CI"]
+addopts = '-ra -m "not acceptance"'

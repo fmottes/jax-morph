@@ -1,0 +1,54 @@
+name: ci
+on: [push, pull_request, workflow_dispatch]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+      - run: uv sync --all-extras --group dev --group docs
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+      - run: uv run pytest -q
+      - run: uv run mkdocs build --strict
+
+  acceptance:
+    # Main-only: PRs targeting main, pushes to main, or manual dispatch.
+    if: >-
+      github.event_name == 'workflow_dispatch'
+      || (github.event_name == 'pull_request' && github.base_ref == 'main')
+      || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+      - run: uv sync --all-extras --group dev
+      - run: uv run pytest -m acceptance -q
+
+  viz-optional:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+      - run: uv venv .venv-base
+      - run: uv pip install --python .venv-base/bin/python .
+      - run: |
+          .venv-base/bin/python - <<'PY'
+          import jax_morph.viz as viz
+
+          try:
+              viz.draw(None)
+          except ImportError as error:
+              assert 'jax-morph[viz]' in str(error)
+          else:
+              raise AssertionError('draw() unexpectedly rendered without matplotlib')
+          PY
