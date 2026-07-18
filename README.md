@@ -1,7 +1,10 @@
 > [!IMPORTANT]
-> The code to reproduce the results in
+> The legacy code to reproduce the results in
 > [*Engineering morphogenesis of cell clusters with differentiable programming*](https://doi.org/10.1038/s43588-025-00851-4)
-> is available on the [`paper-natcompsci-2025` branch](https://github.com/fmottes/jax-morph/tree/paper-natcompsci-2025).
+> is available on the [`paper-natcompsci-2025` branch](https://github.com/fmottes/jax-morph/tree/paper-natcompsci-2025). 
+> This old version should only be used to reproduce the results of the paper. For any other purpose, please use the current code on `main`. Note that the current library API is **not backward-compatible** with the legacy version.
+
+
 
 <p align="center">
   <img src="docs/_static/images/jax-morph-wordmark-white.png" alt="jax-morph" width="720">
@@ -16,7 +19,7 @@ Differentiable particle-based physics for proliferating cells and active matter,
 - **Core abstractions built for easy extension** — add your own physics steps to the pipeline. Guides provided with the library for coding agents reference.
 - **JAX and Equinox native** — `jit`, `vmap`, Equinox filtered transformations and neural-network modules work throughout the pipeline; GPU support out of the box.
 
-See [Key Concepts](docs/concepts.md) and usage guides for more.
+See [Key Concepts]([docs/concepts.md](https://fmottes.github.io/jax-morph/concepts.html) and usage guides for more.
 
 ---
 ## Installation
@@ -81,7 +84,7 @@ sim_key = jax.random.PRNGKey(0)
 final_state = jxm.simulate(model, state, n_steps=20, dt=0.1, key=sim_key)
 ```
 
-See the [documentation](docs/index.md) and [example notebooks](examples/README.md) for more.
+See the [documentation](https://fmottes.github.io/jax-morph/index.html) and [example notebooks](https://fmottes.github.io/jax-morph/example-notebooks/index.html) for more.
 
 ---
 ## Installed usage guides
