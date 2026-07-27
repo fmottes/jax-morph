@@ -19,7 +19,7 @@ Differentiable particle-based physics for proliferating cells and active matter,
 - **Core abstractions built for easy extension** — add your own physics steps to the pipeline. Guides provided with the library for coding agents reference.
 - **JAX and Equinox native** — `jit`, `vmap`, Equinox filtered transformations and neural-network modules work throughout the pipeline; GPU support out of the box.
 
-See [Key Concepts]([docs/concepts.md](https://fmottes.github.io/jax-morph/concepts.html) and usage guides for more.
+See [Key Concepts](https://fmottes.github.io/jax-morph/concepts.html) and usage guides for more.
 
 ---
 ## Installation
@@ -103,7 +103,7 @@ jxm.guides.guide('optimization/pathwise')
 ---
 ## Reference
 
-If you use Jax-Morph, please cite:
+If you use JAX-Morph, please cite:
 
 ```
 @article{deshpandemottes2025,
