@@ -118,8 +118,8 @@ namespacing tags, callables:
 ```python
 class Grow(jxm.SimulationStep):
     step_type = jxm.StepType.DYNAMIC
-    rate: jax.Array                 # a jax.Array -> a trainable parameter
-    n_space_dim: int = eqx.field(static=True, default=2)   # structural -> static
+    rate: jax.Array  # a jax.Array -> a trainable parameter
+    n_space_dim: int = eqx.field(static=True, default=2)  # structural -> static
 ```
 
 Pass `rate=jnp.array(0.5)` to make it optimizable, or `rate=0.5` to freeze it. All `jit`/`grad`
@@ -152,7 +152,7 @@ class Sense(jxm.SimulationStep):
         n_alive = jnp.clip(alive.sum(), 1.0, None)
         com = (state.position * alive[:, None]).sum(0) / n_alive
         dist = jxm.ad_utils.safe_norm(state.position - com, axis=-1)
-        return state.set('signal', dist * alive)   # dead slots -> 0
+        return state.set('signal', dist * alive)  # dead slots -> 0
 ```
 
 ### Dynamic step
@@ -196,9 +196,9 @@ class Repel(jxm.SimulationStep):
 
     def __call__(self, state, *, dt, key):
         disp = jxm.geometry.pairwise_displacements(state.position, state.displacement)  # (N, N, d)
-        dist = jxm.ad_utils.safe_norm(disp, axis=-1, keepdims=True)                      # (N, N, 1)
-        force = jxm.ad_utils.safe_divide(disp, dist**3)             # 1/r^2 along the separation
-        total = self.strength * jxm.geometry.neighbor_sum(force, state.alive)           # (N, d)
+        dist = jxm.ad_utils.safe_norm(disp, axis=-1, keepdims=True)  # (N, N, 1)
+        force = jxm.ad_utils.safe_divide(disp, dist**3)  # 1/r^2 along the separation
+        total = self.strength * jxm.geometry.neighbor_sum(force, state.alive)  # (N, d)
         return state.deltas(position=total * dt)
 ```
 
@@ -290,7 +290,7 @@ score time, keeps the score correct even though a real division mutates `alive` 
 ```python
 class MaybeDivide(jxm.StochasticStep):
     step_type = jxm.StepType.DISCRETE
-    p: jax.Array                      # a jax.Array -> the optimizable policy parameter
+    p: jax.Array  # a jax.Array -> the optimizable policy parameter
 
     def trace_writes(self):
         return (
@@ -311,7 +311,7 @@ class MaybeDivide(jxm.StochasticStep):
         return state.update(divided=trace['divided'], divide_eligible=trace['divide_eligible'])
 
     def logp(self, state, trace, dt):
-        prob = self._dist(state, dt)   # recomputed live through p during trace replay
+        prob = self._dist(state, dt)  # recomputed live through p during trace replay
         return jnp.sum(
             jxm.ad_utils.bernoulli_logp(trace['divided'], prob) * trace['divide_eligible']
         )
@@ -344,7 +344,7 @@ formulas that must agree"). The trace fields are additive dynamic fields default
 class Kick(jxm.StochasticStep):
     step_type = jxm.StepType.DYNAMIC
     log_std: jax.Array
-    tag: str = eqx.field(static=True, default='kick')   # namespaces the trace fields
+    tag: str = eqx.field(static=True, default='kick')  # namespaces the trace fields
 
     @property
     def _xi(self):
@@ -359,8 +359,8 @@ class Kick(jxm.StochasticStep):
 
     def trace_writes(self):
         return (
-            jxm.StateFieldSpec(self._xi, shape=(), heritable=False),   # noise, default 0
-            jxm.StateFieldSpec(self._dx, shape=(), heritable=False),   # realized dx, default 0
+            jxm.StateFieldSpec(self._xi, shape=(), heritable=False),  # noise, default 0
+            jxm.StateFieldSpec(self._dx, shape=(), heritable=False),  # realized dx, default 0
         )
 
     def _dist(self, state, dt):
@@ -369,14 +369,14 @@ class Kick(jxm.StochasticStep):
         return mean, std
 
     def sample_trace(self, state, *, dt, key):
-        return {self._xi: jax.random.normal(key, state.radius.shape)}   # noise only
+        return {self._xi: jax.random.normal(key, state.radius.shape)}  # noise only
 
     def replay(self, state, trace, *, dt, pathwise):
         mean, std = self._dist(state, dt)
         if pathwise:
-            dx = mean + std * trace[self._xi]   # recompute from noise with LIVE log_std
+            dx = mean + std * trace[self._xi]  # recompute from noise with LIVE log_std
         else:
-            dx = trace[self._dx]                # frozen realized displacement
+            dx = trace[self._dx]  # frozen realized displacement
         return state.deltas(**{'u': dx, self._xi: trace[self._xi], self._dx: dx})
 
     def logp(self, state, trace, dt):
@@ -452,7 +452,7 @@ s0 = State.init_empty(capacity=64, n_space_dim=2, n_types=1)
 s0 = s0.update(alive=s0.alive.at[:8].set(True), radius=s0.radius.at[:8].set(0.5))
 
 # forward (pure sampler). A model with any stochastic step REQUIRES a key.
-s1 = model(s0, dt=1.0, key=key)                       # one macro-step
+s1 = model(s0, dt=1.0, key=key)  # one macro-step
 traj = jxm.simulate(model, s0, n_steps=20, dt=1.0, key=key, history=True)
 
 # score a rollout jointly. The result is one term per macro-step, not a scalar.
@@ -493,17 +493,19 @@ alike, and raises `AssertionError` if the round-trip fails). Then check the grad
 ```python
 import numpy as np
 
+
 def test_trace_round_trips():
     step = MaybeDivide(p=jnp.array(0.3))
-    s0 = seed(...)                                    # a state with some live cells
-    jxm.check_stochastic_step(step, s0, key=key)      # raises if replay drops a trace field
+    s0 = seed(...)  # a state with some live cells
+    jxm.check_stochastic_step(step, s0, key=key)  # raises if replay drops a trace field
+
 
 def test_score_gradient_reaches_the_param():
     m = jxm.Model([MaybeDivide(p=jnp.array(0.3))])
     s0 = seed(...)
     s1 = m(s0, dt=1.0, key=key)
     g = eqx.filter_grad(lambda mm: jxm.transition_logp(mm, s0, s1, 1.0))(m)
-    assert float(g.steps[0].p) != 0.0    # the recorded action is scored through p
+    assert float(g.steps[0].p) != 0.0  # the recorded action is scored through p
 ```
 
 Useful checks, by step kind:

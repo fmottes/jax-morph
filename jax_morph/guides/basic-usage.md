@@ -7,9 +7,11 @@ and an explicitly initialized state. This minimal model grows one cell toward a 
 import jax.numpy as jnp
 import jax_morph as jxm
 
-model = jxm.Model([
-    jxm.physics.SaturatingCellGrowth(max_radius=1.0),
-])
+model = jxm.Model(
+    [
+        jxm.physics.SaturatingCellGrowth(max_radius=1.0),
+    ]
+)
 
 State = jxm.build_state_from_model(model, name='growth')
 empty = State.init_empty(capacity=8, n_space_dim=2, n_types=1)

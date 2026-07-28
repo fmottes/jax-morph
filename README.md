@@ -1,7 +1,7 @@
 > [!IMPORTANT]
 > The legacy code to reproduce the results in
 > [*Engineering morphogenesis of cell clusters with differentiable programming*](https://doi.org/10.1038/s43588-025-00851-4)
-> is available on the [`paper-natcompsci-2025` branch](https://github.com/fmottes/jax-morph/tree/paper-natcompsci-2025). 
+> is available on the [`paper-natcompsci-2025` branch](https://github.com/fmottes/jax-morph/tree/paper-natcompsci-2025).
 > This old version should only be used to reproduce the results of the paper. For any other purpose, please use the current code on `main`. Note that the current library API is **not backward-compatible** with the legacy version.
 
 
@@ -64,10 +64,12 @@ import jax_morph as jxm
 from jax_morph.physics import BrownianDynamics, Division, SoftSphere
 
 # Cells diffuses under a soft-sphere interaction and divide stochastically
-model = jxm.Model([
-    BrownianDynamics(SoftSphere(), n_space_dim=2, kT=0.05),
-    Division(n_space_dim=2),
-])
+model = jxm.Model(
+    [
+        BrownianDynamics(SoftSphere(), n_space_dim=2, kT=0.05),
+        Division(n_space_dim=2),
+    ]
+)
 
 # Build state class and initialize with a single cell
 StateClass = jxm.build_state_from_model(model)

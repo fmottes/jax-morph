@@ -34,4 +34,4 @@ jobs:
         run: ruff check --output-format=github .
 
       - name: Run ruff formatter check
-        run: ruff format --check .
+        run: ruff format --check --exclude CLAUDE.md .

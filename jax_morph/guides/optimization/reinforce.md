@@ -121,9 +121,7 @@ terms:
 
 ```python
 # returns_to_go[t] contains rewards from transition t onward
-loss = -jnp.sum(
-    jax.lax.stop_gradient(returns_to_go - baselines) * logp_terms
-)
+loss = -jnp.sum(jax.lax.stop_gradient(returns_to_go - baselines) * logp_terms)
 ```
 
 Do not return `-advantage * logp_terms` without reducing it: that is a vector, not a scalar loss.
