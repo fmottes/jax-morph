@@ -6,19 +6,26 @@ A `Model` defines a dynamical system and `simulate` integrates it forward to a p
 system is *hybrid*: some processes are fast constraints solved at the current configuration
 (quasistatic), some evolve at a finite rate (dynamic), and some are instantaneous events (discrete).
 
-One macro-step advances the state over a time increment `dt` by a Lie-Trotter operator split: the
-quasistatic, dynamic, and discrete phases are applied as sub-maps composed in a fixed order into a
-single macro-step operator,
+One macro-step advances the state over a time increment `dt` by composing the quasistatic, dynamic,
+and discrete phases in a fixed order into a single macro-step operator,
 
-$$F_{dt} = F^{\mathrm{disc}}_{dt} \circ F^{\mathrm{dyn}}_{dt} \circ F^{\mathrm{qs}}_{dt}, \qquad s_{n+1} = F_{dt}(s_n).$$
+$$F_{dt} = F^{\mathrm{disc}}_{dt} \circ F^{\mathrm{dyn}}_{dt} \circ P, \qquad s_{n+1} = F_{dt}(s_n).$$
+
+The quasistatic phase $P$ does not evolve the state over `dt`: it projects the state onto the
+equilibrium of the fast processes (e.g. mechanical force balance or steady-state diffusion) at the
+current slow state. The dynamic and discrete phases are a Lie-Trotter operator split of the
+finite-rate evolution and the instantaneous events. Because $P$ acts at the start of a macro-step,
+a returned state is generally slightly off equilibrium: its quasistatic fields reflect the
+configuration before that step's dynamic and discrete updates.
 
 A whole simulation iterates this map, so it is the forward composition of `n_steps` identical
 operators and simulated time is real physical time,
 
 $$s(T) = F_{dt}^{\,n_{\mathrm{steps}}}(s_0), \qquad T = n_{\mathrm{steps}}\, dt.$$
 
-The split is first-order accurate: its `O(dt)` error shrinks as `dt` is refined toward the same
-physical `T`.
+The scheme is first-order accurate: its `O(dt)` error shrinks as `dt` is refined toward the same
+physical `T`. The projection itself adds no `dt` error; treating fast processes as instantaneous is
+a modeling approximation that refining `dt` does not remove.
 
 ## Models are ordered step pipelines
 
