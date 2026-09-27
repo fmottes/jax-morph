@@ -27,7 +27,7 @@ lineax==0.1.1
     # via
     #   diffrax
     #   optimistix
-ml-dtypes==0.5.4
+ml-dtypes==0.6.0
     # via
     #   jax
     #   jaxlib
