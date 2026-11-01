@@ -51,7 +51,7 @@ typing-extensions==4.16.0
     #   equinox
     #   lineax
     #   optimistix
-wadler-lindig==0.1.7
+wadler-lindig==0.1.8
     # via
     #   diffrax
     #   equinox
